@@ -717,3 +717,121 @@ the binary expansion of a real, and nothing unconditional is known about the
 fluctuations of the carry of the Erdős series; this is the arithmetic content
 of the uniform prime-`k`-tuples hypothesis in Pratt's result, and it is an
 *assumption of the published result*, not of the catalog statement.
+
+---
+
+## Round 49 — the digit criterion in ARBITRARY RADIX `q`
+
+New module `lean/JSPProblem/Radix.lean` (1083 lines, **59 new theorems and
+lemms** plus 6 new defs, 0 `sorry`, 0 `admit`; **385 proved theorems and lemmas**
+in the tree at the `^(theorem|lemma)` level — 326 before this round — `lake build`
+clean).
+
+This is a **new attack family**.  Rounds 37–46 attacked the *carried* series
+`S = ∑' n, ω(n) 2^-(n+1)` and round 47 attacked the *carry-free* (primary)
+expansion, both **in base `2` only**; round 48 attacked the doubling map on the
+carries, again in base `2`.  This round changes the one parameter no earlier round
+varied: **the radix**.  The reason it matters is the *no-carry condition* — in radix
+`q` the digit strings that never carry are exactly those satisfying
+`jsp87NoCarry f q := ∀ n, f n ≤ q − 2`, and in **every** radix there is a carry-free
+digit string built from `ω`, namely the reduction `ω n mod (q − 1)`.  So the whole
+Erdős criterion of round 47 is available in every radix, and can be instantiated on
+three new series; and the reason it still does not reach `jsp_000087_main` becomes a
+*theorem* (`jsp87_noCarry_fails_any_radix`) rather than an observation.
+
+### 1. The radix-`q` series, the split, and the tail bound
+
+`jsp87RadixSeries f q = ∑' n, f n q^-(n+1)`, `jsp87RadixInt f q N` (the prefix),
+`jsp87RadixTail f q N` (the rescaled tail).
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87RadixTerm`, `jsp87RadixSeries`, `jsp87NoCarry`, `jsp87RadixInt`, `jsp87RadixTail`, `jsp87RadixBlock`, `jsp87RadixBlockNat`, `jsp87RadixFracNum` | the new objects |
+| `summable_jsp87RadixTerm` / `summable_jsp87RadixTail` | a carry-free digit string gives a summable series |
+| `tsum_jsp87RadixTerm_geom` | `∑' n, q^-(n+1) = (q − 1)⁻¹` |
+| `jsp87RadixTail_lt_one` | **NO CARRYING IN RADIX `q`**: `U f q N < 1` at *every* cut point, uniformly in `N` (the majorant `(q−2)/(q−1) < 1`, with strictness from the `k = 0` place) |
+| `jsp87Radix_split` | **`q^N · T_q f = A f q N + U f q N`** — the round-38 carry decomposition with *no* carry term |
+| `jsp87RadixTail_succ` | the tail recurrence `U f q (N+1) = q · U f q N − f N` |
+
+### 2. No carrying, and the digit theorem, in radix `q`
+
+| Theorem | Statement |
+| --- | --- |
+| `floor_natCast_mul_sub` | **THE `q`-ARY DIGITAL EXTRACTION** `⌊q·x⌋ − q⌊x⌋ = ⌊q·fract x⌋`.  Mathlib has no lemma of this shape: `⌊q·x⌋ = q⌊x⌋` is *false* in general (`x = 3/5`, `q = 2`), so the digit cannot be obtained from `Int.floor_intCast_mul` |
+| `Int.fract_natCast_mul`, `Int.fract_radix_pow_mul` | `fract (q·x) = fract (q·fract x)`, and the same after `q^{N+1}` rescaling |
+| `jsp87Radix_floor` | **the `q`-ary floor of `q^N T_q f` is exactly the prefix integer `A f q N`** |
+| `jsp87Radix_fract` | `fract (q^N T_q f) = U f q N` |
+| **`jsp87Radix_digit`** | **the `q`-ary digit of `T_q f` *is* the digit `f N`**: `f N = ⌊q^{N+1}T_q f⌋ − q⌊q^N T_q f⌋` (the radix-`q` form of round 47's `jsp87Binary_digit`) |
+
+### 3. THE COMPLETE ERDŐS CRITERION IN ARBITRARY RADIX (both directions)
+
+Rationality quantises the fractional parts of `q^N T_q f` into `(1/b)ℤ`
+(`jsp87Radix_fract_eq_div`, `jsp87RadixFracNum_spec`), the `q`-ary multiplication map is
+deterministic (`jsp87RadixFracNum_succ`), so the numerators are eventually periodic
+(`jsp87RadixFracNum_period`), and the digit is recovered from two consecutive
+numerators by `b · f N = q·c(N) − c(N+1)` (`jsp87Radix_digit_fracNum`).
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Radix_rational_imp_periodic` | `T_q f = a/b`, `b > 0` ⟹ the digit string `f` is eventually periodic |
+| `jsp87Radix_series_eq_block` | **the exact value**: periodic with period `t > 0` from `N` forces `q^N T_q f = A f q N + β f q N t/(q^t − 1)` |
+| `jsp87Radix_rational_of_periodic` | hence a rational with denominator exactly `(q^t − 1)·q^N` |
+| **`jsp87Radix_irrational_iff`** | **`Irrational (∑' n, f n q^-(n+1)) ↔ f` is not eventually periodic** — the complete criterion in every radix `q ≥ 3`.  For `q = 2` it is round 47's `jsp87Binary_irrational_iff` |
+
+### 4. `ω` IS APERIODIC MODULO EVERY `m ≥ 2`
+
+| Theorem | Statement |
+| --- | --- |
+| `mod_succ_ne_of_two_le` | `(x+1) % m ≠ x % m` for `m ≥ 2` (a common residue would force `m ∣ 1`) |
+| `omega_mod_eventuallyPeriodic_const_mul` | an eventual period freezes `n ↦ ω (t·n) mod m` along the multiples of `t` |
+| **`omega_mod_not_eventuallyPeriodic`** | **`n ↦ ω n mod m` is not eventually periodic, for every `m ≥ 2`** — the full generalisation of round 47's parity theorem (for a prime `p ∣ t` one has `ω (t·p^k) = ω t` while for `q ∤ t` one has `ω (t·q^k) = ω t + 1`, and the two are distinct modulo any `m ≥ 2`) |
+
+### 5. THREE NEW COMPLETE IRRATIONALITY THEOREMS, one per radix
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87OmegaModSeries`, `jsp87OmegaMod_noCarry` | the reduced-`ω` series `∑' n, (ω n mod (q−1)) q^-(n+1)`, whose digits never carry |
+| **`jsp87OmegaModSeries_irrational`** | **for every `q ≥ 3`, `∑' n, (ω n mod (q−1)) q^-(n+1)` is irrational** — carry-free by `jsp87OmegaMod_noCarry`, aperiodic by `omega_mod_not_eventuallyPeriodic` with `m = q−1` |
+| **`jsp87RadixPrimeSeries_irrational`** | **for every `q ≥ 3`, Erdős' base-`q` prime constant `∑' n, [n prime] q^-(n+1)` is irrational** (round 47 proved the base-`2` instance) |
+| `jsp87SquareBit`, `jsp87SquareBit_not_eventuallyPeriodic` | the square indicator is aperiodic: a period would make `M² + t` a square, but `M² < M² + t < (M+1)²` |
+| **`jsp87RadixSquareSeries_irrational`** | **for every `q ≥ 3`, `∑' n, [n is a square] q^-(n+1)` is irrational** — a third complete instance |
+
+### 6. WHY THIS STILL DOES NOT CLOSE JSP-000087 — now a *theorem*
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87_noCarry_fails_any_radix`** | **for every radix `q`, `ω` violates `jsp87NoCarry`**: `¬ (∀ n, ω n ≤ q − 2)`, because `ω` is unbounded (round 44's `omega_unbounded`) |
+| `omega_mod_le_omega`, `omega_mod_eq_omega` | the reduced digits never exceed `ω`, and agree with it below the modulus |
+| `jsp87ErdosRadixSeries`, `summable_jsp87ErdosRadix`, `summable_nat_mul_radixGeom`, `jsp87ErdosRadixSeries_eq_two` | **the Erdős series converges in every radix** (`ω n ≤ n − 1`, dominated by `n·q^-(n+1)`), and in radix `2` it is the catalog's `jsp87Series` |
+
+`jsp87_noCarry_fails_any_radix` is the sharp statement of the gap: the method which
+decides the three series above is *provably inapplicable* to the Erdős series
+itself, in every radix, because its digit function is unbounded.  So varying the
+radix cannot close JSP-000087; the missing input is still aperiodicity of the
+**carried** binary digit string (round 48's `jsp87_fracCarry_not_eventuallyPeriodic`),
+i.e. the arithmetic content of the uniform prime-`k`-tuples hypothesis.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The round-49 theorems are
+the unconditional content of the criterion in every radix; none of them supplies the
+missing aperiodicity input for the carried series.  In the published literature the
+headline irrationality is **conditional** (Pratt, arXiv:2409.15185, under a uniform
+prime-`k`-tuples hypothesis) and the catalog records *Solved; Lean proof: No;
+Eligible to claim: No*.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### Toolchain notes recorded this round
+
+* The tree's namespace is **`JSP87`**, not `JSPProblem`.
+* `mul_inv_cancel₀` requires `a ≠ 0` even in `ℝ`: `a * a⁻¹ = 1` is **false** for
+  `a = 0`, so any lemma of that shape needs an explicit nonzeroness hypothesis.
+* `pow_le_pow_left' : a ≤ b → ∀ i, a^i ≤ b^i` (not the `(n, a ≤ b)` shape), and
+  omega cannot derive `2 ≤ q^t` from `2^t ≤ q^t` — use `Nat.one_lt_two_pow` first.
+* `by_cases h : p` does **not** fall back to a classical instance; put
+  `noncomputable def f := by classical; exact if _ then _ else _` instead.
+* `rw [h]` inside a `calc` step whose proof is a `by`-block must stay on the same
+  line (round 48's parser trap).
