@@ -12,3 +12,4 @@ import JSPProblem.DigitCarry
 import JSPProblem.CarryExcess
 import JSPProblem.BlockPeriod
 import JSPProblem.Primary
+import JSPProblem.CarryDoubling
