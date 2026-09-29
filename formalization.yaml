@@ -1,0 +1,23 @@
+jsp_id: JSP-000087
+catalog_url: https://github.com/TheJustinSunPrize/awards
+status: wip
+prize_ready: false
+github_owner: Yi-111-a
+lean_repository: https://github.com/Yi-111-a/jsp-000087-lean
+branch: main
+commit_sha: ""
+headline_theorems:
+  - jsp_000087_main
+roles:
+  formalization_operators:
+    - Yi-111-a
+attribution_basis: |
+  Formalization WIP under Yi-111-a. No prize claim.
+build:
+  toolchain_file: lean-toolchain
+  command: lake build
+  note: >-
+    harness/score.py runs `lake build` with cwd = this problem directory, so the
+    Lake project entrypoint (lakefile.lean, lean-toolchain, lake-manifest.json)
+    lives here; `lean_lib JSPProblem` points at srcDir "lean" and `.lake` is a
+    relative symlink to `lean/.lake` so the Mathlib artefacts are shared.
