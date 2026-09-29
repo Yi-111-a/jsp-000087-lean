@@ -499,3 +499,116 @@ the arithmetic content of a uniform prime-`k`-tuples correlation hypothesis on
 periodic (rounds 40 + 41), and conversely any period of `ω` gives a period of
 the block. It is an *assumption of the published result*, not of the catalog
 statement, so it is not introduced here.
+
+---
+
+## Round 47 — the primary (carry-free) binary expansion, and TWO complete irrationality theorems
+
+New module `lean/JSPProblem/Primary.lean` (1334 lines, **80 new theorems and
+defs**, 0 `sorry`, 0 `admit`; **307 proved theorems and lemmas** in the tree at
+the `^(theorem|lemma)` level — 237 before this round — `lake build` clean).
+
+This is a **new attack family**: rounds 37–46 attacked the Lambert reduction,
+the carry scaffold, the gcd arithmetic, the carry dynamics, the digit
+bookkeeping, the carry-excess/sieve content, and the base-`2` block arithmetic —
+all of them for the *carried* series `S = ∑ ω(n) 2^-(n+1)`.  **No previous round
+considered the primary (carry-free) expansion**: a base-`2` series whose digits
+are already `0` or `1`, so that nothing is ever carried.
+
+### 1. The primary series and the no-carrying identities
+
+For `f : ℕ → ℕ` with `f n ≤ 1` put `T f = ∑' n, f n 2^-(n+1)`,
+`A f N = ∑_{n<N} f n 2^{N-n-1}`, `U f N = ∑' k, f (N+k) 2^-(k+1)`.
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Binary_split` | **the split without a carry term**: `2^N · T f = A f N + U f N` — compare round 38's `2^N S = I N + 2^N τ N` |
+| `jsp87BinaryTail_succ` | the primary tail recurrence `U f (N+1) = 2 U f N − f N` (the analogue of `jsp87Carry_succ`) |
+| `jsp87BinaryTail_le_one` / `jsp87BinaryTail_lt_one` | `0 ≤ U f N ≤ 1`, **strictly** `< 1` as soon as one digit at or after `N` vanishes |
+| `jsp87BinaryInt_bounds` | a prefix is a genuine `N`-bit integer: `A f N ≤ 2^N − 1` |
+| `jsp87Binary_floor` | **NO CARRYING**: `⌊2^N T f⌋ = A f N` — the binary floor is *exactly* the prefix integer, in contrast with round 41's `jsp87_floor_scaled` (`⌊2^N S⌋ = I N + ⌊θ N⌋`) |
+| `jsp87Binary_fract` | `Int.fract (2^N T f) = U f N` |
+| **`jsp87Binary_digit`** | **THE PRIMARY DIGIT THEOREM**: `f N = ⌊2^{N+1} T f⌋ − 2 ⌊2^N T f⌋` — the binary digit of `T f` *is* the digit `f N`.  This is exactly the identity that fails for `S`, where the digit is `ω N + c(N+1) − 2 c N` |
+
+### 2. The exact value of a periodic primary series
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87BinaryTail_iter` | `U f (N+t) = 2^t U f N − β f N t` with `β f N t = ∑_{j<t} f (N+j) 2^{t-1-j}` the `t`-digit block |
+| `jsp87BinaryBlock_bounds` | a block is a genuine `t`-digit window: `0 ≤ β ≤ 2^t − 1` |
+| **`jsp87Binary_series_eq_block`** | **THE EXACT VALUE**: if `f` is periodic from `N` with period `t > 0` then `2^N · T f = A f N + β f N t / (2^t − 1)`.  Round 46 proved the same for the *fractional part* of the carried series; here it is the *value*, and the periodic string is a rational with denominator exactly `(2^t−1) 2^N` |
+| `jsp87Binary_rational_of_periodic` | hence `∃ a : ℤ, ∃ b : ℕ, 0 < b ∧ T f = a / b` |
+
+### 3. THE COMPLETE ERDŐS CRITERION (both directions, from scratch)
+
+| Theorem | Statement |
+| --- | --- |
+| `Int.fract_two_pow_mul` | the doubling map on the fractional parts of a general rescaling |
+| `jsp87Binary_fract_eq_div` | rationality **quantises** the fractional parts: `Int.fract (2^N T f) = c/b`, `0 ≤ c < b` |
+| `jsp87BinaryFracNum_spec` / `_succ` / `_period` | the numerators live in the finite set `range b`, propagate along the doubling map, and are eventually periodic (pigeonhole) |
+| `jsp87Binary_digit_fracNum` | **`b · f N = 2 c(N) − c(N+1)`**: the digit is recovered from two consecutive numerators |
+| `jsp87Binary_rational_imp_periodic` | **rationality ⟹ the digit sequence is eventually periodic** |
+| `jsp87Binary_irrational_of_notPeriodic` | **aperiodicity ⟹ irrationality** |
+| **`jsp87Binary_irrational_iff`** | **THE COMPLETE CRITERION**: `Irrational (∑' n, f n 2^-(n+1)) ↔ f` is not eventually periodic — in **both** directions, and entirely from scratch.  Mathlib has no statement about the base-`2` expansion of a real number at all |
+
+### 4. **TWO COMPLETE, UNCONDITIONAL IRRATIONALITY THEOREMS**
+
+| Theorem | Statement |
+| --- | --- |
+| `omega_mul_of_not_dvd` | `p` prime, `p ∉ n.primeFactors` ⟹ `ω (n·p) = ω n + 1` |
+| `primeFactors_mul_pow_of_dvd`, `omega_mul_pow_of_dvd` | for a prime `p ∣ t`: `ω (t·p^k) = ω t` |
+| `omega_mul_pow_of_coprime` | for a prime `q ∤ t`, `1 ≤ k`: `ω (t·q^k) = ω t + 1` |
+| **`omega_parity_not_eventuallyPeriodic`** | **THE PARITY SEQUENCE OF `ω` IS APERIODIC**: an eventual period `t` freezes `n ↦ ω (t·n) mod 2`, but `ω (t·p^k) = ω t` for `p ∣ t` while `ω (t·q^k) = ω t + 1` for `q ∤ t` (for `t = 1`: `ω q = 1` and `ω (2q) = 2`).  Mathlib has no such statement |
+| `omega_six_pow` | `ω (6^k) = 2` for `1 ≤ k` — the digit hypothesis `U < 1` needs a zero digit past every cut point |
+| **`jsp87ParitySeries`** | `∑' n, (ω n mod 2) 2^-(n+1)` — the parity series of `ω` |
+| **`jsp87ParitySeries_irrational`** | **THE PARITY SERIES OF `ω` IS IRRATIONAL.**  The closest provable sibling of `jsp_000087_main`: the same function `ω`, the same binary method, the same criterion — with the carry dropped |
+| `jsp87PrimeBit_not_eventuallyPeriodic` | the primality indicator is aperiodic: a period makes `p + j t` prime for all `j ≥ 0`, hence `p (1+t)` prime |
+| **`jsp87PrimeSeries_irrational`** | **ERDŐS' PRIME CONSTANT `∑' n, [n prime] 2^-(n+1)` IS IRRATIONAL** — a second complete instance of the criterion (Erdős 1948; here proved from scratch) |
+
+### 5. Why this does not (yet) close JSP-000087 — now *proved*, not just observed
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Series_ge_quarter` | `1/4 ≤ S` (the six nonzero terms already sum to `1/4`) |
+| `jsp87Series_lt_half` | `S < 1/2` (partial sum over `n < 5` is `7/32`, tail past 5 is `≤ 6·2^-5 = 3/16`, so `S ≤ 13/32`) |
+| `jsp87_floor_two_S`, `jsp87_floor_four_S` | `⌊2S⌋ = 0` and `⌊4S⌋ = 1` |
+| **`jsp87_digit_one`** | **THE ERDŐS SERIES CARRIES AT `N = 1`: its first binary digit is `1`, although `ω 1 = 0`** |
+| `jsp87_digit_ne_omega_one` | so the digits of `S` are **not** the `ω`-digits |
+| `jsp87_digit_ne_parity_one` | and **not even the parities of `ω`** — so the aperiodicity of `ω mod 2` proved in this file does *not* transfer to the digits of `S` |
+
+This is the precise reason the headline statement stays open: the entire
+difference between JSP-000087 and the two theorems proved here is the carry
+`⌊2^N τ N⌋`, and round 47 exhibits that carry *numerically* at `N = 1` rather
+than only symbolically.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The round-47 criterion
+is complete in both directions and is applied to two proved irrationality
+theorems, but the Erdős series itself genuinely carries (proved:
+`jsp87_digit_one`), so the aperiodicity of the *binary digits* of `S` remains
+the single missing input — exactly round 46's blocker
+`jsp87Series_irrational_of_blockNotPeriodic`.  In the published literature the
+headline is conditional (Pratt, arXiv:2409.15185, uniform prime `k`-tuples) and
+the catalog records *Solved; Lean proof: No; Eligible to claim: No*.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 47, stated exactly
+
+> **`jsp87_digit_not_eventuallyPeriodic`** — the binary digits
+> `d N = ⌊2^{N+1} S⌋ − 2 ⌊2^N S⌋` of the Erdős series are not eventually
+> periodic in `N`.
+
+With `jsp87Binary_irrational_iff` (proved this round) plus the reduction of
+round 41 (`jsp87_digit_eventuallyPeriodic`) and round 46
+(`jsp87_frac_scaled_eq_block`), this is the *only* remaining step, and it is
+exactly the aperiodicity statement that Pratt's uniform prime-`k`-tuples
+hypothesis is designed to supply: the carry `⌊2^N τ N⌋` is what makes the digits
+differ from the parities of `ω` (proved this round at `N = 1`), and nothing
+unconditional is known about its fluctuations.  The primary criterion makes the
+reduction rigorous: *a `{0,1}`-digit series is irrational exactly when its digit
+string is aperiodic*, so the whole problem is aperiodicity of the digit string
+of `S` — not of `ω`, and not of `ω mod 2`.
