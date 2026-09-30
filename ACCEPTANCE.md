@@ -1301,3 +1301,75 @@ carry cannot be removed in any radix.
 * `linarith` treats `((P - Q) * 2 ^ t)` as a nonlinear monomial and then fails
   on goals mixing it with `m * k`; use `linear_combination (1 : ℤ) * hk2 +
   (-1 : ℤ) * hk1` (the tool that works for exactly these ℤ polynomial goals).
+
+### `-- NEW IN ROUND 53 --` `lean/JSPProblem/RunLength.lean` — runs in `ω` become runs in the binary expansion, and the constant-run criterion
+
+Rounds 37-52 studied the *pointwise* or *periodic* behaviour of single objects
+(the carry, the carry excess, the digit, the `t`-block, the `ω`-window, the
+2-adic prefix, the profile modulo `m`).  **No round ever asked what a RUN of
+`ω`-values does to the binary expansion** — and a run is exactly the kind of
+object a prime-`k`-tuples hypothesis produces.  The passage is elementary and is
+made exact here.
+
+`θ N = u (1 - 2^(-L)) + 2^(-L) θ (N+L) = u - 2^(-L) (u - θ (N+L))` on a window
+where `ω` is constantly `u`, so the *whole* fractional part of the carry is a
+**binary tail**, `1 - 2^(-L)·d` or `2^(-L)·d` with `d ∈ (0,1]`.
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87ProfileSum`, `jsp87ConstRun`, `sum_two_pow_neg_range`, `jsp87ProfileSum_const` | the `L`-block of a profile read in base `2`; a constant run of `ω`; the geometric sum |
+| `jsp87Carry_eq_profile` | **the profile formula**: a prescribed `ω`-profile on `[N, N+L)` gives `θ N = block + 2^(-L) θ (N+L)` |
+| `jsp87Carry_sub_constRun` | **the constant-run formula** `θ N = u - 2^(-L) (u - θ (N+L))` |
+| `jsp87_fractCarry_succ`, `jsp87_fract_run`, `jsp87_fract_run_zeros` | the doubling step on the fractional parts; a run of `L` ones (resp. zeros) propagates along the whole window, the tail being the binary expansion of `d` |
+| `jsp87_fract_constRun_ones` / `_zeros` | **the constant-run identity**: `Int.fract (θ N) = 1 - 2^(-L)(u - θ (N+L))` when the carry does not overshoot, `= 2^(-L)(θ (N+L) - u)` when it does |
+| `jsp87_digit_run_ones` / `jsp87_digit_run_zeros` | **RUNS BECOME DIGIT RUNS**: a constant run of `ω` of length `L` produces `L` consecutive `1`s (resp. `0`s) in the binary expansion of `jsp87Series`, at an explicit place |
+| `jsp87_fractCarry_eq_div` | the orbit lives on the lattice `1/b ℤ` (`jsp87FracNum_spec` transported to the carries) |
+| `jsp87_fractCarry_ne_one` | **THE ASYMMETRY OF THE LATTICE**: `S = a/b` forces every *nonzero* orbit value into `[1/b, 1 - 1/b]` — the orbit never comes within `1/b` of `1`, and reaches `0` only by hitting it exactly |
+| `jsp87_fractCarry_small_or_zero` | **WHY RUNS OF `0`s ARE NOT A CRITERION**: a tiny orbit value is either exactly `0` or forces `b > 2^L` |
+| `jsp87Series_irrational_of_fract_near_one` | **the orbit criterion**: `∀ L ≥ 1, ∃ N ≥ 1, 1 - 2^(-L) ≤ Int.fract (θ N)` ⟹ `S` is irrational |
+| `jsp87Series_irrational_of_digit_run_ones` | **the digit-run criterion**: arbitrarily long runs of `1`s in the digit string ⟹ `S` is irrational (the dual with `0`s is **false**) |
+| `jsp87Series_irrational_of_constRun` | **THE CONSTANT-RUN CRITERION**: if `ω` takes an arbitrarily long constant value `u` on windows whose far end has carry below `u`, then `S` is irrational |
+| `jsp87Series_rational_imp_denominator_ge` | **quantitative form**: a single run of `L` ones at a cut point forces `2 ^ L ≤ b` |
+| `omega_run_twenty`, `omega_window_23`, `jsp87Carry_23_window`, `jsp87ConstRun_twenty` | machine-checked instance: `ω 20 = ω 21 = ω 22 = 2` and `1 ≤ θ 23 < 2` |
+| `jsp87_digit_run_twenty` | **THREE CONSECUTIVE `1`s IN THE BINARY EXPANSION OF THE ACTUAL SERIES**, at `20, 21, 22` |
+| `jsp87_fractCarry_twenty_ge`, `jsp87_fractCarry_twenty_near_one` | `7/8 ≤ Int.fract (θ 20) < 1` |
+| `jsp87Series_rational_imp_denominator_ge_eight` | **if `S = a/b` with `b > 0` then `b ≥ 8`** — the first numerical constraint on the hypothetical denominator |
+
+`jsp_000087_main` is **still deliberately not declared**.  The constant-run
+hypothesis of `jsp87Series_irrational_of_constRun` is a *conjecture* (a
+uniform statement about patterns of `ω` on consecutive integers, of the same
+nature as the uniform prime-`k`-tuples hypothesis in the published conditional
+result); it is not known, and no round of this development can supply it.
+
+#### Round 53 -- toolchain notes
+
+* `Int.self_sub_fract x` is `x - ⌊x⌋ = Int.fract x`; `Int.self_sub_floor x` is
+  `x - Int.fract x = ⌊x⌋`.  To get `Int.fract x = c`, take the former, rewrite
+  the floor with the floor value and finish with `linarith` — the `↑z` casts
+  make `exact_mod_cast` the tool of choice for the `ℤ` part.
+* `Int.floor_eq_iff : ⌊a⌋ = ↑z ↔ ↑z ≤ a ∧ a < z + 1`: the first component is a
+  `ℝ` inequality, the second mixes `ℤ` (`z + 1`) with `ℝ`, so the second goal must
+  be closed with `exact_mod_cast` from a `ℝ` statement.
+* `set d : ℝ := … with hd` introduces a *let-bound* variable plus the equation.
+  All subsequent `have`s must mention `d`, not the expanded expression, or
+  `linarith` will treat `2^(-L) * d` and `2^(-L) * (u - θ (N+L))` as different
+  atoms and fail.
+* `linarith` cannot multiply inequalities by a nonneg quantity: use
+  `mul_le_mul_of_nonneg_left/right`, `div_le_div_iff₀ h1 h2` (which takes the
+  two positivity hypotheses *in the order of the two denominators*:
+  `0 < b → 0 < d → (a / b ≤ c / d ↔ a * d ≤ c * b)`) or `one_div_le_one_of_le`.
+* `div_le_div_of_nonneg_left` has the OPPOSITE orientation from its name
+  (`y ≤ x → a / x ≤ a / y`); use `div_le_div_iff_of_pos_right` for the same
+  denominator, and `lt_div_iff₀ h` for `x < 1 / c ↔ x * c < 1`.
+* `obtain ⟨L, hL, N, hN, hnear⟩` on a goal `∃ N, P ∧ Q` silently mis-binds the
+  names: an `Exists` with one witness and an `And` has **three** components, so
+  use `obtain ⟨N, hN, hnear⟩`.
+* `jsp87FracNum b N` occurs in the *type* of `jsp87FracNum_spec`, so `obtain`
+  (which performs `cases`) on that lemma raises "Dependent elimination failed";
+  use `have h := jsp87FracNum_spec …; exact ⟨…, h.1, …⟩` and transport with
+  `Eq.trans`, never by `rw` at a goal mentioning `jsp87FracNum`.
+* `Interval_cases`/`native_decide` handle the concrete `ω`-tables; but
+  `2 ^ (j - 1 + 1 - 1) = 2 ^ (j - 1)` is NOT provable by `omega` or `ring`
+  (the truncated subtraction survives), so state such identities as
+  `2 * (2^j)⁻¹ = (2^(j-1))⁻¹` and prove them via `inv_pow_neg`, which itself
+  needs `Nat.sub_add_cancel` after `rw [← pow_succ]`.

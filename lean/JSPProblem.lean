@@ -17,3 +17,4 @@ import JSPProblem.Radix
 import JSPProblem.CarryAsymptotic
 import JSPProblem.PeriodEquation
 import JSPProblem.AdicPrefix
+import JSPProblem.RunLength
