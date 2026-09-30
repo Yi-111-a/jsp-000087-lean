@@ -19,3 +19,4 @@ import JSPProblem.PeriodEquation
 import JSPProblem.AdicPrefix
 import JSPProblem.RunLength
 import JSPProblem.SieveModel
+import JSPProblem.WindowProduct

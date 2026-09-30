@@ -1495,3 +1495,122 @@ used.
   out: `jsp87UnsievedCard 30 2 = 2`, not `1`, because `3` and `5` both exceed `2`.
 * `if_pos` / `if_neg` are deprecated in this toolchain; use `ite_eq_left` /
   `ite_eq_right` inside `rw`.
+
+## Round 56 — the arithmetic of the product of a window (new family)
+
+### What the round attacks
+
+Rounds 37–55 all attacked the Erdős series *through the series*: the Lambert
+reduction (37), the carry scaffold (38), the denominator gcd (39), the carry
+recurrence (40), the binary digit bookkeeping (41), the carry excess (44), the
+base-`2` block arithmetic (46), the primary expansion (47), the doubling map
+(48), the radix criterion (49), the asymptotics of the carry (50), the period
+equation (51), the `2`-adic binary prefix (52), runs in `ω` (53) and the sieve
+local model (55).  **No round had ever formed the product of a window**, the
+classical object of Erdős's own argument.  This round introduces it:
+
+* `jsp87WindowProd N L = ∏_{j<L} (N+j)`;
+* `jsp87BigCard m L = #{p ∈ m.primeFactors : p ≥ L}`;
+* `jsp87BigFactors N L` — the prime divisors `≥ L` of the window product;
+* `jsp87Incidence p N L = #{j < L : p ∣ (N+j)}`.
+
+`lean/JSPProblem/WindowProduct.lean`, 690 lines, 4 definitions, 48 theorems,
+0 `sorry`, 0 `admit`, 0 new linter warnings.  The tree now holds 626 proved
+theorems and lemmas (was 578).
+
+### The driving observation
+
+**Two entries of a window have a common prime factor only if that prime is
+smaller than the length of the window.**  If `p ∣ (N+i)` and `p ∣ (N+j)` with
+`i < j < L` then `p ∣ (j-i)`, and `j-i < L`, so `p < L`
+(`jsp87_common_prime_lt`, and in gcd form `jsp87_gcd_lt_window`).  Hence the
+prime divisors `≥ L` of the product of a window are *disjointly attributable*.
+
+### Headline theorems
+
+* `jsp87_bigFactors_card_eq` — **THE ADDITIVITY THEOREM**:
+  `(jsp87BigFactors N L).card = ∑_{j<L} jsp87BigCard (N+j) L`.  Proved from
+  `jsp87_bigFactors_eq_biUnion` and `jsp87_bigFactors_disjoint` via
+  `Finset.card_biUnion`.
+* `jsp87_window_omega_eq` — **THE EXACT WINDOW ACCOUNTING**:
+  `∑_{j<L} ω(N+j) = #(distinct primes ≥ L of the product) + ∑_{j<L} #(primes ≤ L-1 of N+j)`.
+  Round 44 had only the one-sided estimate `jsp87_sum_omega_window_le`.
+* `jsp87_pow_bigLe_window`, `jsp87_window_pow_bounds` — the sandwich
+  `L ^ #(large primes) ≤ ∏ (N+j) ≤ (N+L-1) ^ L`, and hence
+  `jsp87_bigFactors_card_le_log` : `#(large primes) ≤ L · log_L (N+L-1)`,
+  with the *window length* as base.
+* `jsp87_window_omega_le` : `∑_{j<L} ω(N+j) ≤ L log_L (N+L-1) + L π(L-1)`.
+* `jsp87_incidence_le_div` — **THE COLLISION BUDGET**: a prime `p` divides at
+  most `⌊(L-1)/p⌋+1` of the `L` entries (attained: `jsp87Incidence_three_four`).
+* `jsp87_constRun_height_log` — **a constant run of value `u` and length `L ≥ 2`
+  satisfies `L^(u - π(L-1)) ≤ N+L-1`**, sharpening round 55's
+  `3^(u-1) ≤ N+L-1` by a factor that sees the length of the run.
+* `jsp87_run_prod_ge` (`2^(u·L) ≤ ∏(N+j)` on a constant run) and
+  `jsp87_sieveRun_prod_ge` (`(k+1)^(c·L) ≤ ∏(N+j)` under round 55's
+  compensation hypothesis) — the *window* form of round 55's pointwise
+  `jsp87_pow_unsieved_le`, which was route (1) of its `next_round_attack`.
+* `jsp87SieveCard_le_primes` : the small-prime content of an entry is at most
+  `π(L-1)`, i.e. **all** the non-additivity of a window sits inside the primes
+  below `L`.
+
+### Machine-checked instances
+
+* `jsp87BigFactors_twenty` : `jsp87BigFactors 20 3 = {3,5,7,11}`, product
+  `9240 = 2^3·3·5·7·11`, `ω`-mass `6 = 4 + 2`.
+* `jsp87_small_additivity_fails` — **NEGATIVE**: for the window `[3,8)` the
+  primes `≤ 5` have `6` incidences but only `3` distinct primes of the product
+  `20160`, while the primes `≥ 6 = L` are additive (`1` and `1`).  The
+  threshold `L` is exactly right.
+* `jsp87ConstRun_1306291` — a **12-run** of value `3` on
+  `[1306291, 1306303)`, with `36 = 21 + 15`; `jsp87ConstRun_526095` — a
+  **14-run** of value `3` on `[526095, 526109)`, with `42 = 22 + 20`.
+
+### Gate status
+
+`lake build` OK, 0 `sorry`, 0 `admit`,
+`harness/score.py problems/JSP-000087 --strict-prize` → `partial_ok=true`,
+`prize_ready=false`, `missing_theorems=['jsp_000087_main']`.  The headline
+irrationality remains conditional in the published literature (Pratt,
+arXiv:2409.15185, under a uniform prime `k`-tuples hypothesis), and
+`jsp_000087_main` is deliberately not declared.
+
+### Round 56 -- toolchain notes
+
+* **`Finset.mem_filter` does not unify with a metavariable predicate.**  Write
+  `ext p; simp only [Finset.mem_filter]; constructor; intro h; refine And.intro h.1 ?_; omega`.
+  `Finset.mem_filter.mpr ⟨…⟩` leaves the goal in a form on which `omega` reports a
+  counterexample in terms of the *bound variable* only.
+* `p ∈ s.filter f` is **not** definitionally `p ∈ s ∧ f p`: ascribe with
+  `Finset.mem_filter.mp h`, or `simp only [Finset.mem_filter]` first (the
+  round-55 note about destroyed `List.Mem` applies).
+* `Finset.card_pos : 0 < s.card ↔ s.Nonempty` — `.mp` takes the inequality,
+  `.mpr` takes `Nonempty` (`Basic.lean` writes `.mpr ⟨p, hm⟩`).
+* `Finset.min'_le (s) (x) (hx : x ∈ s) : s.min' _ ≤ x` — the ELEMENT and its
+  membership, not the `Nonempty` proof.
+* `Finset.card_le_card_of_injOn f hmap hinj` — `f` is the first **explicit**
+  argument.
+* `Set.PairwiseDisjoint s t` (the hypothesis of `Finset.card_biUnion`) presents
+  the goal as `Function.onFun Disjoint t a b`, which `rw` cannot see through:
+  `unfold Function.onFun; rw [Finset.disjoint_left]; intro p hp1 hp2`, then
+  ascribe `hp1`/`hp2` with `Finset.mem_filter.mp`.
+* **`omega` does no ring normalisation.**  `L * (log + π) = L·log + L·π` needs
+  `rw [Nat.mul_add]`; cancelling a common positive factor needs
+  `Nat.le_of_mul_le_mul_left hmul2 (by omega)` (inequality first, positivity
+  second).  It cannot cancel when one side is a product *containing a sum*.
+* `calc` with a `∏ j ∈ s, f j` or `∑ j ∈ s, f j` on the left is a **parse
+  error**; prove the equality separately with `Finset.prod_const` /
+  `Finset.sum_const` + `Finset.card_range` and use `rw`.
+* `.card` must sit inside the parentheses: `((s.filter f)).card`, never
+  `s.filter f |>.card` or `s.filter (f).card`.
+* `native_decide` **cannot** decide `jsp87ConstRun N L u` (a `∀ j : ℕ`); use
+  `intro j hj; interval_cases j <;> native_decide`.
+* `Nat.le_log_iff_pow_le (b := L) (1 < L) (0 < y) : x ≤ log L y ↔ L^x ≤ y` —
+  the forward direction is exactly the last step of `jsp87_constRun_height_log`;
+  no contradiction is needed.
+* `simp only [Finset.mem_filter]` makes no progress through an opaque or
+  `noncomputable def` (e.g. `jsp87WindowProd`): use `rwa [jsp87WindowProd] at h`
+  or `exact` on the definitionally equal form.
+* **Machine note:** the container filesystem was FULL (0 bytes free) during
+  this round, which made two `lake env lean` runs hang for >20 minutes before
+  any error was reported.  Free scratch space before long builds; the symptom
+  is a *timeout with no diagnostics*, not an elaboration error.
