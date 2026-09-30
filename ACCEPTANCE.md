@@ -998,3 +998,156 @@ not of the catalog statement.
   `(f i : ℤ)` inside the sum and use `Int.cast_sum`.
 * `jsp87Tail 0 = jsp87Series` and `jsp87Tail 1 = jsp87Series` follow from
   `jsp87_series_eq_sum_add_tail` (which is stated with `+`, not `−`).
+
+---
+
+## Round 51 — the period equation, and the `ω`-window arithmetic
+
+New module `lean/JSPProblem/PeriodEquation.lean` (914 lines, **37 new theorems
+and lemmas** plus **4 new definitions** and 8 private helpers, 0 `sorry`,
+0 `admit`; **488 proved theorems and lemmas** in the tree at the
+`^(theorem|lemma)` level — 451 before this round — `lake build` clean, **no new
+linter warnings**).
+
+**This is a new attack family.**  Rounds 37–46 attacked the *carried* Erdős
+series `S = ∑' n, ω(n) 2^{-(n+1)}` through ten *periodicity* angles; round 47
+the *carry-free* (primary) expansion; round 48 the *doubling map* on the
+carries; round 49 the criterion in *arbitrary radix* (and closed the radix route
+with `jsp87_noCarry_fails_any_radix`); round 50 the *asymptotics* of the carry.
+**No round had ever written down the inhomogeneous term of the carry
+recurrence.**  The single observation driving round 51:
+
+> the `t`-step form of round 40's `θ (N+1) = 2 θ N − ω N` has an inhomogeneous
+> term which is a **window of `ω`-values read in base `2`**,
+> `θ (N+t) = 2^t · θ N − Ω N t`,  `Ω N t := ∑_{j<t} ω (N+j) · 2^{t-1-j}`.
+
+`Ω N t` is a *weighted average of the `ω`-values of `t` consecutive integers* —
+precisely the object a prime-`k`-tuples correlation hypothesis is supposed to
+control — and it had **never been defined in the tree**.
+
+### 1. The `ω`-window
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87OmegaWindow`, `jsp87OmegaWindow_zero`, `jsp87OmegaWindow_one`, `jsp87OmegaWindow_cast` | **the new object** `Ω N t = ∑_{j<t} ω (N+j) 2^{t-1-j}` |
+| `jsp87OmegaWindow_succ`, `jsp87OmegaWindow_succ_cast` | `Ω N (t+1) = 2 · Ω N t + ω (N+t)` |
+| **`jsp87OmegaWindow_ge`** | **`2^t − 1 ≤ Ω N t` for `2 ≤ N`** — the window is *exponentially* large, because every integer `≥ 2` has at least one prime factor |
+| `jsp87OmegaWindow_le` | `Ω N t ≤ (N+t) · (2^t − 1)` (from `ω m ≤ m − 1`) |
+
+### 2. The period equation (the `ω`-family lives inside the carry family)
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87Carry_iter`** | **THE ITERATED CARRY RECURRENCE `θ (N+t) = 2^t θ N − Ω N t`** — the `t`-step form of round 40, the analogue of round 47's `jsp87BinaryTail_iter` for the *carried* series |
+| `jsp87CarryShift`, `jsp87OmegaDiff`, `jsp87OmegaDiffWindow` | the lag-`t` carry increment `Δ N := θ (N+t) − θ N`, the lag-`t` `ω`-difference, the `ω`-difference window |
+| **`jsp87CarryShift_step`** | **THE PERIOD EQUATION, STEP FORM — UNCONDITIONAL: `ω (N+t) − ω N = 2 Δ N − Δ (N+1)`.**  The entire `ω`-family, at *every* lag, is recovered from the carry family; no hypothesis is needed |
+| `jsp87_omega_diff_eq_carryShift` | the same in `ℝ` form |
+| `jsp87CarryShift_block` | the block form `Δ (N+t) = 2^t Δ N − P N t` with `P N t = Ω (N+t) t − Ω N t` |
+| `jsp87CarryShift_eq_excess`, `jsp87CarryShift_int` | under eventual periodicity of the digits, `Δ N = c (N+t) − c N` — the period makes the whole increment arithmetic **`ℤ`-arithmetic** |
+
+### 3. The window–block equation — the headline of this round
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_window_periodEquation` | **THE WINDOW EQUATION: `(2^t−1) θ N = (c (N+t) − c N) + Ω N t`** |
+| `jsp87_carry_block_equation` | **THE SAME QUANTISATION IN BLOCK FORM: `(2^t−1) θ N = (2^t−1) c N + B N t`** (`B N t = jsp87DigitBlock N t`, round 48 multiplied through) |
+| **`jsp87_window_block_equation`** | **THE WINDOW–BLOCK EQUATION: `c (N+t) + Ω N t = 2^t · c N + B N t`** — the first exact `ℤ`-equation in the tree involving a *window of `ω`-values*; the `ω`-window is *readable* from the digit string and the carry excess |
+| **`jsp87_window_block_congr`** | **THE WINDOW CONGRUENCE: `2^t − 1 ∣ c (N+t) − c N + Ω N t − B N t`**, with quotient exactly `c N` — the first divisibility statement in the carry family, and the first time a **Mersenne number divides an expression built from `ω`-values** |
+| `jsp87_carryExcess_window_le` | `c (N+t) ≤ 2^t · c N` (from `Ω N t ≥ 2^t − 1`, `B N t ≤ 2^t − 1`) |
+| `jsp87_omegaWindow_le_carryExcess` | `Ω N t ≤ 2^t · c N + 2^t − 1` — a *small* carry excess forces a *small* `ω`-window |
+| `jsp87_omegaWindow_excess_ge'` | `(c (N+t) − c N) + Ω N t ≥ 2^t − 1` for `2 ≤ N` |
+
+### 4. The period equation on the `ω`-family, and what rationality forces
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87_omega_diff_periodEquation`** | **THE PERIOD EQUATION: `ω (N+t) − ω N = 2 (c (N+t) − c N) − (c (N+1+t) − c (N+1))`** — the lag-`t` `ω`-difference is exactly the **second difference of the carry excess** |
+| `jsp87Series_rational_imp_omega_diff_periodEquation` | what a rational value of `S` forces, stated on the `ω`-family |
+| `jsp87_omega_diff_periodEquation_bound` | under eventual periodicity, `\|ω (N+t) − ω N\| ≤ 6 · log₂ (N+t+1)` (round 50's logarithmic bound on the four carry excesses) |
+
+### 5. The dyadic sub-case, as a carry-integrality statement
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_dyadic_imp_carry_int`, `jsp87_carry_int_imp_dyadic` | `S = n/2^M` **iff** the carry `θ M` is an integer |
+| **`jsp87_dyadic_iff_carryInt`** | **THE DYADIC CROSS-IDENTIFICATION (both directions)** |
+| **`jsp87_carryInt_iff_digitZero`** | **hence the binary digits of `S` are eventually `0` from `M` iff some carry of the series is an integer** — the period-`1` sub-case of JSP-000087, in carry language |
+| `jsp87_carry_int_succ`, `jsp87_carry_int_of_le` | integrality propagates forward along any range |
+| `jsp87_carry_int_excess` | an integral carry *is* its own carry excess |
+| `jsp87_carry_int_ge_two` | under the dyadic hypothesis `c N ≥ 2` for `N ≥ 2` (unconditionally `c N ≥ 1`) |
+| **`jsp87_dyadic_omega_eq`** | **under the dyadic hypothesis `ω N = 2 c N − c (N+1)`** — the whole `ω`-family is a *doubling-difference* of the carry excess |
+| `jsp87_dyadic_omega_bounds` | the squeeze `(omega N : ℝ) ≤ 2 c N − 2` and `2 c N − log₂(N+1) ≤ (omega N : ℝ)` |
+
+### 6. The fifth irrationality criterion
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Series_rational_imp_omegaWindow_congr` | rationality ⇒ some candidate period `t > 0` and start point `M` pass the window congruence test at every `N ≥ M` |
+| **`jsp87Series_irrational_of_omegaWindow_never_congr`** | **if no candidate period passes that test, `S` is irrational** |
+
+Together with the four criteria of rounds 41, 46, 47 and 48 the development now
+has **five** independent obstructions to `jsp_000087_main`, phrased on five
+different objects: the carry excess `⌊θ N⌋`, the binary digit string, the
+primary digit string of a carry-free series, the doubling orbit `fract (θ N)`,
+and — this round — the residue of the `ω`-window modulo `2^t − 1`.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The round-51 results
+are the unconditional content of the *period equation*; none of them supplies
+the missing aperiodicity input.  In the published literature the headline
+irrationality is **conditional** (Pratt, arXiv:2409.15185, under a uniform
+prime-`k`-tuples hypothesis) and the catalog itself records *Solved; Lean proof:
+No; Eligible to claim: No*.  No rename, wrapper or shadowing of the name is
+used.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 51, stated exactly
+
+> **`jsp87_window_congr_fails`** — for every candidate period `t > 0` and every
+> start point `M`, there is a cut point `N ≥ M` at which
+>
+> `2^t − 1 ∤ c (N+t) − c N + Ω N t − B N t`,
+>
+> i.e. the residue of the `ω`-window modulo the Mersenne number `2^t − 1` does
+> not match the digit block.  Equivalently (by
+> `jsp87Series_irrational_of_omegaWindow_never_congr`) the binary digit string of
+> `S` is not eventually periodic from any start point with any period.
+
+Nothing unconditional is known about the distribution of `Ω N t` modulo
+`2^t − 1`: that is the arithmetic content of the uniform prime-`k`-tuples
+hypothesis in Pratt's result, an *assumption of the published result*, not of the
+catalog statement.
+
+### Toolchain notes recorded this round
+
+* **`omega` cannot prove `1 ≤ N + j` for two *variables* `N j : ℕ`** — it is
+  false (`N = j = 0`), and this bites whenever one wants
+  `omega_lt : ω n ≤ n − 1` for a *bound variable* `n = N + j`.  Split the case:
+  `rcases Nat.eq_zero_or_pos (N + j) with h | hpos` and use `omega_zero` in the
+  zero case.
+* **A term passed as an argument is elaborated *before* the goal is known**, so
+  `mul_le_mul_of_nonneg_right (omega_ge_one_of_ge_two (by omega)) (by positivity)`
+  silently assigns the metavariable to the *wrong* index and produces
+  `1 * N ≤ omega N * N`.  Always pre-prove both sides as separate `have`s with
+  explicit types.
+* **`Nat.cast_sub : m ≤ n → (m − n : ℕ) = m − n` needs its hypothesis**, and
+  `ring` fails on `ℕ` truncated subtraction (`1 + (2^m*2 − 1)*2 = 2^m*4 − 1`).
+  Prove such identities in `ℕ` with `omega` plus `one_le_two_pow_nat : 1 ≤ 2^m`,
+  or transfer from the `ℝ` version with `exact_mod_cast`.
+* **`Nat.one_lt_two_pow : n ≠ 0 → 1 < 2^n`** requires `n ≠ 0`; for the
+  unconditional `1 ≤ 2^n` use `Nat.succ_ne_zero` or prove it by induction.
+* **`Int.cast_sub : ↑(m − n) = ↑m − ↑n` is the `ℤ` subtraction lemma** (the `ℕ`
+  truncated one is `Nat.cast_sub` and needs a proof).  To move a statement from
+  `ℤ` to `ℝ` it is far more robust to write the `ℝ` statement directly and supply
+  the `Int.cast_sub` / `Int.cast_mul` equations by hand than to use
+  `push_cast`/`norm_cast`, which may leave the ambient type unchanged.
+* **`abs_add_le a b : |a + b| ≤ |a| + |b|` is a *term*, not an `iff`**, so it
+  cannot be used as a `rw` argument; likewise `abs_sub_le'`.  Use
+  `have h := abs_add_le a b; … at h`.
+* `Nat.exists_eq_succ_of_ne_zero` and `Nat.succ_eq_add_one` are the right tools
+  to re-index an all-ones geometric window; `Nat.exists_eq_succ_of_one_le`
+  does **not** exist.
