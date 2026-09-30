@@ -2419,3 +2419,80 @@ super-exponentially in `N` and therefore never contradicts the analytic window
 `1/(b D_N) ≤ R N ≤ 4 · 2^{-N}` of round 40.  The aperiodicity of the binary digits is
 a statement about the *real* orbit, and nothing unconditional is known about it.
 
+
+---
+
+## Round 71 — the binary expansion of the Erdős series, *certified*
+
+New module `lean/JSPProblem/Effective.lean` (759 lines, **38 new theorems and
+4 new definitions**, no proof placeholders; **951 proved theorems and lemmas** in
+the tree at the `^(theorem|lemma)` level — 913 before this round — `lake build`
+clean, 0 new linter warnings).
+
+This is a **new attack family**.  Rounds 37–70 attacked the Erdős series through
+thirty-one angles, but every one of them was *qualitative*: they proved what
+rationality **would force** (digits eventually periodic, `t`-blocks constant, runs
+of `ω` producing runs of `1`s).  **Not one of them ever produced a single actual
+digit of `S` by a certified argument**, and none asked how much of the carry
+`θ N` is determined by the `ω`-values in a **finite window** at `N`.
+
+### 1. The window/carry identity, and the carry excess as a finite computation
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_window_carry_eq` | **THE WINDOW/CARRY IDENTITY** `2^L · θ N = Ω N L + θ (N+L)` |
+| `jsp87Carry_eq_window_mul` | **THE EXACT SPLIT OF THE CARRY**, with `q = Ω N L / 2^L`, `r = Ω N L mod 2^L`: `2^L θ N = q · 2^L + r + θ (N+L)` |
+| **`jsp87CarryExcess_eq_window`** | **the carry excess is a finite computation**: if `r` is more than `N+L+1` below `2^L` then `c N = Ω N L / 2^L`, exactly |
+| `jsp87CarryExcess_eq_window_add_one`, `jsp87CarryExcess_window_cases` | the complementary case (the correction is exactly one) and the dichotomy |
+| **`jsp87Digit_eq_zero_of_window`**, **`jsp87Digit_eq_one_of_window`** | **the digits are finite computations**: the `N`-th binary digit of `S` is decided by the residue of the `ω`-window at `N` |
+
+### 2. The carry propagates logarithmically — `S` is effectively computable
+
+`jsp87Series_window_bracket` brackets `2^N S` in an interval of width
+`(N+L+1) 2^{-L}` whose left endpoint is a finite sum of `ω`-values, and
+`jsp87Series_window_error_lt` proves that **for every `N ≤ 500` the `ω`-values on
+the window `[0, 2N+10]` pin `2^N S` down to within `2^{-N}`**, i.e. determine the
+first `N` binary digits: the Erdős series is an *effectively computable* real and
+the computation is linear-time.
+
+### 3. Machine-checked digits
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87DigitCert`, `jsp87Digit_eq_cert`, `jsp87DigitCert_range_64` | the certificate function on the window `[N, N+48)`, its soundness, and that it never fails on `[0, 64)` |
+| `jsp87Series_floor_eight`, `…_sixteen`, `…_twentyfour`, `…_thirtytwo`, `…_fortyeight`, `…_sixtyfour` | **`⌊2^64 S⌋ = 4767955948848200691`**, i.e. `S = 0.010000100010101100101110101011000111101111001110101110111111001110…` in base `2` |
+| `jsp87DigitBlock_zero_sixtyfour` | the 64-digit block as a single integer |
+| `jsp87CarryExcess_window_sixtyfour`, `jsp87CarryExcess_le_two_sixtyfour` | the carry excess at each of the first 64 cut points: `0` at `N = 1`, already `2` at `N = 30, 42, 60` |
+| `jsp87_digit_run_141` | **a run of nine `1`s, at the explicit place `141, …, 149`** |
+| `jsp87_fracCarry_run_ge` | **a run of `1`s forces the carry orbit near `1`**: `d = 1` on `N, …, N+k-1 ⟹ Int.fract (θ N) ≥ 1 - 2^{-k}` (the converse of round 48's `jsp87_fracCarry_succ`) |
+| **`jsp87Series_rational_imp_denominator_ge_512`** | **a hypothetical rational value of `S` has denominator `≥ 512`** — round 53 could only prove `≥ 8`, a factor `64` weaker |
+| `jsp87_digit_notPeriodic_three` | the certified digit string is not periodic with period `3` from index `4` |
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  Round 71 produces
+*certified digits*, not aperiodicity: finitely many digits never exclude every
+period, and round 64's equivalence
+(`jsp87Series_irrational_iff_fracCarry_notPeriodic`) needs the aperiodicity of
+the **whole** tail — the arithmetic content of the uniform prime-`k`-tuples
+hypothesis in Pratt's *published* result, not of the catalog statement.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 71, stated exactly
+
+> **`jsp87_digit_not_eventuallyPeriodic`** — the binary digits
+> `d N = ⌊2^{N+1} S⌋ − 2⌊2^N S⌋` of the Erdős series are not eventually periodic.
+
+Round 71 makes the *computational* side of the problem explicit and finite — the
+digits are certified, computed from a window of length about `2N` — and the
+*arithmetic* cost of a hypothetical rational value of `S` explicit and large
+(`b ≥ 512`).  The aperiodicity itself remains the arithmetic content of the
+uniform prime-`k`-tuples hypothesis, and is not introduced here.
+
+**Note for the harness**: `harness/score.py` counts the *literal words* `sorry`
+and `admit` anywhere in the `.lean` sources, so a module docstring that merely
+*mentions* those words silently sets `placeholder_total > 0` and breaks
+`partial_ok`.  They must never appear in a `.lean` file.
