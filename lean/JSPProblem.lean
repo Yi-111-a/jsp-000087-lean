@@ -27,3 +27,4 @@ import JSPProblem.WindowTwoAdic
 import JSPProblem.OrbitArith
 import JSPProblem.MersenneWindow
 import JSPProblem.DenominatorSplit
+import JSPProblem.PowerPair
