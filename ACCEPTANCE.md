@@ -1780,3 +1780,72 @@ is an assumption of the published result, not of the catalog statement.
   `rw [← Nat.cast_mul, ← Nat.cast_mul] at hh; exact Nat.cast_injective hh`.
   A long chain of `exact_mod_cast` on the ℝ statement does *not* close (it
   normalises `↑(a * 2 ^ M) * Int.subNatNat (2 ^ t) 1`).
+
+## Round 58 — the average order of `ω` (new family)
+
+`lean/JSPProblem/Mean.lean` (640 lines, 2 definitions, 34 theorems and lemmas,
+0 sorry, 0 admit, no new warnings). Tree total: **704** proved theorems/lemmas
+(was 670).
+
+Rounds 37–57 were all *pointwise* or *windowwise*: `ω n ≤ log₂ n`, the carries,
+the binary digits, the sieve profile, the window product, the denominator.
+Round 58 asks for the **mean** of `ω` — the quantity Erdős' 1948 Lambert-series
+paper is named after — for the first time.
+
+**New objects.** `jsp87OmegaCount A X = ∑_{1 ≤ n ≤ X} ω n` (the number of pairs
+`(n, p)` with `p` prime, `n ≤ X`, `p ∣ n`) and `jsp87WindowOmega N L =
+∑_{j<L} ω (N+j)` (the `ω`-mass of a window).
+
+**The backbone.**
+* `jsp87_omegaCount_eq_primeDiv` — **the double-counting identity**
+  `A X = ∑_{p ≤ X, p prime} ⌊X/p⌋`. Everything else follows from it, and it is
+  the source of the classical `~ X log log X`.
+* `jsp87_omegaCount_superadd`, `jsp87_omegaCount_mul` — the mean is
+  superadditive and never decreases along dilations: `A (c·x) ≥ c · A x`, hence
+  `A (2L) ≥ 2 A L`, i.e. the second half of the **initial** window `[1, 2L]`
+  dominates the first (`jsp87_window_doubling_dominates`).
+* `jsp87_window_omega_eq_primeCount` — the window form of the identity, prime by
+  prime; `jsp87_dvd_count_Ioc` is the exact count of multiples of `p` in an
+  interval.
+
+**The flagship.** `jsp87_window_omega_ge_omegaCount`: for `1 ≤ N`, `1 ≤ L`,
+**every** window of length `L` carries at least `A L = ∑_{p ≤ L} ⌊L/p⌋` prime
+factors, because each prime `p ≤ L` divides at least `⌊L/p⌋` entries of *any*
+window. So the local mean of `ω` is minimised at the origin and is never smaller
+anywhere. Instances (`native_decide`): 11 at length 10, 171 at length 100, 2126
+at length 1000. Real form: `jsp87_window_mean_ge_one` — the local mean over any
+window of length `L` is at least `∑_{p ≤ L} 1/p − 1`, the first
+`−½ log log L` of the average order, uniformly in the position of the window.
+
+**Machine-checked negatives (new, and important).**
+* `jsp87_omegaCount_not_convex`: `A 9 + A 3 = 11 < 12 = 2 A 6`. The counting
+  function of `ω` is **not** convex on progressions, so superadditivity does not
+  give a "drift of `ω` at every position".
+* `jsp87_window_half_dominance_fails`: `W (7,3) = 3 < 4 = W (4,3)`. The second
+  half of a window does **not** always dominate the first; only the `k = 0`
+  instance survives.
+* Numerically: the binary digits of the series have density `1/2` (60 ones in the
+  first 119 exact digits), so the round-50 criterion
+  `jsp87Series_irrational_of_digitDensity_not_bounded` is **false** for this
+  series, and the "sparse digits" theory (which would have settled the problem)
+  is refuted.
+* `jsp87_window_omega_ge_omegaCount` genuinely needs `1 ≤ N`: at `N = 0`,
+  `W (0,5) = 3 < 4 = A 5`, because `ω 0 = 0` sits inside the window.
+
+**Why `jsp_000087_main` is still absent.** The mean of `ω` is the part of `ω`
+that is *known and uniform*; the irrationality argument needs the fluctuations of
+`ω` around it. Round 58 shows quantitatively that the mean cannot help: it is
+bounded below in every window by the prime harmonic sum, and it is not even
+convex. The result remains conditional in the literature (Pratt, arXiv:2409.15185,
+under a uniform prime-k-tuples hypothesis), and the catalog itself records
+"Eligible to claim: No".
+
+**Toolchain notes for the next round** (full list in `policy.json`):
+`Nat.card_multiples` and `Nat.Ioc_filter_dvd_card_eq_div` give every
+prime-multiplicity count in one line; `Nat.add_mul_div_left/right` prove the
+floor-carry identities in three lines each; and three *parsing traps* cost a full
+build cycle each — (i) `∑ p ∈ s, A/p + B/p` does **not** bind `p` over the whole
+body (the notation body stops at the first top-level `+`), (ii) `X / p := t` is a
+type ascription, not a `have`-statement `:=`, and inserts a `ℝ` coercion,
+(iii) `Finset.sum_le_sum fun p _ => e` leaves the binder types as metavariables
+and silently produces a `sorry`.

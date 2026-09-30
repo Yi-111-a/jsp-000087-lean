@@ -21,3 +21,4 @@ import JSPProblem.RunLength
 import JSPProblem.SieveModel
 import JSPProblem.WindowProduct
 import JSPProblem.Denominator
+import JSPProblem.Mean
