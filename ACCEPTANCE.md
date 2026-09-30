@@ -502,6 +502,135 @@ statement, so it is not introduced here.
 
 ---
 
+## Round 64 — the doubling orbit computed exactly, and the death of the `2`-adic limit
+
+New module `lean/JSPProblem/OrbitArith.lean` (999 lines, **40 new theorems and
+lemmas** plus 10 private helpers and 1 new definition, 0 `sorry`, 0 `admit`;
+**822 proved theorems and lemmas** in the tree at the `^(theorem|lemma)` level —
+781 before this round — `lake build` clean, 0 new linter warnings).
+
+This is a **new attack family**.  Round 48 introduced the *doubling orbit of the
+carries* `N ↦ Int.fract (θ N)` and proved only that a rational value makes it
+eventually periodic (the fourth irrationality criterion); round 57 computed the
+*period-denominator correspondence* for the **digit string** of `S` but never
+for the orbit.  **This round computes the orbit exactly** — its point, its
+period, and the number of points it visits — and then kills the *other* possible
+quantisation of the series, the `2`-adic one.
+
+### 1. The orbit is a residue: `Int.fract (θ N) = (2^N a mod b)/b`
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87OrbitNum` | **the new object** `r a b N = (2^N · a) mod b`, the numerator of the orbit at time `N` |
+| `jsp87OrbitNum_succ` | **the numerators are the orbit of the doubling map on `ℤ/bℤ`**: `r (N+1) = 2 r (N) mod b` (hence deterministic) |
+| `jsp87OrbitNum_lt`, `jsp87OrbitNum_zero` | `r N < b`; `r 0 = a mod b` |
+| `jsp87_orbitNum_congr` | `r (N+t) = r N ↔ b ∣ 2^N (2^t − 1) a` |
+| `dvd_two_pow_mer_iff_oddPart` | **the `2`-part of a denominator is invisible past its own valuation**: for `k ≥ v_2(b)`, `b ∣ 2^k (2^t−1) ↔ jsp87OddPart b ∣ 2^t − 1` |
+| `jsp87_orbitNum_period_iff` | **the periods of the residue orbit**: `r (n+t) = r n` for all `n ≥ k` `↔ jsp87OddPart b ∣ 2^t − 1` |
+| `jsp87_fracCarry_eq_orbitNum` | **THE ORBIT POINT IS A RESIDUE**: for `S = a/b`, `0 < a`, `1 ≤ N`, `Int.fract (θ N) = r a b N / b` |
+| `jsp87_fracCarry_period_iff_resid` | the orbit and the doubling map mod `b` have the same periodic points |
+| **`jsp87_fracCarryPeriod_iff_oddPart_dvd_mer`** | **THE COMPLETE PERIOD–ORDER CORRESPONDENCE FOR THE ORBIT**: for `S = a/b` in lowest terms, `1 ≤ M`, `v_2(b) ≤ M`, `0 < t`: `(∀ N ≥ M, fract θ (N+t) = fract θ N) ↔ jsp87OddPart b ∣ 2^t − 1` |
+
+So, for a rational value of the Erdős series, **the doubling orbit of the
+carries has minimal eventual period exactly `ord_{jsp87OddPart b}(2)`, and it
+starts exactly at the `2`-adic threshold `M = v_2(b)`** — the same number that
+governs the digit string (round 57), i.e. *the orbit and the binary expansion are
+governed by one and the same integer*.
+
+### 2. The period is minimal, and the orbit visits exactly that many points
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_fracCarry_period_sub_iff` | **two periods spawn a smaller one**: if `t`, `t'` are periods with `t' < t`, then `t − t'` is a period and `jsp87OddPart b ∣ 2^(t−t') − 1` |
+| `jsp87_fracCarry_period_dvd` | the eventual periods of the orbit are **`gcd`-closed** (via round 39's `gcd_two_pow_sub_one`) |
+| `jsp87_fracCarry_distinct` | a *minimal* period `t` (i.e. no `u < t` with `jsp87OddPart b ∣ 2^u − 1`) visits `t` **pairwise distinct** orbit points |
+| `jsp87_fracCarry_distinct_card` | the number of distinct orbit points in one period is exactly `t` |
+
+### 3. The orbit and the digit string have the same periods, and the criterion is now an `iff`
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_fracCarry_periodic_imp_digitPeriodic` | an eventually periodic orbit ⟹ an eventually periodic digit string with the *same* period and the *same* start point (from `d N = 2·fract θ N − fract θ (N+1)`) |
+| `jsp87_fracCarry_period_iff_digitPeriod` | **the two families of eventual periods coincide** |
+| **`jsp87Series_irrational_iff_fracCarry_notPeriodic`** | **THE COMPLETE ERDŐS CRITERION ON THE CARRY ORBIT**: `Irrational S ↔` the doubling orbit of the carries is not eventually periodic (round 48 proved only the forward direction) |
+| `jsp87_fracCarry_zero_of_dyadic`, `jsp87_dyadic_iff_orbit_period_one`, `jsp87_fracCarry_zero_iff_dyadic` | **period `1` of the orbit is exactly the dyadic case**; the orbit vanishes eventually `iff` `S = n/2^M` |
+| `jsp87_fracCarry_pos_of_oddPart`, `jsp87_dyadic_or_fracCarry_pos` | **THE DYADIC ALTERNATIVE**: the orbit hits `0` only if `S` is dyadic; otherwise `0 < fract (θ N)` for *every* `N ≥ 1` |
+
+### 4. THE `2`-ADIC VALUE OF THE SERIES DOES NOT EXIST
+
+Round 52 introduced `jsp87Val2` and the modular behaviour of the binary prefix
+`I N`; round 58's policy suggested the `2`-adic limit of `I N` might be the
+missing object.  **It provably does not exist.**
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_omegaWindow_parity` | `Ω N t ≡ ω (N + t − 1) (mod 2)` for `t ≥ 1` |
+| `jsp87_omegaWindow_not_even_of_prime` | at a prime `p` with `t ≤ p`, the window `Ω (p+1−t) t` is **odd** |
+| **`jsp87_omegaWindow_not_dvd_pow_two`** | **ROUND 52'S NAMED BLOCKER `jsp87_prefix_window_congr_fails` IS CLOSED**: for every `t ≥ 1` and every `M` there is `N ≥ M` with `2^t ∤ Ω N t` (witnessed at a prime) |
+| `jsp87Prefix_mono`, `jsp87_prefix_step_eq` | the prefix is nondecreasing, and `I (N+1) − I N = I N + ω N` |
+| `jsp87_prefix_coh_omega_congr` | **coherence of the prefix at `2^k` forces `ω N ≡ ω M (mod 2^k)` for all `N ≥ M`** |
+| **`jsp87_prefix_twoAdic_limit_absent`** | **THE `2`-ADIC VALUE OF THE ERDŐS SERIES DOES NOT EXIST**: no `k ≥ 1`, no `M`, such that `2^k ∣ I N' − I N` for all `N, N' ≥ M` |
+| `jsp87_prefix_escapes_every_pow_two` | effective form: for `1 ≤ k` and every `M` there are `N, N' ≥ M` with `2^k ∤ I N' − I N` |
+| `jsp87_prefix_incoherent_at_prime` | at every prime `p`, `2^k ∣ I p` and `2^k ∣ I (p+1) − I p` cannot both hold |
+| `jsp87_omega_one_of_prime`, `jsp87_omega_two_mul_of_prime` | `ω p = 1` at a prime, `ω (2p) = 2` for `p > 2` (the two values that refute coherence) |
+
+The reason is elementary: a coherent prefix makes `ω` constant modulo `2^k` on
+the tail, but `ω p = 1` at a prime and `ω (2p) = 2`.  So **the prefix
+quantisation is not available at all**; the only quantisation a rational value of
+`S` could respect is the real one — the doubling orbit, whose exact period was
+computed in §1.
+
+### 5. Instances (machine-checked)
+
+`jsp87_ord_seven_new` (`ord_7 2 = 3`), `jsp87_orbitNum_seven_period`,
+`jsp87_orbitNum_seven_values` (`1, 2, 4`), `jsp87_orbitNum_seven_distinct`;
+`jsp87_ord_twelve_new` (`v_2(12) = 2`, `oddPart 12 = 3`, `ord_3 2 = 2`),
+`jsp87_orbitNum_twelve_period` — periodicity starts exactly at `N = v_2(b)`,
+`jsp87_orbitNum_twelve_values`; `jsp87_ord_nine_new` (`ord_9 2 = 6`, a composite
+odd modulus), `jsp87_orbitNum_nine_period`.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is **conditional** in the published literature (Pratt,
+arXiv:2409.15185, under a uniform prime `k`-tuples conjecture) and the catalog
+records *Solved; Lean proof: No; Eligible to claim: No*.  What this round adds
+is the *exact arithmetic* of the only quantisation a rational value could
+respect, plus a machine-checked refutation of the alternative one.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 64, stated exactly
+
+> **`jsp87_digit_not_eventuallyPeriodic`** — the binary digits
+> `d N = ⌊2^{N+1} S⌋ − 2⌊2^N S⌋` of the Erdős series are not eventually
+> periodic in `N`.
+
+Round 64 makes the reduction *exact in both directions* and pins the period: by
+`jsp87Series_irrational_iff_fracCarry_notPeriodic` and
+`jsp87_fracCarryPeriod_iff_oddPart_dvd_mer`, the headline statement is
+**equivalent** to
+
+> for every `b ≥ 1` and every `M ≥ v_2(b)`, the doubling map on `ℤ/(b')ℤ` (with
+> `b' = jsp87OddPart b`) does **not** return to its starting residue within any
+> multiple of `ord_{b'}(2)`,
+
+i.e. to the aperiodicity of the *real* orbit `Int.fract (θ N)`, which is
+equivalent (round 48, `jsp87_digit_eq_fractCarry`) to the aperiodicity of the
+*binary digit string*.  Nothing unconditional is known about that aperiodicity:
+it is the arithmetic content of the uniform prime-`k`-tuples hypothesis in
+Pratt's result, an assumption of the **published** result and not of the catalog
+statement.  The `2`-adic route is now closed by a theorem
+(`jsp87_prefix_twoAdic_limit_absent`), and the two real quantisations (the
+Lambert denominators of rounds 39/40, and the doubling orbit) are known to be
+governed by the *same* arithmetic period.
+
+---
+
+---
+
 ## Round 47 — the primary (carry-free) binary expansion, and TWO complete irrationality theorems
 
 New module `lean/JSPProblem/Primary.lean` (1334 lines, **80 new theorems and
