@@ -2324,3 +2324,98 @@ deliberately not declared**: the headline irrationality is *conditional* in the
 published literature (Pratt, arXiv:2409.15185, under a uniform prime `k`-tuples
 hypothesis) and the catalog records *Solved; Lean proof: No; Eligible to claim:
 No*.
+
+---
+
+## Round 66 — the denominator split: the Erdős carry and the Lambert tail are the two halves of one rational number
+
+New module `lean/JSPProblem/DenominatorSplit.lean` (638 lines, **21 new theorems and
+defs**, 0 `sorry`, 0 `admit`; **866 proved theorems and lemmas** at the
+`^(theorem|lemma)` level — 846 before this round — `lake build` clean, no new linter
+warnings).
+
+This is a **new attack family**.  Rounds 37–65 built the Erdős side (carry scaffold
+r. 38, carry dynamics r. 40, digit bookkeeping r. 41, carry excess and sieve content
+r. 44, base-`2` block arithmetic r. 46) and the Lambert side (gcd arithmetic r. 39,
+the Lambert truncation r. 40, the exact denominators r. 57, the Mersenne modulus of
+the `ω`-window r. 65) **separately**; no round ever put them side by side.  Round 66
+supplies the join and then pushes it to the level of *exact reduced denominators*.
+
+### 1. THE JOIN — `jsp87_normLambert_eq_carry`
+
+```
+2^{N-1} · T N  =  I N  +  θ N  -  2^{N-1} · R N ,        (1 ≤ N)
+```
+
+i.e. for the new object `jsp87NormLambert N = 2^{N-1} · T N - I N`
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87NormLambert` | **the new object**: the Lambert truncation rescaled so that its denominator is exactly `D_N` |
+| `jsp87_normLambert_eq_carry` | **THE JOIN**: `jsp87NormLambert N = θ N - 2^{N-1} · R N` — the Erdős carry and the Lambert tail are the **two summands of a single rational number**; `I N` is their common part |
+
+### 2. The clearing denominators are a divisibility chain — and nothing cancels
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87LambertQ` | **the new notation** `D_N = ∏_{p<N, prime} (2^p - 1) = lambertDen (range N)` |
+| `jsp87LambertQ_succ` | **the step law** `D_{N+1} = (if N.Prime then 2^N-1 else 1) · D_N` |
+| `jsp87LambertQ_dvd` | **THE CHAIN**: `D_N ∣ D_M` for `N ≤ M` (the Cantor-series setting) |
+| `jsp87LambertQ_odd` | every `D_N` is **odd** (the `2`-part of a truncation is invisible to the Lambert side) |
+| `coprime_two_pow_lambertQ` | `gcd (2^k, D_N) = 1` for every `k` |
+| `jsp87LambertQ_unbounded` | the chain is unbounded |
+| `jsp87_lambertNumer_succ` | **the numerator recursion** `A_{N+1} = (2^N-1 if N prime) · A_N + (D_N if N prime)` |
+| `coprime_new_lambert_den` | a *new* Lambert denominator is coprime to all the old ones |
+| **`jsp87_lambertNumer_coprime_den`** | **NOTHING CANCELS IN THE TRUNCATION**: `gcd (A_N, D_N) = 1`, so `D_N` is the *exact* reduced denominator of `T N`.  Rounds 39/40 proved the *factors* are pairwise coprime and that `D_N · T N ∈ ℤ` but never `gcd (A_N, D_N) = 1` |
+
+### 3. The exact denominator of the join
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_normLambert_mul_int` | `D_N` clears the normalised truncation into `ℤ` |
+| **`jsp87_normLambert_den_exact`** | **THE EXACT DENOMINATOR OF THE JOIN**: for `0 < c < D_N`, `c · jsp87NormLambert N` is *not* an integer |
+
+### 4. What a rational value of `S` would force — the Erdős step in exact-denominator form
+
+Assume `2 · S = a / b` with `b > 0`, and let `2^{N-1} · R N = m / c` with `c > 0`.
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87_rational_imp_lambertTail_den`** | **THE DENOMINATOR SPLIT**: `D_N ∣ c · b` — the denominator of the rescaled Lambert tail, multiplied by the hypothetical denominator of the series, is a multiple of the whole product of Lambert denominators below `N`.  Nothing below `N` cancels |
+| `jsp87_rational_imp_den_dvd_mer` | **EVERY MERDENNE DENOMINATOR BELOW THE CUT POINT DIVIDES `c · b`**: `2^p - 1 ∣ c · b` for every prime `p < N` |
+| **`jsp87_rational_imp_den_prime_gt`** | **the denominators keep acquiring prime factors past `p`**: every prime factor of `2^p - 1` divides `c · b` and *exceeds* `p` (`Diophantine.primeFactors_sub_one_gt`) |
+| **`jsp87_rational_imp_lambertTail_den_escape`** | **THE ESCAPE**: for every `K` there is a cut point `M` such that for all `N ≥ M` the rescaled Lambert tail is not a rational with denominator `≤ K` |
+
+### 5. Machine-checked instances
+
+`jsp87LambertQ_three` (`D_3 = 3`), `jsp87LambertQ_four` (`D_4 = 21`),
+`jsp87LambertQ_six` (`D_6 = 651`), all by `decide`.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline irrationality
+is **conditional** in the published literature (Pratt, arXiv:2409.15185, under a
+uniform prime `k`-tuples conjecture) and the catalog records *Solved; Lean proof: No;
+Eligible to claim: No*.  Round 66 adds the exact-denominator comparison of the two
+halves of the method; it does not supply the missing hypothesis.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 66, stated exactly
+
+> **`jsp87_digit_not_eventuallyPeriodic`** (unchanged since round 46) — the binary
+> digits `d N = ⌊2^{N+1} S⌋ - 2⌊2^N S⌋` of the Erdős series are not eventually
+> periodic.  Equivalently `jsp87Series_irrational_iff_fracCarry_notPeriodic` (round
+> 64): the doubling orbit `N ↦ Int.fract (θ N)` is not eventually periodic.
+
+Round 66 shows the *denominator* obstruction in its sharpest form — under
+rationality the denominators of the rescaled Lambert tails escape every finite set,
+and each of them must carry prime factors exceeding every prime below the cut point —
+but this is an obstruction that a rational `S` can in principle *satisfy* (it is
+arithmetically consistent, only quantitatively useless), because `D_N` grows
+super-exponentially in `N` and therefore never contradicts the analytic window
+`1/(b D_N) ≤ R N ≤ 4 · 2^{-N}` of round 40.  The aperiodicity of the binary digits is
+a statement about the *real* orbit, and nothing unconditional is known about it.
+
