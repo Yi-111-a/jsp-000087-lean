@@ -2223,3 +2223,104 @@ is quantised by the binary digits of `N` alone, per Legendre).  The next
 unexplored object on the series side is the **`2`-adic value of `jsp87Series`
 itself** — the `2`-adic limit of the prefixes `I N`, which round 52 gestured at
 and never defined.
+
+---
+
+## Round 65 — the Mersenne modulus of the `ω`-window, and the denominator spectrum
+
+New module `lean/JSPProblem/MersenneWindow.lean` (786 lines, 5 new private
+helpers, **24 new theorems and lemmas**, 0 `sorry`, 0 `admit`, 0 new linter
+warnings; **846 proved theorems and lemmas** in the tree at the
+`^(theorem|lemma)` level — 822 before this round — `lake build` clean).
+
+This is a **new attack family**.  Rounds 37–64 attacked the Lambert reduction,
+the carry scaffold, the gcd arithmetic, the carry dynamics, the digit
+bookkeeping, the carry excess, the base-`2` block arithmetic, the carry-free
+primary expansion, the doubling map on the carries, the radix criterion, the
+asymptotics, the period equation, the `2`-adic prefix, runs, sieves, windows,
+the counting function, CRT constructions, the denominator correspondence and
+the doubling orbit.  **No round had ever asked what the window congruence
+recorded in round 51 actually says**, nor computed the bound that the odd part
+of the denominator places on the *period*.
+
+### 1. The window–block equation is an identity, not a conditional
+
+Round 52 proved `c (N+t) + Ω N t = 2^t · c N + B N t` *under* the hypothesis
+that the binary digits are eventually periodic with period `t`, and concluded
+the **window congruence**
+`(2 : ℤ)^t − 1 ∣ c (N+t) − c N + Ω N t − B N t`.  **That congruence is an
+identity.**
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_windowBlock_identity` | **THE WINDOW–BLOCK EQUATION, UNCONDITIONALLY**: `B N t = Ω N t + c (N+t) − 2^t · c N` for every `1 ≤ N` and every `t` |
+| `jsp87_window_block_eq` | the same in round 52's orientation, with **no hypothesis** |
+| `jsp87_window_residue` | **THE RESIDUE IS AN IDENTITY**: `c (N+t) − c N + Ω N t − B N t = ((2 : ℤ)^t − 1) · c N` |
+| `jsp87_window_congr_always` | the divisibility holds at **every** cut point, with quotient `c N` |
+| `not_jsp87_window_congr_fails` | **ROUND 51'S RECORDED BLOCKER `jsp87_window_congr_fails` IS VACUOUS** — machine-checked refutation |
+| `jsp87_window_block_dvd_iff` | **THE HONEST OBSTRUCTION**: `(2^t−1) ∣ Ω N t − B N t ↔ (2^t−1) ∣ c (N+t) − c N` (non-vacuous for `t ≥ 2`) |
+
+### 2. The carry excess along a window — unconditionally
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_carryExcess_window_le_uncond` | `2 ≤ N → c (N+t) ≤ 2^t · c N` (round 52 needed periodicity) |
+| `jsp87_carryExcess_window_ge_uncond` | `2^t · c N − Ω N t ≤ c (N+t)` |
+| `jsp87_omegaWindow_carryExcess_bounds` | the `ω`-window is squeezed by the carry excess: `2^t c N − c (N+t) ≤ Ω N t ≤ 2^t c N + 2^t − 1 − c (N+t)` |
+| `jsp87CarryExcess_zero_iff_cutPoint` | `c N = 0 ↔ N ≤ 1` |
+| `jsp87_window_residue_eq_zero_iff` | for `1 ≤ N`, `1 ≤ t`: the residue vanishes only at `N = 1` |
+| `jsp87_window_residue_ge` | for `2 ≤ N` the residue is at least the Mersenne number `2^t − 1` |
+
+### 3. The orbit point lives on the odd part of the denominator
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87OrbitNum_dvd_two_pow` | for `v_2(b) ≤ N`, `2^{v_2(b)} ∣ (2^N a mod b)` |
+| `jsp87_fracCarry_eq_oddPart_num` | **THE ORBIT POINT LIVES ON THE ODD PART**: for `v_2(b) ≤ N` there is `n < jsp87OddPart b` with `jsp87OddPart b · Int.fract (θ N) = n`.  **No coprimality assumption** |
+| `jsp87_digitBlock_eq_fracCarry` | **THE BLOCK AS A DIFFERENCE OF ORBIT POINTS**: `B N t = 2^t f N − f (N+t)` — the unconditional form of round 48's grid statement |
+
+### 4. The reduced Mersenne obstruction, and the period bound
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_digitBlock_dvd_reduced_mer` | **THE REDUCED MERSENNE OBSTRUCTION**: for a reduced value `a/b` with the digits periodic from `M` with period `t > 0`, `((2^t−1)/jsp87OddPart b) ∣ jsp87DigitBlock N t` for every `N ≥ M` |
+| **`jsp87_digitPeriod_le_oddPart`** | **THE MINIMAL PERIOD IS AT MOST THE ODD PART OF THE DENOMINATOR**: a minimal period `t` satisfies `t ≤ jsp87OddPart b` (pigeonhole on the orbit grid of §3) |
+| `jsp87_denominator_ge_period` | `2^{v_2(b)} · t ≤ b`: the denominator dominates the period |
+| `jsp87_digitPeriod_one_oddPart` | a minimal period `1` forces `jsp87OddPart b = 1` (the value is dyadic) |
+| `jsp87_digitPeriod_two_oddPart` | a minimal period `2` forces `jsp87OddPart b = 3` |
+| `jsp87_digitPeriod_ge_two_oddPart` | a minimal period `≥ 2` forces `jsp87OddPart b ≥ 2` |
+
+### 5. The fifth criterion, and the corrected blocker
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Series_rational_imp_block_dvd` | a reduced value `jsp87Series = a/b` has some `t ≥ 2`, `M ≥ 1` with `((2^t−1)/jsp87OddPart b) ∣ jsp87DigitBlock N t` for all `N ≥ M` |
+| `jsp87_blockNotDvd_impossible` | **THE FIFTH IRRATIONALITY CRITERION**: if for every `t ≥ 2`, `M ≥ 1` and every odd `c` the `t`-digit block fails to be a multiple of `(2^t−1)/c` at some cut point past `M`, then no reduced value `a/b` with `jsp87OddPart b = c` exists |
+
+### The blocker, after round 65, stated exactly
+
+Round 51's recorded blocker is **refuted as vacuous** (§1) and is replaced by
+
+> **`jsp87_blockNotReduced_dvd_fails`** — for every odd `c ≥ 1`, every `t ≥ 2`
+> and every `M ≥ 1` there is a cut point `N ≥ M` at which the `t`-digit block of
+> the Erdős series is **not** a multiple of the reduced Mersenne number
+> `(2^t − 1)/c`.
+
+Rationality forces eventual periodicity of the digit string with some period
+`t`, and round 65 proved that such a period forces `jsp87OddPart b ∣ 2^t − 1`,
+`t ≤ jsp87OddPart b` and `((2^t−1)/jsp87OddPart b) ∣ B N t` past the start of
+the period.  Ruling out the corrected statement is a statement about the
+residues of the `ω`-window modulo `2^t − 1` — the same arithmetic that Pratt's
+uniform prime-`k`-tuples hypothesis controls.  It is an assumption of the
+**published** result and not of the catalog statement, so it is not introduced
+here, and `jsp_000087_main` remains honestly reported as missing.
+
+### Gate status
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.  `jsp_000087_main` is **still
+deliberately not declared**: the headline irrationality is *conditional* in the
+published literature (Pratt, arXiv:2409.15185, under a uniform prime `k`-tuples
+hypothesis) and the catalog records *Solved; Lean proof: No; Eligible to claim:
+No*.
