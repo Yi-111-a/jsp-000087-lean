@@ -1849,3 +1849,108 @@ body (the notation body stops at the first top-level `+`), (ii) `X / p := t` is 
 type ascription, not a `have`-statement `:=`, and inserts a `ℝ` coercion,
 (iii) `Finset.sum_le_sum fun p _ => e` leaves the binder types as metavariables
 and silently produces a `sorry`.
+
+---
+
+## Round 60 — CRT CONSTRUCTIONS: the high local minima of `ω` (new attack family)
+
+New module `lean/JSPProblem/CRTWindow.lean` (612 lines, **24 new theorems
+and lemmas** plus 4 private helpers, 0 `sorry`, 0 `admit`, 0 new linter
+warnings; **728 proved theorems and lemmas** in the tree at the
+`^(theorem|lemma)` level — 704 before this round — `lake build` clean).
+
+This is a **new attack family and a new kind of object**.  Rounds 37–59 worked
+exclusively with *necessary* conditions: what a rational value of `S` would
+force.  **No previous round ever constructed anything.**  This round brings
+`Nat.chineseRemainderOfFinset` into the development and obtains the first
+existential results about `ω` and about the carries of the Erdős series.
+
+### 1. The construction (the flagship)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_window_min_omega_ge_of_ge` | **FOR EVERY `k`, EVERY window length `L` AND EVERY `M` there is a place `N ≥ M` such that all of `N, …, N+L-1` have at least `k` DISTINCT prime factors** |
+| `jsp87_window_min_omega_ge` | the same with `N ≥ 1` (the headline form) |
+| `jsp87_window_min_omega_ge_five_three` | five consecutive integers, each with `≥ 3` prime factors |
+| `jsp87_window_min_omega_ge_four_two` | four consecutive integers, each with `≥ 2` prime factors |
+| `jsp87_windowOmega_ge` | the window-sum form `k · L ≤ jsp87WindowOmega N L` |
+| `jsp87_windowOmega_unbounded` | **the local mean of `ω` is unbounded, in windows of fixed length, beyond every place** |
+| `jsp87_windowOmega_bracket` | **THE TWO-SIDED BRACKET**: `jsp87OmegaCount L ≤ jsp87WindowOmega N L` (round 58, uniform) together with the existential upper bound above |
+| private `jsp87_coprime_moduli` | the arithmetic core: for every `k, L` there are `L` **pairwise coprime** moduli each with `≥ k` prime factors |
+
+The private lemma `jsp87_coprime_moduli` is the heart of the round: at each step
+a finset of `k` primes strictly above the product `B` of all previous moduli is
+taken; a prime `p > B ≥ m_j` divides none of the previous moduli, so the new
+modulus is coprime to all of them.  The moduli are then combined by the Chinese
+remainder theorem, and `m j ∣ N + j` for every `j < L` gives `ω (N + j) ≥ k` by
+`omega_mono`.
+
+### 2. The low side, and the oscillation of the local minima
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_omega_one_of_prime` | `ω p = 1` for a prime `p` |
+| `jsp87_window_ge_one_of_prime` | every entry of a window starting at a prime has `≥ 1` prime factor |
+| `jsp87_window_min_one_of_prime` | **AT EVERY PRIME, EVERY WINDOW HAS LOCAL MINIMUM EXACTLY `1`** |
+| `jsp87_window_min_run3` | machine-checked: `ω 3 = ω 4 = ω 5 = 1`, `ω 6 = 2` |
+| `jsp87_minWindow_unbounded` | **THE LOCAL MINIMA OF `ω` ARE UNBOUNDED**: for every `K` and every `M` there is a window beyond `M` on which every entry is `> K` |
+| `jsp87_omega_periodic_imp_bounded` | an eventual period `t` of `ω` makes `ω` bounded on the tail (strong induction stripping one period at a time) |
+| `jsp87_omega_periodic_imp_window_le` | **and therefore bounds the local minima of `ω`** — a quantitative aperiodicity obstruction, strictly stronger than round 40's `omega_not_eventuallyPeriodic` |
+| `jsp87_minWindow_dichotomy` | both halves together: the local minima are unbounded, and the value `1` is attained at every prime |
+
+### 3. What the construction forces on the carries of the series
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Carry_gt_half_of_window` | **ON A WINDOW WHERE `ω ≥ k` EVERYWHERE, EVERY CARRY IS `> k/2`** (from `θ (N+1) = 2θ N − ω N` and the positivity of every carry) |
+| `jsp87Carry_ge_half_of_window` | the same at the start of the window |
+| `jsp87CarryExcess_ge_of_window` | the carry excess `⌊θ N⌋` is `≥ ⌊k/2⌋` at every point of such a window |
+| `jsp87CarryExcess_window_high` | **THE CARRY EXCESS CAN BE MADE UNIFORMLY LARGE ON AN ARBITRARILY LONG BLOCK** |
+| `jsp87CarryExcess_window_high_three`, `…_ten` | instances `k = 3`, `L` arbitrary and `L = 10` |
+
+Round 44 proved `θ N > 1` at *every single* cut point; this is the local form —
+the whole window is high, at once.
+
+### 4. The sharpness: why CRT cannot reach round 55's criterion
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_omega_one_even_four_dvd` | **an even integer `≥ 3` with exactly one prime factor is a multiple of `4`** |
+| `jsp87_constRun_one_four_fails` | **THERE IS NO RUN OF `ω = 1` OF LENGTH `4` PAST `2`** (two of four consecutive integers are even and differ by `2`, so they cannot both be multiples of `4`) |
+
+This is the precise reason the construction stops where it stops: CRT can force
+prime factors *into* a window but cannot keep all the *other* primes *out* of
+it, so `ω ≥ k` cannot be upgraded to the **constant** runs of round 55
+(`jsp87Series_irrational_of_constRun`), which is an assumption of the published
+result and not of the catalog statement.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The round-60 results
+are the *existence* half of the Erdős–Pratt method, and they are orthogonal to
+the missing input: the construction produces **high** carries on long blocks,
+whereas rationality is contradicted by **small** or **aperiodic** carries
+(rounds 41, 44, 55), and both of those are obstructed unconditionally.  This is
+recorded as **negative knowledge for the headline**, not as a solution.  The
+headline irrationality is conditional in the published literature (Pratt,
+arXiv:2409.15185, uniform prime `k`-tuples) and the catalog records *Solved; Lean
+proof: No; Eligible to claim: No*.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports
+`build_ok=true, sorry=0, admit=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 60, stated exactly
+
+Unchanged since round 46 and **not attacked by the construction**:
+`jsp87Series_irrational_of_blockNotPeriodic` — the binary digits of the Erdős
+series are not eventually periodic.  Round 60 shows that the *arithmetic* content
+of a uniform prime-`k`-tuples hypothesis splits into two halves, and that only
+one of them is available unconditionally:
+
+* the **lower** half (`ω ≥ k` simultaneously on a window, arbitrarily far out)
+  is now proved, with no hypothesis, by CRT;
+* the **upper** half (the value of `ω` is *exactly* constant on the window, and
+  the carry at its far end is below that value) is the uniform prime-`k`-tuples
+  content of Pratt's result, and is refuted for small `u`
+  (`jsp87_constRun_one_four_fails`).
