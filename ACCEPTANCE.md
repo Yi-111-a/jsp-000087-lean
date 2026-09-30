@@ -1373,3 +1373,125 @@ result); it is not known, and no round of this development can supply it.
   (the truncated subtraction survives), so state such identities as
   `2 * (2^j)⁻¹ = (2^(j-1))⁻¹` and prove them via `inv_pow_neg`, which itself
   needs `Nat.sub_add_cancel` after `rw [← pow_succ]`.
+
+---
+
+## Round 55 — the sieve local model (new family)
+
+New file `lean/JSPProblem/SieveModel.lean` (637 lines, **40 new theorems and
+lemmas**, 5 new definitions, 0 `sorry`, 0 `admit`, 0 new linter warnings).
+`lean/JSPProblem.lean` now imports it, so `lake build` compiles it.
+Total proved theorems and lemmas in the tree: **578** (538 before this round).
+
+### What the round attacks
+
+Round 44 (`CarryExcess.lean`) had already introduced the finsets
+`jsp87SmallFactors n m` / `jsp87LargeFactors n m`, proved
+`omega n = (jsp87SmallFactors n m).card + (jsp87LargeFactors n m).card`, proved
+`card_largeFactors_le_log`, and proved the CRT window-roughness lemma.  What it
+never did is **describe the small part**: it treated the sieve content as an
+opaque count that could only be bounded from below.  Round 55 describes it
+completely, and shows that it is *rigid*, which is what turns round 53's
+constant-run hypothesis into a sieve statement.
+
+### The new objects
+
+| name | meaning |
+|---|---|
+| `jsp87Primes k` | the primes `≤ k` |
+| `jsp87Primorial k` | `∏_{p ≤ k} p` (`1` for `k ≤ 1`) |
+| `jsp87SieveCard m k` | **sieve content**: number of distinct prime divisors of `m` that are `≤ k` |
+| `jsp87UnsievedCard m k` | **unsieved content**: number of distinct prime divisors of `m` that are `> k` |
+| `jsp87SieveProfile n k L` | the sieve content of the window `[n, n+L)` |
+
+`jsp87SieveCard m k` and `jsp87UnsievedCard m k` are the numeric counterparts
+of round 44's finsets (`card_smallFactors_eq`, `card_largeFactors_eq` are
+`rfl`).
+
+### Headline theorems
+
+| theorem | statement |
+|---|---|
+| `jsp87SmallFactors_congr` | **THE LOCAL MODEL**: `m ≡ m' (mod k#)` ⟹ the *finset* of prime divisors of `m` that are `≤ k` equals that of `m'` |
+| `jsp87SmallFactors_window_congr` | the local model holds **window-wise**: `n ≡ n' (mod k#)` ⟹ `jsp87SieveCard (n+j) k = jsp87SieveCard (n'+j) k` |
+| `sieveProfile_period` | the sieve profile has period **exactly** `k#` |
+| `jsp87SieveProfile_recurs` | **REALISATION**: every sieve profile of level `k` occurring at `m ≥ 1` occurs at every height `N₀` (take `n ≡ m (mod k#)`) |
+| `jsp87_pow_unsieved_le` | **THE UNSIEVED CONTENT IN POWER FORM**: `(k+1)^r ≤ m`, where `r` counts the prime divisors of `m` exceeding `k` |
+| `jsp87Unsieved_le_log` | the unsieved content is at most `Nat.log (k+1) m` (sharp base; round 44 had base `k` and needed `2 ≤ k`) |
+| `jsp87Unsieved_le_one_of_lt_pow` | below `(k+1)²`, at most one prime divisor of `m` exceeds `k` |
+| `jsp87Unsieved_lt_of_lt_pow` | below `(k+1)^r`, fewer than `r` |
+| `jsp87Unsieved_eq_zero_of_ge`, `jsp87Unsieved_eq_zero_iff` | the unsieved content vanishes exactly on the `k`-smooth numbers |
+| `omega_congr_of_unsieved` | on a progression `≡ r (mod k#)`, `ω m` is the residue class plus the unsieved content |
+| `omega_congr_of_smooth` | on `k`-smooth numbers, `ω` is **exactly** periodic with period `k#` |
+| `omega_diff_le_of_congr` | the periodicity defect of `ω` is at most `2 log_{k+1}(m+m')` |
+| `jsp87_constRun_sieve_iff` | **the constant-run hypothesis in sieve form**: `ω` is constant with value `u` on `[N,N+L)` **iff** the sieve content plus the unsieved content is `u` at every point of the window |
+| `jsp87_constRun_sieve_sub` | **the compensation form**: at every point of a constant run, `jsp87UnsievedCard (N+j) k = u - jsp87SieveCard (N+j) k` |
+| `jsp87_run_halves_not_constant` | **NEGATIVE, machine-checked**: on `ω 20 = ω 21 = ω 22 = 2` the two halves are *not* separately constant (sieve content `2,1,1`, unsieved `0,1,1` at `k = 5`) |
+| `jsp87Series_irrational_of_sieveRun` | the irrationality criterion with the hypothesis written in sieve form (an honest **reformulation**, not a weakening — see below) |
+| `sieveCard_two` | the sieve content at level `2` is the indicator of evenness |
+| `jsp87_constRun_height` | **a quantitative constraint on where a run can sit**: a constant run of value `u` on `[N,N+L)` with `L ≥ 2` forces `3^(u-1) ≤ N+L-1` |
+| `jsp87_omega_eq_sieve_of_window_below` | below the cut-off, `ω` is entirely sieve content |
+
+Machine-checked instances: `jsp87Primorial_instances` (`k#` for `k ≤ 5`),
+`jsp87_sieve_instances_thirty` (the split at `30 = 2·3·5` for `k = 2,3,5`),
+`jsp87_sieve_run_twenty` (the run `ω 20 = ω 21 = ω 22 = 2` is *purely modular* at
+`k = 23`, and the profile is `k#`-periodic),
+`jsp87_constRun_height_twenty`.
+
+### What this does and does not buy
+
+`jsp87SieveProfile_recurs` shows that **the small-prime half of any pattern
+hypothesis about `ω` is unconditionally satisfiable**: whatever profile the
+small primes are asked to display on a window, they display it at infinitely
+many heights.  Combined with `jsp87Unsieved_le_log`, the residual hypothesis
+of `jsp87Series_irrational_of_sieveRun` is therefore entirely about the
+primes exceeding a *fixed* bound `k` — the shape of the uniform prime-`k`-tuples
+hypothesis of Pratt (arXiv:2409.15185).
+
+The attempted *strict weakening* of round 53's hypothesis **failed** and is
+recorded as machine-checked negative knowledge: asking the two halves to be
+constant separately is *stronger*, not weaker, and a constant run does not
+imply it.  The correct sieve form of the hypothesis is the compensation form
+`jsp87_constRun_sieve_sub`.
+
+`jsp_000087_main` remains undeclared.  No rename, wrapper or shadowing trick is
+used.
+
+### Round 55 -- toolchain notes
+
+* **Round 44 already owns `jsp87SmallFactors` / `jsp87LargeFactors`** as
+  *finsets* in `CarryExcess.lean`.  A new file must not reuse the names; the
+  numeric counterparts used here are `rfl`-equal to their `.card`.
+* **`Finset.filter` membership destroys to `List.Mem`.**  Once
+  `hp : p ∈ m.primeFactors.filter (· ≤ k)` is in the context, `rintro ⟨h,h'⟩`
+  and *any* projection `.1` / `.2` on it fail with
+  `Invalid projection ... List.Mem ... is not a one-constructor inductive type`.
+  The fix is to ascribe the type:
+  `have hp' : p ∈ m.primeFactors ∧ p ≤ k := Finset.mem_filter.mp hp`, and to
+  build the answer with `Finset.mem_filter.mpr ⟨…⟩` (whose expected type forces
+  the `And` view).
+* `simp only [Finset.mem_filter]` makes **no progress** on a goal stated with a
+  `noncomputable def` that unfolds to a filter; unfold the definition first
+  (`simp only [jsp87SmallFactors, Finset.mem_filter]`).
+* `Nat.ModEq.dvd` / `Nat.modEq_of_dvd` work in `ℤ` with the orientation
+  `↑n ∣ ↑b - ↑a` for `a ≡ b [MOD n]`.  The most robust construction is to give
+  the witness explicitly — `refine Nat.modEq_of_dvd ⟨-(c:ℤ), ?_⟩` and prove the
+  cast equation with `push_cast; ring`; `push_cast; linear_combination` is
+  unreliable here.  After `rw [hcast]` a goal may remain in the order
+  `↑n * ↑c`, which `ring` closes.
+* **`omega` cannot derive `s ≤ u` from `c = u - s`** — only the converse
+  (`c = u - s` from `s + c = u`).  State the iff in the sum form and obtain the
+  subtraction form as a corollary.
+* `omega` cannot prove `u - s = 0` from `u < s`; use `Nat.sub_eq_zero_of_le`.
+* `Nat.mul_le_mul : n₁ ≤ n₂ → m₁ ≤ m₂ → n₁ * m₁ ≤ n₂ * m₂` (TWO order
+  hypotheses), so `Nat.mul_le_mul (Nat.le_refl N0) hK : N0 ≤ N0 * K`; the
+  one-argument form is a type error.
+* `Nat.log_mono_right` takes only the order proof.
+* `obtain` on a nested `Exists`/`And` does **not** flatten: take the `Exists`
+  witnesses first, then the `And` chain.  A witness for
+  `jsp87Series_irrational_of_constRun` needs **six** names, not five.
+* `native_decide` evaluates `jsp87SieveCard m k` (a `Finset` filter over
+  `m.primeFactors`) fine, so all small instances are by `native_decide`.  Watch
+  out: `jsp87UnsievedCard 30 2 = 2`, not `1`, because `3` and `5` both exceed `2`.
+* `if_pos` / `if_neg` are deprecated in this toolchain; use `ite_eq_left` /
+  `ite_eq_right` inside `rw`.
