@@ -1954,3 +1954,143 @@ one of them is available unconditionally:
   the carry at its far end is below that value) is the uniform prime-`k`-tuples
   content of Pratt's result, and is refuted for small `u`
   (`jsp87_constRun_one_four_fails`).
+
+---
+
+## Round 61 — the `2`-adic content of a window: Legendre's formula
+
+New module `lean/JSPProblem/WindowTwoAdic.lean` (1139 lines, **54 new theorems**
+plus 13 private helpers, 0 `sorry`, 0 `admit`; **781 proved theorems and lemmas**
+in the tree at the `^(theorem|lemma)` level — 727 before this round — `lake build`
+clean).
+
+This is a **new attack family** and simultaneously the execution of route (3) of
+the round-58 attack list ("the `2`-adic content of the window product").  It was
+stated in that list as `v₂ ∏_{j<L}(N+j) = L + 1 + popcount(N−1) − popcount(N+L)`.
+**Mathlib and Lean core have no popcount at all** (`rg -l popcount Mathlib` is
+empty), so the round began by *defining* one; everything else follows from that.
+
+### 0. The new objects
+
+| Object | Statement |
+| --- | --- |
+| `jsp87Popcount` | **the binary digit sum** `s₂ n`, defined by well-founded halving recursion: `if n = 0 then 0 else s₂ (n/2) + n % 2` |
+| `jsp87WindowVal2 N L` | **the `2`-adic content of a window**: `∑_{j<L} v(N+j)`, the total exponent of `2` in `∏_{j<L}(N+j)` |
+| `jsp87OddFactors N L` | **the odd prime divisors** of the product of the window |
+
+### 1. The digit sum, from scratch
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Popcount_def` | the halving equation `s₂(n+1) = s₂((n+1)/2) + (n+1) % 2` |
+| `jsp87Popcount_two_mul`, `jsp87Popcount_two_mul_add_one` | appending `0` / `1` to the binary expansion |
+| `jsp87Popcount_succ_le` | **adding one adds at most one digit**: carries only destroy `1`'s |
+| `jsp87Popcount_add_le` | **subadditivity** `s₂(a+b) ≤ s₂ a + s₂ b` |
+| `jsp87Popcount_two_mul_le`, `jsp87Popcount_le_half`, `jsp87Popcount_le` | `2 s₂ n ≤ n+1`, hence `s₂ n ≤ ⌈n/2⌉` |
+| `jsp87Popcount_add_two_pow` | **no carrying**: for `y < 2^m`, `s₂(2^m + y) = 1 + s₂ y` |
+| `jsp87Popcount_compl` | **the bitwise complement identity** `s₂(2^k − 1 − x) = k − s₂ x` for `x < 2^k` |
+
+### 2. Legendre's formula, at the level of a window
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Val2_succ_popcount` | **the increment identity** `v(n) + s₂(n) = 1 + s₂(n−1)` for `n ≥ 1` — incrementing a number destroys exactly its trailing zeros |
+| **`jsp87_windowVal2_eq`** | **FLAGSHIP — LEGENDRE'S FORMULA FOR A WINDOW.** For `1 ≤ N`: `∑_{j<L} v(N+j) + s₂(N+L−1) = L + s₂(N−1)` |
+
+This is the identity the round-58 attack list named, in its correct form (the
+`+1` in that list's formula was an artifact of a factorial convention).
+Equivalently `v((N+L−1)!) − v((N−1)!) = L − s₂(N+L−1) + s₂(N−1)`.
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_windowVal2_sub` | the content is at least `L − s₂ L` |
+| `jsp87_windowVal2_ge_half` | **every window has `⌊L/2⌋` units of `2`-content**, whatever `N` is |
+| `jsp87_windowVal2_le_add`, `jsp87_windowVal2_le_add_half` | and at most `L + s₂(N−1) ≤ L + ⌊N/2⌋` |
+| `jsp87_windowVal2_bounds` | the two-sided window bound `⌊L/2⌋ ≤ content ≤ L + ⌊N/2⌋` |
+
+### 3. The join with round 52 (`jsp87Val2`) and round 56 (`jsp87WindowProd`)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Val2_mul` | **the `2`-exponent is additive on products**, from scratch (Mathlib has `Nat.factor`, not a `ℕ`-valued `2`-adic exponent) |
+| `jsp87Val2_windowProd` | **the content of a window *is* the `2`-exponent of its product** |
+| `two_pow_dvd_windowProd`, `jsp87_windowProd_pow_two_le` | `2^content ∣ ∏_{j<L}(N+j)` |
+| `jsp87_windowProd_two_pow_ge`, `jsp87_windowProd_two_pow_dvd` | **the classical `2^{⌊L/2⌋}`-divisibility of a product of `L` consecutive integers**, with the exact exponent attached |
+| `jsp87_windowVal2_one`, `jsp87_windowVal2_pow_two` | a window of length `1` at `2^k` has content exactly `k` |
+
+### 4. The odd channel, and the two-channel sandwich
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_oddPart_ne_zero`, `jsp87_oddFactors_subset_oddPart` | every odd prime of the product divides its **odd part** `∏(N+j) / 2^content` |
+| `jsp87_pow_three_oddFactors` | the odd part is at least `3^(#odd primes)` |
+| **`jsp87_windowProd_two_three_pow`** | **FLAGSHIP SANDWICH** for `1 ≤ N`: `2^{⌊L/2⌋} · 3^{#(odd primes of the product)} ≤ ∏_{j<L} (N+j)` |
+| `jsp87_oddCard_le_log`, `jsp87_oddFactors_card_le_log` | the odd channel is logarithmic in the height of the window, with base `3` |
+
+A window of length `L` therefore has only `⌊L/2⌋` units of *free* `2`-content
+however `N` is chosen, and every odd prime factor costs a factor `3` in the
+product.  This is the arithmetic form of the heuristic behind Pratt's uniform
+prime-`k`-tuples hypothesis: a window whose every entry has `≥ k` odd prime factors
+costs `≥ 3^k` in the *position* of the window.
+
+### 5. Two new aperiodicity theorems
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Val2_add_two_pow` | `2^k > t ⟹ v(2^k + t) = v(t)`: adding a large power of `2` changes nothing `2`-adically |
+| **`jsp87_windowVal2_not_eventuallyPeriodic`** | **the `2`-content of a window is not eventually periodic in the position of the window** |
+| **`jsp87Popcount_not_eventuallyPeriodic`** | **the binary digit sum is not eventually periodic** |
+
+Both are aperiodicity statements about objects built from the binary expansion of
+an integer, of a kind Mathlib cannot have (it has no popcount and no `2`-adic
+exponent on `ℕ`).
+
+### 6. The bridge to `ω` (rounds 52 and 56)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_omega_eq_odd_add_two` | `ω m` splits into the odd prime factors of `m` and the prime `2` |
+| `jsp87_oddCard_le_add` | the odd `ω`-part of one entry is at most `π(L−1) + #large primes` |
+| `jsp87_even_count_le_windowVal2` | the number of even entries of a window is at most its `2`-content |
+| **`jsp87_window_omega_le_twoAdic`** | **FLAGSHIP BRIDGE** for `1 ≤ N`, `3 ≤ L`: `∑_{j<L} ω(N+j) ≤ jsp87WindowVal2 N L + #(odd primes of the product) + L·π(L−1)` — round 56's window accounting with the prime `2` separated out and quantised by Legendre |
+| `jsp87_window_omega_le_explicit` | `... ≤ L + ⌊N/2⌋ + L·log₃(N+L−1) + L·π(L−1)` |
+| `jsp87_prefix_and_window_content_differ` | the two `2`-channels — round 52's `2^L ∣ Ω N L` for the binary *prefix* and Legendre's formula for the *product* — hold simultaneously and are quantised by different objects |
+
+### 7. Machine-checked negative knowledge
+
+* **The two channels overlap at `L = 2`**: `jsp87_window_omega_le_twoAdic` needs
+  `3 ≤ L`, not `2 ≤ L`, because every window of length `≥ 2` contains an even
+  entry whose prime factor `2` is "large" (`≥ L`) when `L = 2`, and is then
+  counted twice.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is **conditional in the published literature** (Pratt,
+arXiv:2409.15185, under a uniform prime-`k`-tuples hypothesis) and the catalog
+records *Solved; Lean proof: No; Eligible to claim: No*.  Round 61 does not touch
+the missing input: the aperiodicity of the *binary digits* of `S`
+(`jsp87Series_irrational_of_blockNotPeriodic`, unchanged since round 46).  What
+round 61 supplies is the exact `2`-adic arithmetic of the **other** quantisation
+of the same series — the one that round 52 gestured at (`jsp87Val2`) and round 56
+supplied the product for (`jsp87WindowProd`), and which had never been joined.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 61, stated exactly
+
+> **`jsp87Series_irrational_of_blockNotPeriodic`** — the binary digits
+> `d N = ⌊2^{N+1} S⌋ − 2⌊2^N S⌋` of the Erdős series are not eventually
+> periodic in `N` (unchanged since round 46).
+
+Round 61 proves, from scratch, that the `2`-adic content of a window is *also*
+not eventually periodic (`jsp87_windowVal2_not_eventuallyPeriodic`), i.e. that
+the second natural quantisation of the series is aperiodic.  The two are
+different objects: the digits of `S` (which carry the Erdős/Pratt arithmetic
+that is still conditional) versus the `2`-adic content of `∏_{j<L}(N+j)` (which
+is quantised by the binary digits of `N` alone, per Legendre).  The next
+unexplored object on the series side is the **`2`-adic value of `jsp87Series`
+itself** — the `2`-adic limit of the prefixes `I N`, which round 52 gestured at
+and never defined.
