@@ -835,3 +835,166 @@ missing_theorems=["jsp_000087_main"]`.
   `noncomputable def f := by classical; exact if _ then _ else _` instead.
 * `rw [h]` inside a `calc` step whose proof is a `by`-block must stay on the same
   line (round 48's parser trap).
+
+---
+
+## Round 50 — ASYMPTOTIC CARRY THEORY: the logarithmic window, the mean identity, and the rate criterion
+
+New module `lean/JSPProblem/CarryAsymptotic.lean` (1010 lines, **68 new theorems,
+lemmas and defs**, 0 `sorry`, 0 `admit`; **451 proved theorems and lemmas** in the
+tree at the `^(theorem|lemma)` level — 385 before this round — `lake build`
+clean).
+
+**This is a new attack family.**  Rounds 37–46 attacked the *carried* Erdős
+series `S = ∑' n, ω(n) 2^{-(n+1)}` through ten *periodicity* angles (Lambert
+reduction, carry scaffold, gcd arithmetic, carry dynamics, digit bookkeeping,
+carry-excess/sieve content, base-`2` block arithmetic); round 47 the
+*carry-free* (primary) expansion; round 48 the *doubling map on the carries*;
+round 49 the criterion in *arbitrary radix*, and closed the radix escape route
+with `jsp87_noCarry_fails_any_radix`.  **No previous round ever asked how
+*fast* the carry excess grows, or how *fast* the binary digit string
+accumulates `1`s.**  This round does, and it is the first to produce an
+*upper* bound on the carry that is sublinear.
+
+### 1. The carry as a series, and the logarithmic window
+
+The single observation driving the round: the carry is a **geometrically
+weighted average of the `ω`-values after the cut point**, so round 44's
+`ω m ≤ log₂ m` makes it *sublinear*.
+
+| Theorem | Statement |
+| --- | --- |
+| `two_pow_rescale` | `2^N / 2^{N+k+1} = 1/2^{k+1}` — the rescaling behind everything |
+| `omega_le_logb_real` | **the `ℝ` form of `omega_le_log2`**: `ω n ≤ log n / log 2` (from `2^ω ≤ n` plus monotonicity of `log`) |
+| `jsp87Carry_eq_tsum` | **THE CARRY AS A SERIES: `θ N = ∑' k, ω(N+k)·2^{-(k+1)}`** |
+| `log_add_le_log_add_div` | `log(N+k) ≤ log N + k/N` for `1 ≤ N` |
+| **`jsp87Carry_le_logb_sharp`** | **THE LOGARITHMIC BOUND ON THE CARRY: `1 ≤ N → θ N ≤ log₂ N + log₂ e / N`** |
+| `jsp87Carry_le_logb` | `θ N ≤ (log N + 1)/log 2 = log₂ N + log₂ e` |
+| `jsp87CarryExcess_le_logb` | the same for `c N = ⌊θ N⌋` |
+| `Real.log_two_ge_half` | `1/2 ≤ log 2` (from `Real.one_sub_inv_le_log_of_pos`) |
+| `log_le_mul_log_two` | `N ≤ 2^{k+1} → log N ≤ (k+1)·log 2` |
+| **`jsp87CarryExcess_le_of_le_pow_two`** | **`N ≤ 2^{k+1} → c N ≤ k + 3`: on the whole range `[0, 2^{k+1}]` the carry excess is at most logarithmic** |
+| `jsp87CarryExcess_le_pow_two` | the same at `N = 2^{k+1}` |
+| **`jsp87CarryExcess_unbounded_beyond`** | **the (round-44-unbounded) carry excess escapes every such range: `∃ N, 2^{k+1} < N ∧ k+4 ≤ c N`** |
+| **`jsp87CarryExcess_window`** | **THE LOGARITHMIC WINDOW: `1 ≤ c N ≤ k+3` for `2 ≤ N ≤ 2^{k+1}`** |
+
+`jsp87Carry_le_logb` is the **first sublinear upper bound on the carry** of the
+Erdős series: rounds 38–40 had only the linear `θ N ≤ N + 1`.  Together with
+round 44's `1 ≤ c N` for `2 ≤ N` and round 44's `c N` unbounded, the carry
+excess is now pinned from both sides: **never below `1`, never above
+`log₂ N + log₂ e`, and above every fixed level somewhere beyond every
+exponential cut point.**  Also proved: `jsp87Tail_zero`, `jsp87Tail_one`,
+`jsp87Carry_zero`, `jsp87Carry_one`, `jsp87Carry_zero_lt_one`,
+`jsp87Carry_one_lt_one`, `jsp87_floor_S_zero`, `jsp87CarryExcess_zero`.
+
+### 2. The mean identity — the quantitative bridge between `ω` and the carries
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87OmegaSum`, `jsp87OmegaSum_cast`, `jsp87OmegaSum_succ` | the `ω`-prefix `W N = ∑_{M<N} ω M` |
+| `jsp87_sum_intPart` | the integration-by-parts identity `∑_{M<N} I M = I N − W N` |
+| `scaled_sub_intPart_eq_carry` | `2^N·S − I N = θ N` for every `N ≥ 0` |
+| **`jsp87_sum_carry`** | **THE MEAN IDENTITY: `∑_{M<N} θ M = W N + θ N − S`** |
+| `jsp87_sum_carryExcess_le` / `_ge` | `∑_{M<N} c M` is the mean identity up to `N`, on either side |
+| `jsp87_sum_carryExcess_le_logb` | and logarithmically bounded on average |
+
+`jsp87_sum_carry` is the **only place in the tree where the `ω`-family and the
+carry-family meet quantitatively**: the mean of the carries up to `N` is the
+`ω`-prefix, plus the last carry, minus the series.
+
+### 3. The digit count, and its exact formula
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_digit_bookkeeping_zero`, `jsp87_digit_bookkeeping'` | round 41's bookkeeping `d N = ω N + c(N+1) − 2c N` **at every `N ≥ 0`**, including `N = 0` |
+| `jsp87_digit_nonneg`, `jsp87_digit_toNat_cast` | `0 ≤ d N` and `(d N).toNat = d N` over `ℤ` |
+| `jsp87DigitCount`, `jsp87_digitCount_cast`, `jsp87_digitCount_le` | **the digit count `D N = ∑_{M<N} d M`** and `D N ≤ N` |
+| **`jsp87_digitCount_eq`** | **THE DIGIT-COUNT IDENTITY: `D N = W N + c N − ∑_{M<N} c M`** — the first exact formula relating the binary digit string to the `ω`-values *and* to the carries |
+| **`jsp87_digitCount_eq_fractSum`** | **`D N + fract (2^N S) = S + ∑_{M<N} fract (2^M S)`** — the digit count *is*, up to `S` and the last fractional part, the partial sum of the doubling orbit |
+| `jsp87_digitCount_ge_sub_fract` | `S − fract (2^N S) ≤ D N` |
+
+### 4. Eventual periodicity forces a **linear** digit count — the *rate* criterion
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_digit_eq_of_periodic` | a `t`-periodic digit string is `t`-constant after `M`: `d (M + q·t + j) = d (M+j)` |
+| `jsp87PeriodOnes`, `jsp87PeriodOnes_bounds` | the number `s = ∑_{j<t} d (M+j)` of `1`s in one period, `0 ≤ s ≤ t` |
+| `jsp87_sum_digit_period_block` | **a full period contributes exactly `s` ones**: `∑_{j<q t} d (M+j) = q·s` |
+| `jsp87_sum_digit_le`, `jsp87_sum_digit_shift_le` | the digit sum over (a shift of) a range is at most the number of terms |
+| **`jsp87_digitCount_split`** | **`D (M + q·t + r) = D M + q·s + ρ` with `ρ = ∑_{j<r} d (M+j)`, `0 ≤ ρ ≤ r < t`** |
+| **`jsp87_digitCount_periodic_bounds`** | **an eventually periodic digit string has `D M ≤ D N ≤ D M + N + t` for every `N ≥ M`** |
+| **`jsp87Series_rational_imp_digitCount_linear`** | **RATIONALITY ⇒ the digit count grows exactly linearly** — the *rate* companion of round 41's `jsp87_digit_eventuallyPeriodic` (a period statement) and of round 46's `jsp87_frac_scaled_eq_block` (a value statement) |
+| **`jsp87Series_irrational_of_digitDensity_not_bounded`** | **THE RATE CRITERION: if the digit count is bounded by no linear function of `N` along an unbounded sequence, `S` is irrational** |
+
+### 5. The boundary of the method, now quantitative
+
+Three routes are now closed by *theorem*, not by observation:
+
+* the **carry-magnitude** route is doubly closed (round 44: `c N ≥ 1`;
+  this round: `c N ≤ log₂ N + log₂ e` and the escape statement);
+* the **period/rate** route is reduced to a single new statement
+  (`jsp87Series_irrational_of_digitDensity_not_bounded`): the digit string of
+  `S` would have to accumulate `1`s at an exactly linear rate;
+* the **radix** route was closed in round 49.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The round-50 results
+are the unconditional *asymptotic* content of the carried Erdős series; none of
+them supplies the missing input.  In the published literature the headline
+irrationality is **conditional** (Pratt, arXiv:2409.15185, under a uniform
+prime-`k`-tuples hypothesis) and the catalog itself records *Solved; Lean
+proof: No; Eligible to claim: No*.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 50, stated exactly
+
+> **`jsp87_digitDensity_not_bounded`** — the number of `1`-digits among the
+> first `N` binary digits of the Erdős series is bounded by no linear function
+> of `N` along an unbounded sequence; formally
+> `∀ C > 0, ∀ K, ∃ N ≥ K, D N > C·N`.
+
+Equivalently (via `jsp87_digitCount_eq_fractSum` and round 41's
+`jsp87_digit_eq_fract`): the **mean of the doubling orbit** `N ↦ fract (2^N S)`
+fails to be bounded by any linear function.  With
+`jsp87Series_rational_imp_digitCount_linear` (this round) and
+`jsp87_digitCount_periodic_bounds` (this round) this is the *only* remaining
+step in the rate formulation, and by round 41's `jsp87_digit_eventuallyPeriodic`
+it is equivalent to round 46's `jsp87Series_irrational_of_blockNotPeriodic`.
+Nothing unconditional is known about the fluctuations of the carry of the
+Erdős series; that is the arithmetic content of the uniform prime-`k`-tuples
+hypothesis in Pratt's result, and it is an *assumption of the published result*,
+not of the catalog statement.
+
+### Toolchain notes recorded this round
+
+* **`Real.logb` does not exist in Mathlib v4.34.0** — write `Real.log x / Real.log b`.
+* **`Real.log_two_gt_d9` / `exp_one_lt_d9` are NOT reachable** from the imports
+  used here; use `Real.one_sub_inv_le_log_of_pos (x := 2)` for `1/2 ≤ log 2`
+  (and note it is `≤`, not `<`).
+* **`Int.fract_lt` does not exist**; get `fract x < 1` from
+  `Int.self_sub_fract x` together with `Int.lt_floor_add_one x`.
+* **`hasSum_coe_mul_geometric_of_norm_lt_one`** gives
+  `∑' n, n·r^n = r/(1−r)^2`; there is no `hasSum_geom_mul`.
+* **`Finset.sum_congr` needs its function arguments pinned**: declare the
+  `AddCommMonoid` (e.g. `sum_congr_range (M := ℝ) …`) or Lean reports
+  "typeclass instance problem is stuck: `AddCommMonoid ?m`".
+* **`Summable` carries an `optParam` `SummationFilter` defaulting to
+  `unconditional`; the `∑' k, f k` notation uses the same one.**  A `have h :
+  Summable … := …` therefore elaborates with `L := unconditional`, and
+  `Summable.tsum_add` / `Summable.tsum_mul_left` only then match the goal.
+  Also `Summable.tsum_mul_left (a) (hf)` takes the **scalar first** and `hf` the
+  summability of the *inner* function.
+* **`rw` does not descend under a `∑'` with a top-level `+` in the body**:
+  `∑' k, A + B` parses as `(∑' k, A) + B`; always parenthesise the body
+  (`∑' k, (A + B)`).  This cost a long debugging detour.
+* `Finset.sum_le_sum_of_subset_of_nonneg` needs
+  `Finset.range_subset_range.mpr (h : N ≤ M)`.
+* A `have` whose statement is `((∑ i ∈ s, (f i : ℤ)) : ℝ) = …` is elaborated
+  with the inner sum *already* coerced; force the inner type with
+  `(f i : ℤ)` inside the sum and use `Int.cast_sum`.
+* `jsp87Tail 0 = jsp87Series` and `jsp87Tail 1 = jsp87Series` follow from
+  `jsp87_series_eq_sum_add_tail` (which is stated with `+`, not `−`).
