@@ -28,3 +28,4 @@ import JSPProblem.OrbitArith
 import JSPProblem.MersenneWindow
 import JSPProblem.DenominatorSplit
 import JSPProblem.PowerPair
+import JSPProblem.CarryRun
