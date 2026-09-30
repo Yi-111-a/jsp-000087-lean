@@ -1614,3 +1614,169 @@ arXiv:2409.15185, under a uniform prime `k`-tuples hypothesis), and
   this round, which made two `lake env lean` runs hang for >20 minutes before
   any error was reported.  Free scratch space before long builds; the symptom
   is a *timeout with no diagnostics*, not an elaboration error.
+
+---
+
+## Round 57 — THE DENOMINATOR SIDE: the complete period–denominator and period–order correspondences
+
+New module `lean/JSPProblem/Denominator.lean` (969 lines, **44 new theorems and
+lemmas** plus 2 new `def`s and 7 private helpers, 0 `sorry`, 0 `admit`; **670
+proved theorems and lemmas** in the tree at the `^(theorem|lemma)` level — 626
+before this round — `lake build` clean).
+
+**New attack family.**  Rounds 37–56 all worked with the **numerators** of the
+problem: the binary digits, the blocks, the carries, the windows, the prefixes.
+None of them ever asked the classical question Erdős asks — *what is the
+denominator of the number?*  Rounds 39, 40 and 46 produced **one-sided**
+divisibility statements about a hypothetical denominator `b`; this round turns
+them into **exact equivalences**, in both directions.
+
+### 1. The binary expansion of an arbitrary real (new apparatus, general `x`)
+
+| Theorem | Statement |
+| --- | --- |
+| `digitAt x N` | the new object: the `N`-th binary digit of an **arbitrary** real, `⌊2^{N+1} x⌋ − 2⌊2^N x⌋` |
+| `digitAt_eq_floor_two_fract` | **the digit is the second binary digit of the fractional part**: `digitAt x N = ⌊2 · fract (2^N x)⌋` |
+| `digitAt_mem` | the digits of *every* real are `0` or `1` |
+| `digitAt_fract_succ'` | **the orbit recursion** `fract (2^{N+1} x) = 2 · fract (2^N x) − digitAt x N` |
+| `digitAt_fract_periodic` | periodicity of the digits forces periodicity of the doubling orbit — proved from the *doubling of the defect*, not from the telescoping identity of round 46 |
+| `digitAt_no_allOnes` | **no real number has an eventually-all-ones binary expansion** |
+| `digitAt_const_of_run` (private) | a run of `t` equal digits *is* the whole tail |
+| `jsp87Digit_eq_digitAt` | round 57's digit restricted to `jsp87Series` is round 41's digit |
+
+Mathlib has no statement about the base-`2` expansion of a real number at all.
+
+### 2. THE COMPLETE PERIOD–DENOMINATOR CORRESPONDENCE (both directions)
+
+| Theorem | Statement |
+| --- | --- |
+| `digitAt_periodic_of_den_dvd` | **divisibility forces periodicity**: `b ∣ 2^M (2^t − 1)` ⟹ the digits of `a/b` are `M`-periodic with period `t` |
+| `digitAt_periodic_of_den_dvd_odd` | the `M = 0` case: `b ∣ 2^t − 1` makes the expansion *purely* periodic |
+| `jsp87_den_dvd_mer_of_period` | **periodicity forces divisibility**: `jsp87Series = a/b` in lowest terms, digits `M`-periodic with period `t > 0` (`1 ≤ M`) ⟹ `b ∣ 2^M (2^t − 1)` |
+| **`jsp87_digitPeriod_iff_den_dvd`** | **THE HEADLINE: `(∀ n ≥ M, d (n+t) = d n) ↔ b ∣ 2^M (2^t − 1)`** |
+
+This is the first time in this development that a hypothesis about the **binary
+digits** of `jsp87Series` is *equivalent* to a hypothesis about the
+**denominator** of a hypothetical rational value.
+
+### 3. THE COMPLETE PERIOD–ORDER CORRESPONDENCE
+
+New object: `jsp87OddPart b = b / 2^{v_2(b)}` (built from round 52's
+`jsp87Val2`).
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Val2_le`, `jsp87_pow_mul_oddPart`, `jsp87OddPart_dvd`, `jsp87OddPart_pos` | the `2`-adic decomposition `b = 2^{v_2 b} · oddPart b` |
+| `not_two_dvd_oddPart`, `jsp87_coprime_two_oddPart` | **the `2`-free part is odd** |
+| `pow_two_dvd_of_dvd_oddPart` | `2^k ∣ oddPart b` and `v_2 b ≤ k` ⟹ `2^k ∣ b` |
+| `jsp87_oddPart_dvd_mer_of_period` | a hypothetical period forces `oddPart b ∣ 2^t − 1` |
+| `jsp87_den_dvd_mer_of_oddPart` | **the converse**: `oddPart b ∣ 2^t − 1` and `v_2 b ≤ M` ⟹ `b ∣ 2^M (2^t − 1)`, i.e. `t` **is** a period |
+| **`jsp87_digitPeriod_iff_oddPart_dvd_mer`** | **THE COMPLETE PERIOD–ORDER CORRESPONDENCE: for `M ≥ v_2(b)`, `(∀ n ≥ M, d (n+t) = d n) ↔ oddPart b ∣ 2^t − 1`** |
+| `jsp87_period_lcm` | two periods have the common period `lcm t t'` |
+| `jsp87_period_gcd` | **the eventual periods are gcd-closed** (from round 39's exact `gcd_two_pow_sub_one`) |
+| `jsp87_minimalPeriod_dvd` | hence the eventual periods form `t₀ ℕ`: the minimal period divides every period, and `t₀` is the multiplicative order of `2` modulo `oddPart b` |
+| `jsp87_prime_den_dvd_mer` | every odd prime `q ∣ b` divides `2^t − 1` for every eventual period `t` |
+| `jsp87_prime_period_lt_den` | a **prime** period is smaller than every odd prime of the denominator (round 39's Fermat step applied to the period) |
+| `jsp87_digitPeriod_one_pow_two_den` | the period-`1` case in denominator form: the reduced denominator is a power of `2` dividing `2^M` (equivalently `oddPart b = 1`) |
+
+### 4. The run dichotomy — round 53's inequality now contains the period
+
+| Theorem | Statement |
+| --- | --- |
+| `digitAt_fract_fracNum` | the fractional part of `2^N (a/b)` is `c/b` with `0 ≤ c < b` |
+| `digitAt_oneRun_gap` | **THE GAP INEQUALITY: a run of `L` ones forces `2^L · (b − c) ≤ b`**, `c` the numerator of the fractional part |
+| `jsp87_oneRun_two_pow_le` | hence `2^L ≤ b`, for an arbitrary rational in lowest terms (round 53 proved it for the series only) |
+| `digitAt_periodic_oneRun_lt` | **a `t`-periodic digit string never contains `t` consecutive ones at or after the periodic point** |
+| `digitAt_periodic_zeroRun_dyadic` | a run of `t` zeros there forces the expansion to **terminate**: the value is dyadic |
+| `jsp87_digitPeriod_oneRun_lt`, `jsp87_digitPeriod_zeroRun_dyadic`, `jsp87_oneRun_two_pow_le_series` | the three statements for `jsp87Series = a/b` |
+
+### 5. Machine-checked instances
+
+* `digitAt_five_sevens` : the binary expansion of `5/7` is `3`-periodic **from the first digit** (`7 ∣ 2^3 − 1`).
+* `digitAt_five_sevens_digits` : `5/7 = 0.101 101 101 …`, the three digits exactly.
+* `jsp87_ord_seven` : `v_2(7) = 0`, `oddPart(7) = 7`, `7 ∣ 2^3 − 1`, `7 ∤ 2 − 1`, `7 ∤ 2^2 − 1` — the `3` above is the *order*.
+* `jsp87_ord_twelve` : `v_2(12) = 2`, `oddPart(12) = 3`, `3 ∣ 2^2 − 1`, `3 ∤ 2 − 1`.
+* `digitAt_seven_twelve_period_two` : the expansion of `7/12` is `2`-periodic **from index 2** — the threshold `M ≥ v_2(b)` is exactly right.
+
+### Gate status
+
+`lake build` OK, 0 `sorry`, 0 `admit`,
+`harness/score.py problems/JSP-000087 --strict-prize` → `build_ok=true,
+sorry=0, admit=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.  The headline irrationality remains
+**conditional in the published literature** (Pratt, arXiv:2409.15185, under a
+uniform prime `k`-tuples hypothesis) and the catalog records *Solved; Lean proof:
+No; Eligible to claim: No*; `jsp_000087_main` is deliberately not declared.
+
+### The blocker, after round 57, stated exactly
+
+> **`jsp87Series_irrational_of_blockNotPeriodic`** (round 46) — equivalently
+> `jsp87_digit_not_eventuallyPeriodic` (round 47) — equivalently
+> `jsp87_fracCarry_not_eventuallyPeriodic` (round 48).
+
+Round 57 does not remove it; it **pins the period arithmetically**.  What is
+now proved, for a hypothetical rational `jsp87Series = a/b` in lowest terms:
+
+* the binary digit string is eventually periodic, and from `M = v_2(b)` on it is
+  `t`-periodic where `oddPart b ∣ 2^t − 1`;
+* the eventual periods are exactly the multiples of `t₀ = ord_{oddPart b}(2)`
+  (gcd-closed, hence a principal ideal);
+* every one-run after `M` is shorter than `t` and forces `2^L ≤ b`;
+* a zero-run of length `t` there would make the value dyadic.
+
+So the *only* way the Erdős series can be rational is that its digit string
+*is* eventually periodic, and round 57 says exactly what that periodicity would
+force arithmetically.  The missing input is still the quantitative correlation
+control of `ω` at shifted primes that makes such a periodicity impossible; it
+is an assumption of the published result, not of the catalog statement.
+
+### Round 57 — toolchain notes (LEARN THESE)
+
+* `rw [h]` with a *variable* on the left-hand side rewrites EVERY occurrence of
+  that variable — including inside `q % t`, `q / t`, `jsp87Val2 b`, …  Use
+  `calc`, `congr`, or a `have` with an explicit statement instead.  This bit
+  three proofs (`digitAt_const_of_run`, `not_two_dvd_oddPart`,
+  `jsp87_den_dvd_mer_of_period`).
+* `rw` with several lemmas rewrites **all** instances of each LHS.  When the
+  pattern also occurs inside a `⌊ · ⌋` (e.g. `2^N * x` inside `⌊2^N * x⌋`), use
+  `nth_rewrite 1 [h]` — and if the LHS of the goal step is still a
+  metavariable, the first concrete occurrence is the *wrong* one: instantiate it
+  with a `rfl` step first.
+* `Nat.cast_sub (h : m ≤ n) : ↑(n − m) = ↑n − ↑m` — the hypothesis must be
+  stated in the `≤` form (`Nat.lt.le` of a `<` hypothesis elaborates to
+  `Nat.succ a ≤ b` and the rewrite then looks for `↑(b − c.succ)`).
+* `Nat.gcd_le_left (n : ℕ) : 0 < m → m.gcd n ≤ m` — the *first* explicit
+  argument is the **second** gcd slot; use `Nat.gcd_dvd_left` + `Nat.le_of_dvd`
+  instead when in doubt.
+* `Nat.coprime_pow_left_iff` has `(a ^ n).Coprime b ↔ a.Coprime b` (power on the
+  left), `Nat.coprime_pow_right_iff` has `a.Coprime (b ^ n) ↔ a.Coprime b`; the
+  implicit `n` is the exponent, the two explicit slots are `a` and `b`.
+* `Nat.coprime_primes : p.Prime → q.Prime → (Coprime p q ↔ p ≠ q)` is an
+  **iff**, not a function returning the coprimality: use `.mpr (by …)`.
+* `Nat.mul_le_mul_left (k : ℕ) (h : m ≤ n) : k * m ≤ k * n` — the explicit
+  argument is the multiplier `k`, the inequality is the second argument.
+* `Int.floor_eq_iff : ⌊a⌋ = z ↔ ↑z ≤ a ∧ a < z + 1` — the goals contain
+  `↑z`, which `linarith` treats as an opaque atom; use `simpa`/`norm_num`.
+* `linarith` cannot use divisibility: `m ∣ n` gives an existential witness, so
+  `m ≤ n` needs `Nat.le_of_dvd`.  It also cannot relate `a * b` to `a` for
+  variables `a, b`; use `Nat.mul_le_mul_left`/`mul_lt_mul_of_pos_left` or
+  `div_lt_iff`/`lt_div_iff` to cancel a factor.
+* `mul_eq_zero` is the tool for `x * c = 0 → x = 0 ∨ c = 0` when `c ≠ 0`; plain
+  `linarith` cannot do it.
+* Numerals in a `ℝ` context elaborate through `OfNat`, **not** through
+  `NatCast`, so `rw [← Nat.cast_pow]` does not match `(2 : ℝ) ^ M`.  For
+  `(2 : ℝ) ^ M = ((2 ^ M : ℕ) : ℝ)` use `norm_cast` (or `push_cast; norm_num`).
+* `Int.toNat_of_nonneg` + `exact_mod_cast` is the safe route from `0 ≤ c`
+  (`c : ℤ`) to `(c.toNat : ℝ) = (c : ℝ)`.
+* `(2 : ℝ) ^ M * ((2 : ℝ) ^ t − 1) = ((2 ^ M * (2 ^ t − 1) : ℕ) : ℝ)` is closed
+  by `push_cast; norm_num` (3 lines) but **not** by `norm_cast` or
+  `push_cast; ring`.
+* `digitAt_periodic_of_den_dvd` takes `n` **before** the `M ≤ n` hypothesis
+  (the conclusion is a `∀`-telescope), so the `M = 0` corollary must be applied
+  as `… hb ht h1 n (Nat.zero_le n)`.
+* Extracting `b ∣ a * D` from the real equation `a · D = n₀ · b`: clear the
+  denominators with `field_simp at h`, cast `n₀` to a natural with
+  `n₀.toNat` (it is `≥ 0` by `mul_nonneg_iff_of_pos_left`), then
+  `rw [← Nat.cast_mul, ← Nat.cast_mul] at hh; exact Nat.cast_injective hh`.
+  A long chain of `exact_mod_cast` on the ℝ statement does *not* close (it
+  normalises `↑(a * 2 ^ M) * Int.subNatNat (2 ^ t) 1`).
