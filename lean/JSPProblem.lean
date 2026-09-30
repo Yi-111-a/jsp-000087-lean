@@ -16,3 +16,4 @@ import JSPProblem.CarryDoubling
 import JSPProblem.Radix
 import JSPProblem.CarryAsymptotic
 import JSPProblem.PeriodEquation
+import JSPProblem.AdicPrefix

@@ -1151,3 +1151,153 @@ catalog statement.
 * `Nat.exists_eq_succ_of_ne_zero` and `Nat.succ_eq_add_one` are the right tools
   to re-index an all-ones geometric window; `Nat.exists_eq_succ_of_one_le`
   does **not** exist.
+
+
+---
+
+## Round 52 — the `2`-adic and modular arithmetic of the binary prefix
+
+New module `lean/JSPProblem/AdicPrefix.lean` (516 lines, **24 new theorems and
+lemmas** plus **2 new definitions** and 7 private helpers, 0 `sorry`,
+0 `admit`; **512 proved theorems and lemmas** in the tree at the
+`^(theorem|lemma)` level — 488 before this round — `lake build` clean, **no new
+linter warnings**).
+
+**This is a new attack family.**  Rounds 37–46 attacked the *carried* Erdős
+series through ten periodicity angles; round 47 the *carry-free* (primary)
+expansion; round 48 the *doubling map* on the carries; round 49 the criterion in
+*arbitrary radix*; round 50 the *asymptotics* of the carry; round 51 the *period
+equation* and the `ω`-window.  **No round had ever looked at the integer
+`I N = ⌊2^N S⌋ − ⌊θ N⌋` itself** — the numerator of the `N`-th partial sum, the
+integer whose binary expansion *is* the first `N` digits of `S`, and the
+`2`-adic integer whose digits are the `ω`-values with carries.  This round
+changes the object, not the tool: from `ℝ`-valued carries to `ℤ`-valued
+divisibility.
+
+The driving observation is the homogeneous form of round 41's prefix
+recursion:
+
+> `I (N+t) = 2^t · I N + Ω N t` — the `t`-step prefix recursion, whose
+> inhomogeneous term is **exactly round 51's `ω`-window**.  Hence
+> `2^t ∣ I (N+t) ↔ 2^t ∣ Ω N t`: **the `2`-adic content of the binary prefix is
+> the `2`-adic content of the `ω`-window.**
+
+### 1. The prefix as a natural number
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Prefix` | **THE NEW OBJECT** `I N := (⌊2^N S⌋ − ⌊θ N⌋).toNat`, round 41's `jsp87IntPart` read in `ℕ` |
+| `jsp87Prefix_succ` | **THE PREFIX RECURSION `I (N+1) = 2 I N + ω N`** — the carry recursion `θ (N+1) = 2 θ N − ω N` with the sign of `ω N` flipped |
+| `jsp87Prefix_iter` | **THE `t`-STEP PREFIX RECURSION `I (N+t) = 2^t I N + Ω N t`** — the homogeneous form, inhomogeneous term = round 51's window |
+| `jsp87Prefix_zero`, `jsp87Prefix_cast` | `I 0 = 0`, and the `ℝ` reading of the prefix |
+
+### 2. The `2`-adic exponent of a natural number
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Val2` | **THE NEW OBJECT** `v (n)`, the exponent of `2` in `n` (via `Nat.findGreatest`); Mathlib has no such function for `ℕ` |
+| `jsp87Val2_spec` | **`v n = k ↔ 2^k ∣ n ∧ ¬ 2^(k+1) ∣ n`** for `n ≠ 0` |
+| `jsp87Val2_dvd`, `jsp87Val2_not_succ`, `jsp87Val2_zero` | `2^v ∣ n`, `¬ 2^(v+1) ∣ n`, `v 0 = 0` |
+| `jsp87Val2_mul_two` | **`v (2 X) = v X + 1`** for `X ≠ 0` |
+| `jsp87Val2_prefix_succ_odd` | **`ω N` odd ⇒ `v (I (N+1)) = 0`** |
+| `jsp87Val2_prefix_succ_even` | **THE 2-ADIC SAWTOOTH: `ω N` even and `I N ≠ 0` ⇒ `v (I (N+1)) = v (I N + ω N / 2) + 1`** |
+
+### 3. Parity and the `2`-adic chain
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Prefix_parity` | **`I (N+1) mod 2 = ω N mod 2`** — the low bit of the prefix is the low bit of `ω N` |
+| `jsp87Prefix_dvd_two_iff` | `2 ∣ I (N+1) ↔ 2 ∣ ω N` |
+| `jsp87Prefix_dvd_pow_succ` | **THE 2-ADIC CHAIN: for `k ≥ 1` and even `ω N`, `2^(k+1) ∣ I (N+1) ↔ 2^k ∣ (I N + ω N / 2)`** |
+| `jsp87Prefix_dvd_pow_succ'` | the consequence form (one step of the chain) |
+
+### 4. Aperiodicity of the prefix — the headline of the round
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Prefix_periodic_imp_omega_periodic` | **THE KEY TRANSFER LEMMA: an eventual period of `I N mod m` forces the same for `ω N mod m`** (from the recursion, with `Nat.ModEq.add_left_cancel`) |
+| **`jsp87_prefix_mod_not_eventuallyPeriodic`** | **THE APERIODICITY OF THE BINARY PREFIX, MODULO EVERY `m ≥ 2`: `N ↦ I N mod m` is NEVER eventually periodic.**  The *sixth* independent aperiodicity statement in the tree, and the first on this object |
+| `jsp87_prefix_mod_pow_two_not_eventuallyPeriodic` | the `m = 2^k` instance |
+| `jsp87_prefix_dvd_not_eventually` | the divisibility form: for every `m ≥ 2`, `t > 0`, `M` some `n ≥ M` fails `m ∣ I (n+t) − I n` |
+| **`jsp87_prefix_dvd_pow_two_not_eventually`** | **THE PREFIX ESCAPES EVERY 2-ADIC WINDOW: for every `k ≥ 1` and `M` there is `n ≥ M` with `2^k ∤ I n`** |
+
+### 5. The window, and the carry excess reading the prefix
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87Prefix_dvd_window`** | **THE 2-ADIC WINDOW EQUIVALENCE: `2^t ∣ I (N+t) ↔ 2^t ∣ Ω N t`** |
+| `jsp87_adic_window_iff` | the same in `ℤ` |
+| `jsp87_window_periodic_of_prefix_periodic` | **AN EVENTUAL PERIOD OF THE PREFIX MOD `m` FORCES THE SAME FOR THE `ω`-WINDOW** — modular aperiodicity of the prefix transfers to round 51's window |
+| **`jsp87_adic_carry_congr`** | **THE 2-ADIC CONTENT OF THE BINARY PREFIX IS READ OFF THE CARRY EXCESS: under eventual periodicity of the digits with period `t` from `M`, `2^t ∣ I (N+t) ↔ 2^t ∣ (c (N+t) − B N t)`** |
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The round-52 results
+are the unconditional modular content of the *binary prefix*; none of them
+supplies the missing input.  In the published literature the headline
+irrationality is **conditional** (Pratt, arXiv:2409.15185, under a uniform
+prime-`k`-tuples hypothesis) and the catalog itself records *Solved; Lean
+proof: No; Eligible to claim: No*.  No rename, wrapper or shadowing of the name
+is used.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 52, stated exactly
+
+> **`jsp87_prefix_window_congr_fails`** — for every candidate period `t > 0` and
+> every start point `M` there is a cut point `N ≥ M` at which
+> `2^t ∤ I (N+t)`, i.e. at which the `ω`-window `Ω N t` is **not** a multiple of
+> `2^t`; formally `(∀ t > 0) (∀ M) (∃ N ≥ M), ¬ 2^t ∣ jsp87OmegaWindow N t`.
+
+Equivalently (by `jsp87Prefix_dvd_window`): the base-`2` weighted average of the
+`ω`-values of a window, `∑_{j<t} ω (N+j) 2^{-(j+1)}`, is an integer for **no**
+candidate period at **all** cut points.  Nothing unconditional is known about
+the distribution of the `ω`-window modulo `2^t`; that is the arithmetic content
+of the uniform prime-`k`-tuples hypothesis in Pratt's result, and it is an
+*assumption of the published result*, not of the catalog statement.
+
+Note that the *aperiodicity* of the prefix modulo every `m` is now proved
+unconditionally (`jsp87_prefix_mod_not_eventuallyPeriodic`) but is **not by
+itself** a criterion: rationality of `S` does not freeze `I N mod m`, because
+the digit identity `d N = ω N + c (N+1) − 2 c N` mixes the digit family with the
+carry family, and round 49's `jsp87_noCarry_fails_any_radix` already proved the
+carry cannot be removed in any radix.
+
+### Toolchain notes recorded this round
+
+* **`∤` (not-divides) is NOT AVAILABLE** with the imports used here — the parser
+  rejects it (`expected token`).  Write `¬ a ∣ b`.
+* `Int.toNat_of_nonneg : 0 ≤ a → (↑a.toNat : ℤ) = a` has its coercion in `ℤ`;
+  to state a fact about `(x.toNat : ℝ)` use `exact_mod_cast`, since `rw` will not
+  fire (`Monoid ?m` instance stuck).
+* `Int.ofNat_dvd : (↑m : ℤ) ∣ (↑n : ℤ) ↔ m ∣ n` is an **iff** (`m : ℕ`), and
+  `Int.ofNat_sub : m ≤ n → ↑(n − m) = ↑n − ↑m` **needs the ordering hypothesis**.
+  Use `Nat.modEq_iff_dvd' (hle : a ≤ b) : a ≡ b [MOD n] ↔ n ∣ b − a` instead.
+* `dvd_mul_left (a b : α) : a ∣ b * a` and `dvd_mul_right (a b : α) : a ∣ a * b`
+  take **two elements**, not a proof; the proof-taking versions are
+  `Int.dvd_mul_of_dvd_left : a ∣ b → a ∣ b * c`.  `Nat.dvd_mul_left` /
+  `Nat.dvd_mul_right` have the same shape.
+* `Nat.mul_dvd_mul_iff_left (a := 2) (h : 0 < a) : (a * b ∣ a * c ↔ b ∣ c)` —
+  the first explicit argument is the **proof** `0 < a`.
+* `dvd_neg : a ∣ -b ↔ a ∣ b` is an **iff**; `.mp` goes from `a ∣ b` to
+  `a ∣ -b`.  Lean cannot unify a goal `a ∣ (x - y)` with `a ∣ -?b`, so insert
+  `rw [show (x - y : ℤ) = -((y - x : ℤ)) from by ring] at h` first.
+* **A `by` block inside an anonymous constructor `⟨a, (by omega : P), b⟩` is
+  elaborated with a WRONG expected type** (Lean reported the goal `2 ≤ m` for
+  `by omega : 0 < t`).  Always supply hypotheses as real terms
+  (`Nat.zero_lt_succ 0`) or use `Nat.zero_lt_succ`/`Nat.pos_of_ne_zero`.
+* `Nat.ModEq` is a plain `def (a % n = b % n)`: `ModEq.dvd : a ≡ b [MOD n] →
+  (n : ℤ) ∣ b - a`, `Nat.modEq_of_dvd : (n : ℤ) ∣ b - a → a ≡ b [MOD n]`, and
+  the algebraic toolkit `ModEq.add_left_cancel`, `.add`, `.add_left`,
+  `.add_right`, `.mul_left`, `.symm`, `.modEq_zero_nat` is enough for every
+  transfer lemma of this round.
+* `omega` cannot see through a power (`2 ≤ 2^k` from `1 ≤ k`): prove
+  `1 ≤ 2^m` by induction (`one_le_two_pow_nat'`) and `2 ≤ 2^m` from
+  `Nat.one_lt_two_pow`.  Inside `cases k with | succ u => …`, the original
+  variable `k` is NOT in scope and `Nat.one_lt_two_pow` wants `u ≠ 0`, not
+  `Nat.succ u ≠ 0`.
+* `linarith` treats `((P - Q) * 2 ^ t)` as a nonlinear monomial and then fails
+  on goals mixing it with `m * k`; use `linear_combination (1 : ℤ) * hk2 +
+  (-1 : ℤ) * hk1` (the tool that works for exactly these ℤ polynomial goals).
