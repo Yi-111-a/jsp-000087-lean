@@ -308,18 +308,57 @@ theorem jsp87SubwordTail_20_1024 :
       (fun N => jsp87Subword (jsp87Prefix2048 + 1) 2048 20 (N + 1))) = 1024 := by
   native_decide
 
-/-- **THE TAIL COMPLEXITY AT LENGTH `20`, FROM PLACE `1`, IS `1024`** — the
-quantity round 73's `jsp87_blockCompl_le_period` actually bounds, and the
-quantity the period exclusion below needs.  (The count is over the `1024`
-positions `1 ≤ N < 1025`; longer windows only add more blocks, so this is a
-*lower* bound on the true tail complexity, which is all the argument uses.) -/
-theorem jsp87_compl_tail_20_ge_1024 :
+/-- **THE TAIL-COMPLEXITY BRIDGE, IN ONE PLACE.**  Round 75 stated this by
+hand for `n = 20` and `n = 24`, and the statement took **49 minutes** to
+elaborate: the single pointwise bridge `(jsp87DigitBlock N n : ℤ) =
+(jsp87Subword X L n N : ℤ)` over `1025` positions forces the kernel to unfold
+`Nat.cast` of a `20`-term `Finset.sum` of `Int.toNat`-ed *real* digit
+expressions at every position.  The two-step route used by
+`jsp87DigitBlockCompl_24` above — first `jsp87_blockNat_cast`, which is a
+direct theorem application, then `card_image_intCast`, which is a `card_bij'` —
+is pointwise identical in content but never unfolds anything, and it compiles in
+seconds.
+
+So the tail lower bound is now a *parameterised* private lemma, and the two
+public theorems below are one-liners. -/
+private theorem compl_tail_ge_1024 {n : ℕ} (hn : n ≤ 1023)
+    (hcert : Finset.card ((Finset.range 1024).image
+      (fun N => jsp87Subword (jsp87Prefix2048 + 1) 2048 n (N + 1))) = 1024) :
     1024 ≤ Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
-      (fun N => jsp87DigitBlock N 20)) := by
+      (fun N => jsp87DigitBlock N n)) := by
+  have h1 : Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
+        (fun N => jsp87DigitBlock N n))
+      = Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
+        (fun N : ℕ => jsp87BlockNat N n)) := by
+    have hb : Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
+        (fun N => jsp87DigitBlock N n))
+      = Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
+        (fun N : ℕ => (jsp87BlockNat N n : ℤ))) :=
+      card_image_congr (fun N : ℕ => jsp87DigitBlock N n)
+        (fun N : ℕ => (jsp87BlockNat N n : ℤ))
+        ((Finset.range 1025).filter (fun N => 1 ≤ N))
+        (fun N _ => (jsp87_blockNat_cast N n).symm)
+    rw [hb, card_image_intCast (fun N : ℕ => jsp87BlockNat N n)
+      ((Finset.range 1025).filter (fun N => 1 ≤ N))]
+  rw [h1]
+  have hc : Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
+        (fun N : ℕ => jsp87BlockNat N n))
+      = Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
+        (fun N : ℕ => jsp87Subword (jsp87Prefix2048 + 1) 2048 n N)) :=
+    card_image_congr (fun N : ℕ => jsp87BlockNat N n)
+      (fun N : ℕ => jsp87Subword (jsp87Prefix2048 + 1) 2048 n N)
+      ((Finset.range 1025).filter (fun N => 1 ≤ N))
+      (fun N hN => jsp87_subword_eq_block (X := jsp87Prefix2048 + 1) (L := 2048)
+        (n := n) (N := N) (by
+          have hNf := Finset.mem_filter.mp hN
+          have hNr := Finset.mem_range.mp hNf.1
+          omega)
+        jsp87DigitBlock_zero_2048)
+  rw [hc]
   have hsub : ((Finset.range 1025).filter (fun N => 1 ≤ N)).image
-      (fun N : ℕ => jsp87Subword (jsp87Prefix2048 + 1) 2048 20 N)
+      (fun N : ℕ => jsp87Subword (jsp87Prefix2048 + 1) 2048 n N)
     = (Finset.range 1024).image
-      (fun N : ℕ => jsp87Subword (jsp87Prefix2048 + 1) 2048 20 (N + 1)) := by
+      (fun N : ℕ => jsp87Subword (jsp87Prefix2048 + 1) 2048 n (N + 1)) := by
     ext x
     constructor
     · intro hx
@@ -338,24 +377,17 @@ theorem jsp87_compl_tail_20_ge_1024 :
       refine Finset.mem_image.mpr ⟨N + 1, ?_, rfl⟩
       refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), ?_⟩
       omega
-  have hcong : ∀ N ∈ (Finset.range 1025).filter (fun N => 1 ≤ N),
-      (jsp87DigitBlock N 20 : ℤ) = (jsp87Subword (jsp87Prefix2048 + 1) 2048 20 N : ℤ) := by
-    intro N hN
-    have hNf := Finset.mem_filter.mp hN
-    have hNr := Finset.mem_range.mp hNf.1
-    refine jsp87_subword_eq_block (X := jsp87Prefix2048 + 1) (L := 2048) (n := 20)
-      (N := N) ?_ jsp87DigitBlock_zero_2048
-    omega
-  have h1 : Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
-        (fun N => jsp87DigitBlock N 20))
-      = Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
-        (fun N => (jsp87Subword (jsp87Prefix2048 + 1) 2048 20 N : ℤ))) := by
-    exact card_image_congr (fun N : ℕ => jsp87DigitBlock N 20)
-      (fun N : ℕ => (jsp87Subword (jsp87Prefix2048 + 1) 2048 20 N : ℤ))
-      ((Finset.range 1025).filter (fun N => 1 ≤ N))
-      (fun N hN => hcong N hN)
-  rw [h1, hsub]
-  exact_mod_cast jsp87SubwordTail_20_1024
+  rw [hsub, hcert]
+
+/-- **THE TAIL COMPLEXITY AT LENGTH `20`, FROM PLACE `1`, IS `1024`** — the
+quantity round 73's `jsp87_blockCompl_le_period` actually bounds, and the
+quantity the period exclusion below needs.  (The count is over the `1024`
+positions `1 ≤ N < 1025`; longer windows only add more blocks, so this is a
+*lower* bound on the true tail complexity, which is all the argument uses.) -/
+theorem jsp87_compl_tail_20_ge_1024 :
+    1024 ≤ Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
+      (fun N => jsp87DigitBlock N 20)) :=
+  compl_tail_ge_1024 (n := 20) (by norm_num) jsp87SubwordTail_20_1024
 
 /-- **THE `1024` SUCCESSIVE `24`-DIGIT BLOCKS FROM PLACE `1` ARE PAIRWISE
 DISTINCT TOO.** -/
@@ -367,47 +399,8 @@ theorem jsp87SubwordTail_24_1024 :
 /-- **THE TAIL COMPLEXITY AT LENGTH `24`, FROM PLACE `1`, IS `1024`.** -/
 theorem jsp87_compl_tail_24_ge_1024 :
     1024 ≤ Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
-      (fun N => jsp87DigitBlock N 24)) := by
-  have hsub : ((Finset.range 1025).filter (fun N => 1 ≤ N)).image
-      (fun N : ℕ => jsp87Subword (jsp87Prefix2048 + 1) 2048 24 N)
-    = (Finset.range 1024).image
-      (fun N : ℕ => jsp87Subword (jsp87Prefix2048 + 1) 2048 24 (N + 1)) := by
-    ext x
-    constructor
-    · intro hx
-      obtain ⟨N, hN, hx'⟩ := Finset.mem_image.mp hx
-      have hNf := Finset.mem_filter.mp hN
-      have hNr := Finset.mem_range.mp hNf.1
-      rw [← hx']
-      have hk : N < 1025 := by omega
-      have hs : N = (N - 1) + 1 := by omega
-      rw [hs]
-      exact Finset.mem_image.mpr ⟨N - 1, Finset.mem_range.mpr (by omega), rfl⟩
-    · intro hx
-      obtain ⟨N, hN, hx'⟩ := Finset.mem_image.mp hx
-      have hNr := Finset.mem_range.mp hN
-      rw [← hx']
-      refine Finset.mem_image.mpr ⟨N + 1, ?_, rfl⟩
-      refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), ?_⟩
-      omega
-  have hcong : ∀ N ∈ (Finset.range 1025).filter (fun N => 1 ≤ N),
-      (jsp87DigitBlock N 24 : ℤ) = (jsp87Subword (jsp87Prefix2048 + 1) 2048 24 N : ℤ) := by
-    intro N hN
-    have hNf := Finset.mem_filter.mp hN
-    have hNr := Finset.mem_range.mp hNf.1
-    refine jsp87_subword_eq_block (X := jsp87Prefix2048 + 1) (L := 2048) (n := 24)
-      (N := N) ?_ jsp87DigitBlock_zero_2048
-    omega
-  have h1 : Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
-        (fun N => jsp87DigitBlock N 24))
-      = Finset.card (((Finset.range 1025).filter (fun N => 1 ≤ N)).image
-        (fun N => (jsp87Subword (jsp87Prefix2048 + 1) 2048 24 N : ℤ))) := by
-    exact card_image_congr (fun N : ℕ => jsp87DigitBlock N 24)
-      (fun N : ℕ => (jsp87Subword (jsp87Prefix2048 + 1) 2048 24 N : ℤ))
-      ((Finset.range 1025).filter (fun N => 1 ≤ N))
-      (fun N hN => hcong N hN)
-  rw [h1, hsub]
-  exact_mod_cast jsp87SubwordTail_24_1024
+      (fun N => jsp87DigitBlock N 24)) :=
+  compl_tail_ge_1024 (n := 24) (by norm_num) jsp87SubwordTail_24_1024
 
 /-! ## 5. The headline: a machine-checked lower bound on the digit period -/
 
@@ -442,8 +435,8 @@ supplies a digit period `t` from some `M ≥ 1`; the theorem above forces
 `t ≥ 1024`.  Since round 65 computes the *least* eventual period as the
 multiplicative order of `2` modulo the odd part of `b`, this pins the
 denominator's odd part as well. -/
-theorem jsp87Series_rational_imp_period_ge_1024 {a : ℤ} {b : ℕ} (hb : 0 < b)
-    (h : jsp87Series = (a : ℝ) / (b : ℝ)) {t : ℕ} (ht : 0 < t)
+theorem jsp87Series_rational_imp_period_ge_1024 {a : ℤ} {b : ℕ} (_hb : 0 < b)
+    (_h : jsp87Series = (a : ℝ) / (b : ℝ)) {t : ℕ} (ht : 0 < t)
     (hper : ∀ x : ℕ, 1 ≤ x → jsp87Digit (x + t) = jsp87Digit x) :
     1024 ≤ t := by
   by_contra hcon
