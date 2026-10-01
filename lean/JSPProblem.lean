@@ -32,3 +32,4 @@ import JSPProblem.CarryRun
 import JSPProblem.Effective
 import JSPProblem.SubwordComplexity
 import JSPProblem.Complexity
+import JSPProblem.MorseHedlund
