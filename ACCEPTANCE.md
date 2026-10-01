@@ -2496,3 +2496,127 @@ uniform prime-`k`-tuples hypothesis, and is not introduced here.
 and `admit` anywhere in the `.lean` sources, so a module docstring that merely
 *mentions* those words silently sets `placeholder_total > 0` and breaks
 `partial_ok`.  They must never appear in a `.lean` file.
+
+## Round 73 — the *subword complexity* of the binary expansion, and the first `2048` certified digits
+
+New module `lean/JSPProblem/SubwordComplexity.lean` (971 lines, 30 public
+theorems + 2 defs + 5 private helpers), wired into `lean/JSPProblem.lean`.
+**0 placeholders, 0 errors, 0 warnings; `lake build` 3127 jobs, exit 0.**
+
+Rounds 37–72 all asked what rationality would *force*.  None of them ever
+asked **how many distinct `n`-digit blocks the expansion contains** — the
+classical *subword complexity* `p(n)`, the sharpest invariant of eventual
+periodicity, for which Mathlib has no statement at all about base-2 expansions
+of reals.
+
+### 1. The word layer
+
+* `jsp87BlockNat M n` — the `n`-digit block `B M n` as a `Nat` — with
+  `jsp87_blockNat_split` (`B M (n+1) = 2 · (B M n) + d (M+n)`) and
+  `jsp87_blockNat_top`.
+* **`jsp87_block_inj` — the block determines the digits**: `B M n = B M' n`
+  forces `d (M+j) = d (M'+j)` for all `j < n`.
+* `jsp87_digit_eq_of_mod`, `jsp87_block_eq_of_congr` — past a pre-period `M`
+  with period `t` the digit at `m`, and hence the block, depends only on
+  `m mod t`.
+
+### 2. The two structural theorems
+
+* **`jsp87_blockCompl_le_period`** — an eventually `t`-periodic digit string has
+  at most `t` distinct `n`-digit blocks among the positions `≥ M`.
+* **`jsp87_minimalPeriod_blocks_distinct`** — for a *least* eventual period `t`
+  and every `n ≥ t`, the `t` blocks at `M, …, M+t−1` are pairwise distinct, so
+  `p(n) = t` for all `n ≥ t`.  Together with the previous lemma: the complexity
+  *stabilises* at the minimal period.
+* `jsp87_blockCompl_total_le` — over all positions `N < K` the count is at most
+  `M + t`, i.e. the pre-period costs `M` blocks.
+
+### 3. The orbit bridge
+
+`jsp87_digit_eq_floorOf_fract`, **`jsp87_block_eq_floorOf_fract`**: the block at
+`M` is `⌊2^n · {2^M S}⌋`.  So a block is a function of the fractional part of
+the doubling orbit, and the count of distinct blocks is the count of orbit
+points actually visited.
+
+### 4. The flagship quantitative result
+
+**`jsp87_blockCompl_le_denominator`**: if `S = a/b` with `b > 0`, then for every
+`n` the binary expansion of `S` has at most `b` distinct `n`-digit blocks — the
+fractional parts of `2^N S` live in the finite set `{k/b : k < b}`.  A finite
+*computation* of the complexity is therefore a bound on the denominator.
+
+**`jsp87Series_irrational_of_compl_gt_period`** (0 placeholders): unbounded
+subword complexity implies `Irrational jsp87Series`.
+
+### 5. `2048` certified digits, and the value `2025`
+
+* `jsp87Prefix2048`, `jsp87Prefix_2048`, `jsp87Series_floor_2048`,
+  `jsp87DigitBlock_zero_2048` — **the first `2048` binary digits of the series,
+  certified in Lean** as a single 616-digit natural number (round 71 certified
+  `64`; the same window machinery, `jsp87Series_floor_eq`, runs unchanged).
+* `jsp87Subword`, **`jsp87_subword_eq_block`** — the *prefix–block identity*:
+  if `⌊2^L S⌋ = X` and `N + n ≤ L` then `B N n = (X / 2^{L−N−n}) mod 2^n`.
+  Every block of the expansion is readable off the certified prefix by one
+  division, with no new object.
+* **`p(20) = 2025`** and **`p(24) = 2025`** (`jsp87Compl_20`, `jsp87Compl_24`,
+  `jsp87BlockCompl_20`, `jsp87DigitBlockCompl_20`), machine-checked.
+* **`jsp87Series_rational_imp_denominator_ge_2025`**: a hypothetical rational
+  value of `S` has denominator `≥ 2025` — round 53 gave `≥ 8`, round 71 `≥ 512`.
+
+### Gate status
+
+`harness/score.py problems/JSP-000087 --strict-prize` (run
+`harness/runs/score-20261001-082649-567110.json`) reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 73, stated exactly
+
+> **`jsp87_digit_not_eventuallyPeriodic`** — unchanged since round 41
+> (equivalently, by round 64, `jsp87Series_irrational_iff_fracCarry_notPeriodic`).
+
+Unbounded subword complexity is an *independent* aperiodicity criterion, proved
+here with 0 placeholders, but it is **not known unconditionally** for this
+series: ruling it out for every denominator `b` has the same arithmetic content
+as the uniform prime-`k`-tuples hypothesis of the published result
+(Pratt, arXiv:2409.15185), which is an assumption of that paper and not of the
+catalog statement.  The remaining word-theoretic input is only about
+*extension* (Morse–Hedlund growth, right-special factors); see
+`policy.json → next_round_attack` for the four ranked continuations.
+
+### Round 73 — toolchain notes
+
+1. **There is no `Coe ℤ ℕ`.**  `(z : ℕ)` for `z : ℤ` does not elaborate; use
+   `Int.toNat` / the `Nat`-valued `jsp87BlockNat` together with
+   `jsp87_blockNat_cast`.
+2. `Nat.div_lt_div_of_lt` does not exist.  Signatures worth memorising:
+   `Nat.mul_add_div : m > 0 → (m * x + y) / m = x + y / m`;
+   `Nat.add_mul_div_left (x z) {y} : 0 < y → (x + y * z) / y = x / y + z`;
+   `Nat.div_eq_of_lt : a < b → a / b = 0`; `Nat.mod_self : n % n = 0`;
+   `Nat.add_mod`; `Nat.mul_mod`; `Nat.mod_eq_of_lt : a < b → a % b = a`.
+3. `Finset.card_congr`, `Finset.card_bij`, `Finset.card_image_iff` (in the
+   `Mathlib.Data.Finset.Card` form) and `Set.ncard_coe` do not exist here.
+   To move a cardinality between pointwise-equal image functions, use the double
+   subset plus `Finset.card_le_card` and `le_antisymm`.
+4. **Never pass `fun N => jsp87BlockNat N 20` to a congruence lemma.**  It
+   leaves `α, β, f, g, s` as metavariables; unifying them unfolds
+   `jsp87BlockNat`/`jsp87DigitBlock` (a sum of floors of `2^k S`) and hangs
+   past `maxRecDepth` and past the 200000-heartbeat limit.  State the expected
+   equation with a `have … :=` first, or annotate `(fun N : ℕ => …)`.
+5. `set_option maxHeartbeats 0 in` does **not** apply to a declaration carrying
+   a docstring ("unexpected token, expected lemma").  Put the unscoped
+   `set_option maxHeartbeats 0` *before* the docstring and restore the default
+   after the section.
+6. `exponentiation.threshold` warnings are silenced per declaration, attached to
+   the declaration whose *proof* triggers them.
+7. `omega` does not see through `Finset.mem_range`: extract
+   `Finset.mem_range.mp hN` before asking it for `N + 20 ≤ 2048`.
+8. `rw [h]` rewrites LHS-pattern → RHS.  To use a decomposition use `rw [heq]`;
+   to unfold `jsp87BlockNat 0 (N+n)` use `rw [hsplit]`.
+9. **A name collision with an older module is fatal at import time**: appending
+   `import JSPProblem.SubwordComplexity` failed with "environment already
+   contains `JSP87.jsp87OrbitNum` from `JSPProblem.OrbitArith`".  Check new
+   declaration names against `lean/JSPProblem/*.lean` before wiring the import
+   (the helper here became `jsp87RatOrbitNum`).
+10. For `2^(k + (L - k)) · S`, normalise the exponent
+    (`rw [Nat.add_sub_of_le hk] at h`) before matching telescoping lemmas.
