@@ -36,3 +36,4 @@ import JSPProblem.MorseHedlund
 import JSPProblem.FarDigits
 import JSPProblem.Multiplier
 import JSPProblem.BaseFamily
+import JSPProblem.LevelSets
