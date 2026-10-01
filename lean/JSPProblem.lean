@@ -35,3 +35,4 @@ import JSPProblem.Complexity
 import JSPProblem.MorseHedlund
 import JSPProblem.FarDigits
 import JSPProblem.Multiplier
+import JSPProblem.BaseFamily
