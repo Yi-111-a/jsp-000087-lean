@@ -40,3 +40,4 @@ import JSPProblem.LevelSets
 import JSPProblem.ResidueCarry
 import JSPProblem.ShiftRational
 import JSPProblem.CutPeriod
+import JSPProblem.AltSum

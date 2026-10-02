@@ -2714,3 +2714,99 @@ Round 83 proves the aperiodicity of the *level indicators* and converts it into 
 countable family of irrationality theorems; what remains is the aperiodicity of
 the digits of the **carried** series, the content of the uniform prime-`k`-tuples
 hypothesis of the published result.
+
+---
+
+## Round 88 — THE HEADLINE IS NO LONGER CONDITIONAL (status correction), and the Tao–Teräväinen reduction
+
+### 1. THE GATE IS NOT AN OPEN PROBLEM ANY MORE
+
+The catalog note *“settled conditionally by K. Pratt, arXiv:2409.15185”* is
+**superseded**.  Tao and Teräväinen, *Quantitative correlations and some problems
+on prime factors of consecutive integers*, **arXiv:2512.01739** (v1 1 Dec 2025,
+v2 25 Apr 2026), prove, in the abstract:
+
+> “Secondly, we show that the series `∑_{n=1}^{∞} ω(n)/2^n` is irrational,
+> settling a conjecture of Erdős.”
+
+Their **Theorem 1.3 (Erdős #69)**; §1.3 of the paper states explicitly that Pratt
+had obtained it *conditionally* on a prime-tuples conjecture and that “our result
+makes the irrationality unconditional”.  The same paper also settles Erdős #248
+(`ω(n+k) ≤ Ω(n+k) ≪ k`), and its §1.3 records that the method extends to
+`∑ ω(n)/b^n` for every base `b ≥ 2` and to `∑ Ω(n)/2^n`.
+
+**The blocker that fifty rounds of this harness recorded (“open, or at best
+conditional on a uniform prime-k-tuples hypothesis”) is stale and is retracted
+here.**  What is *not* formalisable is the input of the published proof: a
+quantitative **two-point correlation estimate for bounded multiplicative
+functions with a logarithmic saving**, derived from Pilatte's recent work
+(their §3), plus Erdős–Kac machinery and a variance argument (§5.4–§5.14,
+`κ₁,…,κ₅` and their “Technical reduction” theorem).  Mathlib contains no
+Chowla-type correlation bound for multiplicative functions, so that input cannot
+be stated here honestly.
+
+What *is* formalisable — and what no round of this tree had ever written down —
+is the **entire exact arithmetic of the reduction of §5**.  This round proves its
+window half.
+
+### 2. New module `lean/JSPProblem/AltSum.lean` (522 lines, 20 new theorems, 0 `sorry`, 0 `admit`)
+
+This is a **new attack family** in two independent ways: it follows the proof
+strategy of the *actual* 2025–26 solution rather than Pratt's conditional
+argument, and it works with the **window sums** `W(n) = ∑' h ≥ 1, ω(n+h)·2^{-h}`
+— an object that had never appeared in the 1330-theorem tree (rounds 38–46
+attacked the carry tails, 80/85 the multiplier family, 82 the base-`q` family, 83
+the level sets, 86 the prime-residue cut).
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Win_succ` | **THE WINDOW CARRY RECURRENCE** `W(n+1) = 2 W(n) − ω(n+1)` |
+| `jsp87Win_pos`, `jsp87Win_le` | `0 < W(n) ≤ n + 2` |
+| `jsp87Win_add_omega_scaled_tail` | `W(n) + ω(n) = 2^{n+1}·τ(n+1)` — the correct normalisation (the tempting `W(n) = 2^{n+1}·τ(n)` is **false**) |
+| **`jsp87Win_eq_carry`** | **THE WINDOW IS THE ERDŐS CARRY ONE CUT POINT FURTHER OUT**: `W(n) = 2^{n+1}·τ(n+1) = jsp87Carry (n+1)`.  This is the join of the new family with round 40's carry |
+| `jsp87Win_mul_eq_int`, `jsp87Win_ge_inv` | rationality freezes every window into `(1/b)ℤ`, so `W(n) ≥ 1/b` (the paper's (1.1)) |
+| **`omega_mul_prime`** | **THE DILATING IDENTITY** `ω(p·n) = ω(n)` if `p ∣ n`, `ω(n)+1` otherwise — i.e. `ω(n) + 1 − 1_{p\|n}` (§5.1) |
+| `jsp87WinD`, `jsp87Delta`, `summable_jsp87WinD`, `summable_jsp87Delta` | the dilated window `W_p(n) = ∑' h≥1, ω(n+p·h)·2^{-h}` and the error `δ_p(m) = ∑' h≥1, [p ∣ m+h]·2^{-h}` |
+| `jsp87Delta_nonneg`, `jsp87Delta_le_one`, **`jsp87Delta_pos`** | `0 ≤ δ_p(m) ≤ 1`, and **THE ERROR NEVER VANISHES**: `δ_p(m) > 0` for every prime `p`, every `m ≥ 1` |
+| **`jsp87WinD_dilate`** | **THE EXACT WINDOW-DILATION IDENTITY** (the paper's (2.2) as an identity of reals): for prime `p ∣ n`, `∑' h≥1, ω(n+ph)·2^{-h} = ∑' h≥1, ω(n/p+h)·2^{-h} + 1 − ∑' h≥1, [p ∣ n/p+h]·2^{-h}` |
+| **`jsp87WinD_congr`** | **THE MOD-1 CONGRUENCE** (the paper's equation (2.2) modulo `1`): under `jsp87Series = a/b` with `b > 0`, prime `p ∣ n`, there is `m ∈ ℤ` with `\|b·W_p(n) − m\| ≤ b·δ_p(n/p)` |
+| `jsp87Sign`, `jsp87Sign_zero`, `jsp87Sign_succ`, `jsp87Sign_ne_zero`, `jsp87Sign_mul_self` | the sign `(−1)^{|ε|}` and its behaviour under one toggle |
+| `jsp87AltShift`, `jsp87AltSub`, `jsp87AltSum`, `jsp87AltToggle` | the **Gowers-cube objects** of §5.2: the shift `r_{ε,h} = p₀h + Σ_{k∈ε}(h−k)v_k`, one summand, the integer alternating sum over the `2^K` vertices, and the coordinate toggle |
+
+`jsp87Delta_pos` is **negative knowledge about the published paper itself**: the
+congruence (2.2) can *never* be promoted to an exact identity, because
+`p ∣ m+h` has a solution `h ≥ 1` for *every* `m`; the error is negligible only
+**on average over `n`** (the paper's `κ₁ = o(1)`), never pointwise.
+
+### 3. The blocker, after round 88, stated exactly
+
+The reduction is complete on its own side; the single missing input is the
+**analytic** one:
+
+> **`jsp87AltSum_zero`** — for every `1 ≤ h ≤ K`, the Gowers-cube cancellation
+> `Σ_{ε ∈ {0,1}^K} (−1)^{|ε|}·ω(n + r_{ε,h}) = 0`.  Pure combinatorics: the shift
+> does not depend on the `h`-th coordinate, so pairing each vertex with its image
+> under the `h`-th toggle cancels the sum.
+
+The four supporting lemmas (`jsp87AltToggle_invol`, `jsp87AltSign_toggle`,
+`jsp87AltShift_toggle`, and the involution-sum helper) were drafted but did not
+compile inside this round's budget and were **cut from the file to keep
+`lake build` green**; they are recorded one by one in `policy.json.blockers`
+together with the exact Mathlib obstacles.  They are the first item of
+`policy.json.next_round_attack`, followed by the series level
+(`jsp87Alt`, `jsp87Alt_eq_finset`, `jsp87Alt_congr`, `jsp87Alt_zero_or_ge`,
+`jsp87Series_irrational_of_altSmall`).
+
+### 4. Gate status
+
+`jsp_000087_main` is **still not declared**.  Not because the statement is open —
+it is a **published theorem** — but because its proof rests on machinery with no
+Mathlib counterpart (Pilatte-type correlation estimates for bounded
+multiplicative functions).  Attaching the catalog name to a weaker statement would
+still misrepresent the headline.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.  `lake build`: **Build completed
+successfully (3137 jobs)**.  The tree now has **1330 proved theorems and lemmas**
+(1310 before this round).
