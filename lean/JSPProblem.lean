@@ -42,3 +42,4 @@ import JSPProblem.ShiftRational
 import JSPProblem.CutPeriod
 import JSPProblem.AltSum
 import JSPProblem.CubeSplit
+import JSPProblem.DeltaExact
