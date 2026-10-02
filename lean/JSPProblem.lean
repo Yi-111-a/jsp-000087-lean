@@ -39,3 +39,4 @@ import JSPProblem.BaseFamily
 import JSPProblem.LevelSets
 import JSPProblem.ResidueCarry
 import JSPProblem.ShiftRational
+import JSPProblem.CutPeriod
