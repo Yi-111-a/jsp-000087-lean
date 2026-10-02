@@ -37,3 +37,4 @@ import JSPProblem.FarDigits
 import JSPProblem.Multiplier
 import JSPProblem.BaseFamily
 import JSPProblem.LevelSets
+import JSPProblem.ResidueCarry
