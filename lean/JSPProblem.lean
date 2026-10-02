@@ -43,3 +43,4 @@ import JSPProblem.CutPeriod
 import JSPProblem.AltSum
 import JSPProblem.CubeSplit
 import JSPProblem.DeltaExact
+import JSPProblem.DeltaMass

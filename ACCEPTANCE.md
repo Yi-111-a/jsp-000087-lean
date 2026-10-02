@@ -2981,3 +2981,120 @@ two remaining ingredients are therefore (i) the exact geometric-series form of
 the error `δ_p(m) = 2^{−(p−m)}/(1 − 2^{−p})` for `1 ≤ m < p`, and (ii) the
 mod-1 congruence at *cube* level for `W_p`.  Both are recorded in
 `policy.json` as `next_round_attack` items 2 and 3.
+
+---
+
+## Round 93 — the period mass of `δ_p`, and the quantisation threshold
+
+New module `lean/JSPProblem/DeltaMass.lean` (792 lines, **41 new theorems and
+lemmas**, 0 new definitions, 0 `sorry`, 0 `admit`; **1443 proved theorems and
+lemmas** in the tree at the `^(theorem|lemma)` level — 1402 before this round —
+`lake build` clean, 3140 jobs).
+
+Round 92 computed the error term of §5.1 of Tao–Teräväinen exactly,
+`δ_p(m) = 2^(p−1−c)/(2^p−1)`, but said nothing about its **average**.  The
+published proof never uses `δ_p` pointwise; it uses that the error is negligible
+*on average over `n`* (their `κ₁ = o(1)`).  This round supplies that average in
+closed form, and then computes exactly when the `mod 1` congruence (2.2)
+degenerates into an equality.
+
+### 1. THE PERIOD MASS
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_exists_dvd_add` | among `j < p` exactly one satisfies `p ∣ b + j` |
+| `jsp87_count_dvd_add` | the cardinality form |
+| `jsp87_sum_div_add` | `∑_{j<p} [p ∣ b+j] · w = w` for any real `w` |
+| `jsp87_two_pow_neg_sum` | `∑_{k<p} 2^{-(k+1)} = 1 − 2^{-p}` |
+| `jsp87_delta_indicator_sum` | the indicator sum over a residue block is the single weight |
+| **`jsp87Delta_sum_period`** | **`∑_{j<p} δ_p(m+j) = 1`** for every `m`, `p ≥ 1` |
+| **`jsp87Delta_mean_period`** | **the mean of `δ_p` over a period is exactly `1/p`** |
+| `jsp87Delta_add_mul` | `δ_p(m + q·p) = δ_p(m)` |
+| `jsp87Delta_sum_period_mul` | `∑_{j<pq} δ_p(m+j) = q` |
+| `jsp87Delta_mean_period_mul` | the mean over `q` periods is still `1/p` |
+
+So the error term of §5.1 has **mass exactly `1` on every period**.  This is the
+exact content of the paper's `κ₁ = o(1)`, and it is what makes the average in
+their §5.3 legitimate.
+
+### 2. THE WINDOW BUDGET
+
+`jsp87Delta_sum_range_split` (`∑_{j<L} δ_p(m+j) = ⌊L/p⌋ + ∑_{j<L mod p} δ_p(m+j)`),
+`jsp87Delta_sum_range_le`, `_ge`, `_lt` (the average budget is strictly below `1`
+for `p ≥ 2`).
+
+### 3. THE MEAN DEFECT IS `b/p` — AND THAT IS WHAT MAKES THE PROOF WORK
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_two_pow_lt_mer` | `2^(p−1) < 2^p − 1` for `p ≥ 2` |
+| **`jsp87_defect_lt`** | **`0 < b·δ_p(m) < b`** for `p ≥ 2`, `b ≥ 1` |
+| `jsp87_defect_ne_zero` | the defect is never `0` |
+| **`jsp87_defect_period_sum`** | `∑_{j<p} b·δ_p(m+j) = b` |
+| `jsp87_defect_mean` | the mean defect over a period is `b/p` |
+| **`jsp87_defect_mean_lt_one`** | **the mean defect is `< 1` as soon as `p > b`** |
+
+Each individual defect exceeds `b/(2^p−1)`, so the `mod 1` congruence can never be
+killed pointwise; but its **mean** is `b/p`, which is `< 1` for `p > b`.  This is
+the arithmetic heart of §5.3 of the paper, machine-checked.
+
+### 4. THE QUANTISATION THRESHOLD
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_mer_odd` | `2^p − 1` is odd |
+| `jsp87_mer_coprime_pow` | `2^p − 1` is coprime to every power of `2` |
+| `jsp87_defect_mul_eq_int_of_dvd_mer` | `(2^p−1) ∣ b ⟹ b·δ_p(m) ∈ ℤ` |
+| **`jsp87_defect_integral_iff`** | **`b·δ_p(m) ∈ ℤ ⟺ (2^p−1) ∣ b`**, for every `m`, `p ≥ 2` — no rationality hypothesis |
+| `jsp87WinD_defect_exact` | the `mod 1` defect of (2.2), with the integer determined explicitly |
+| **`jsp87WinD_mul_eq_int_iff`** | **under rationality, `b·W_p(n) ∈ ℤ ⟺ (2^p−1) ∣ b`** |
+| `jsp87_mer_gt_of_large_prime` | `b < p ⟹ b < 2^p − 1` |
+| **`jsp87_defect_not_int_of_large_prime`** | **`b < p ⟹ b·δ_p(m) ∉ ℤ`** — no rationality needed |
+| `jsp87WinD_not_mul_eq_int_of_large_prime` | `p > b ⟹ b·W_p(n) ∉ ℤ` under rationality |
+| **`jsp87WinD_mul_eq_int_imp_le`** | **`b·W_p(n) ∈ ℤ ⟹ p ≤ b`** |
+| `jsp87_dilation_dichotomy` | either it quantises with `p ≤ b`, or it does not quantise |
+| `jsp87_defect_int_two`, `jsp87_defect_not_int_five_of_coprime` | machine-checked instances at `p = 2, 5` |
+
+So the `mod 1` congruence (2.2) becomes an *equality* at exactly those dilations
+whose Mersenne number divides the denominator, and only at primes `p ≤ b`.  This
+is the join of the window side (rounds 88–93) and the Lambert side (rounds
+37–40, 84): `2^p − 1` is the same Mersenne number in both.  Round 39's
+`dvd_lambert_den_prime_gt` (`b ∣ 2^p−1 ⟹ p < b`) pins `p` from the other side.
+
+### Negative knowledge recorded this round
+
+* An earlier draft of this round asserted the **false** statement
+  `¬ ∃ d ∈ ℤ, b·W_p(n) = d` for every prime `p`.  It was **deleted, not
+  weakened**: `b·δ_p(m) ∈ (0, b) ∩ ℤ` is perfectly consistent — for `b = 3`,
+  `p = 2` one has `δ_2 ≡ 1/3, 2/3 (mod 1)`, so `3·δ_2 ∈ {1, 2}`, and indeed
+  `3 ∣ 2^2 − 1`.  The honest statement is the **iff** of `jsp87WinD_mul_eq_int_iff`
+  and the bound `p ≤ b` of `jsp87WinD_mul_eq_int_imp_le`.
+* The defect is never `0`, but it is never `< 1` in general either; the correct
+  control is the **average**, not the pointwise value.
+* Rationality does **not** imply `Nat.Coprime b (2^p − 1)`; only the `⟺` and the
+  bound `p ≤ b` are proved.  Do not upgrade.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is a published theorem (Tao–Teräväinen, arXiv:2512.01739, Thm 1.3,
+unconditional) but its analytic core — Gowers-norm smallness of the window
+function, obtained from a Pilatte-type two-point correlation bound — has no
+Mathlib counterpart and cannot honestly be assumed here.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 93, stated exactly
+
+> **`hsmall`** — for every positive integer `b`, every `m` and every `base`,
+> `|W(base) − W(base+m)| < 1/b` (Gowers-norm smallness of the window function
+> `W(n) = ∑' h ≥ 1, ω(n+h) 2^{-h}`).
+
+Round 93 closes the *arithmetic* side of the paper's §5.3 completely: the error
+term has period mass exactly `1`, its mean under a hypothetical denominator is
+exactly `b/p`, and the `mod 1` defect is an integer exactly at the dilations whose
+Mersenne number divides `b` — at most those with `p ≤ b`.  What remains is the
+single analytic hypothesis `(hsmall)`, with `jsp87Series_irrational_of_FCube_one_small`
+(`JSPProblem/CubeSplit.lean`) turning it into the headline.
