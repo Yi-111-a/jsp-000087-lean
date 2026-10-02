@@ -45,3 +45,4 @@ import JSPProblem.CubeSplit
 import JSPProblem.DeltaExact
 import JSPProblem.DeltaMass
 import JSPProblem.LambertTail
+import JSPProblem.StrideSplit

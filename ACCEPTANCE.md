@@ -3198,3 +3198,118 @@ multiple of `1/b`.  The one analytic input is unchanged:
 > remainder-weighted prime-Lambert sums `jsp87RemSum N` cannot *all* be multiples of
 > `1/b`.  `jsp87RemTerm_lt_one` shows this must involve infinitely many primes at
 > once — precisely the content of the Pilatte correlation estimate.
+
+
+---
+
+## Round 98 — THE STRIDE (DILATION) DECOMPOSITION OF THE ERDŐS SERIES
+
+New module `lean/JSPProblem/StrideSplit.lean` (690 lines, **28 new public theorems and
+lemmas** + 2 private helpers + 2 new definitions, 0 `sorry`, 0 `admit`; no new linter
+warnings beyond the tree-wide `if_pos`/`if_neg` deprecations; **1508 proved theorems and
+lemmas** in the tree at the `^(theorem|lemma)` level — 1480 before this round —
+`lake build` clean at **3142 jobs**).
+
+This is a **new attack family**.  Rounds 88–97 attacked the *window/cube* family (Tao–Teräväinen
+cubes, dilations of the windows), the *Lambert tail* family (the remainder-weighted
+prime-Lambert series at an arbitrary cut point) and the *base family* (the Erdős series at
+every base `q`, but only ever the **whole** series at each base).  **No round had ever split a
+series by the residue class of its summation index**, nor compared a series to itself at the
+coarser base `q^p`.
+
+### 1. THE ARITHMETIC CORE
+
+| Theorem | Statement |
+| --- | --- |
+| `omega_mul_prime_add` | **for every prime `p` and every `m`**, `ω (p·m) = ω m + (if p ∣ m then 0 else 1)` — the generalisation of round 96's `omega_two_mul` (which is the case `p = 2`) |
+| `omega_mul_prime_of_dvd`, `omega_mul_prime_of_not_dvd` | the two halves, as equations |
+| **`omega_mul_pow_prime`** | **`ω (p^k · m) = ω m + (if p ∣ m then 0 else 1)` for `k ≥ 1`**: a whole prime *power* is a **single** new prime factor, however large the power |
+| `omega_two_pow_mul` | `ω (2^k · m) = ω m + [m Odd]` |
+| `omega_mul_le_add` | dilation is subadditive in `ω`: `ω (m·p) ≤ ω m + ω p` |
+| `omega_le`, `omega_ge_one` | `ω n ≤ n`, `1 ≤ ω n` for `n ≥ 2` |
+
+### 2. THE REINDEXING MACHINERY (the technical core)
+
+| Theorem | Statement |
+| --- | --- |
+| **`hasSum_stride_gen`** | **for every nonnegative summable `f` and every `p ≥ 1`, `∑' n, [p ∣ n] f n = ∑' k, f (p·k)`** |
+| `tsum_stride_gen` | the same, in evaluated form |
+
+Rounds 92–96 recorded "reindexing a `tsum` along an arithmetic progression" as the obstacle
+that cost those rounds their budget.  This is the workaround: the truncation at `n < p·M` is a
+**cofinal subsequence** of the partial sums (`Filter.tendsto_atTop_atTop`), the finite
+reindexing is an explicit `Finset.sum_bij` with `Nat.mul_left_cancel` for injectivity and
+`Nat.mul_lt_mul_of_pos_left` for surjectivity, and the value is transported by
+`hasSum_iff_tendsto_nat_of_nonneg` + `hasSum_of_subseq_of_summable`.  **No assumption on `f 0`
+is needed**, because `0 ∣ 0` matches the index `n = 0` on both sides.
+
+### 3. THE STRIDE SUBSUM AND ITS CLOSED FORM
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87StrideTerm`, `jsp87Stride` (defs) | `jsp87Stride p q = ∑' n, [p ∣ n] ω n / q^(n+1)`, the `p`-divisible subsum of the Erdős series at base `q` |
+| `jsp87Stride_zero`, `jsp87Stride_one` | **`jsp87Stride 0 q = 0`** and **`jsp87Stride 1 q = jsp87Base q`**: the stride family interpolates between nothing and everything (`0` divides only the index `0`) |
+| `jsp87Stride_two` | **`jsp87Stride 2 q = jsp87Even q` (`rfl`)**: the "even part" of round 100 (`BaseFamily`) *is* the stride-`2` subsum |
+| `jsp87Stride_le_base`, `jsp87Stride_pos` | every stride subsum lies in `[0, jsp87Base q]`, and is strictly positive for `p ≥ 1` |
+| `tsum_geom_stride` | `∑' k, 1 / q^(p·k+1) = q^(p-1) / (q^p - 1)`, the geometric sum **along a stride**, in closed form |
+| **`jsp87Stride_prime_eq_base`** (FLAGSHIP) | **for `q ≥ 2` and every PRIME `p`: `∑' n, [p ∣ n] ω n / q^(n+1) = q^(p-1) · jsp87Base (q^p) + q^(p-1)/(q^p-1) − q^(p^2-1)/(q^(p^2)-1)`** |
+| **`jsp87Stride_two_two`** | **`jsp87Even 2 = 2 · jsp87Base 4 + 2/15`** — the even part of the binary Erdős series is **twice the Erdős series in base `4`, up to the rational `2/15`** |
+
+In words: **the `p`-divisible part of the Erdős series at base `q` is the *same* series at the
+coarser base `q^p`, up to an explicit rational.**  The two rational corrections are (i) the
+geometric sum along the stride and (ii) the geometric sum along the stride *squared*, which is
+exactly what the indicator `[p ∣ k]` in the correction term `1/q^(p·k+1)` costs.
+
+### 4. WHAT THE STRIDE IDENTITY TRANSFERS
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Even_two_rat_of_base_four_rat` | if `S(4) = c/d` with `d > 0`, then `jsp87Even 2 = (30c + 2d) / (15d)` |
+| `jsp87Base_four_of_even_two`, `jsp87Base_four_eq_of_even_two_rat` | `S(4) = (jsp87Even 2 − 2/15)/2` |
+| `jsp87Base_four_rat_of_even_two_rat` | if `jsp87Even 2 = a/b` with `b > 0`, then `S(4) = (15a − 2b) / (30b)` |
+| `jsp87Stride_two_two_lt_base` | the even part is strictly below the series (`1/16 ≤ jsp87Odd 2`) |
+| `jsp87Stride_prime_pos_lt_base` | for every prime stride, `0 < jsp87Stride p 2 ≤ jsp87Base 2` |
+
+So **rationality of the Erdős series at base `2` and rationality of the Erdős series at base
+`4` are the same statement** (via `S(2) = jsp87Even 2 + jsp87Odd 2` and the rationality of the
+odd part), and the denominators are explicit.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline irrationality is a
+published *unconditional* theorem (Tao–Teräväinen, arXiv:2512.01739, Thm 1.3), but its
+analytic core — a Pilatte-type two-point correlation estimate for multiplicative functions —
+has no Mathlib counterpart and cannot honestly be assumed here.  Attaching the catalog name to
+any weaker statement would misrepresent the headline.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true, sorry=0,
+admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### Negative knowledge recorded this round
+
+* **`jsp87Stride 0 q = 0`, not `jsp87Base q`**: an earlier draft of this round asserted the
+  stride-`0` subsum is the whole series and it was **deleted, not weakened** — `0` divides only
+  the index `0`.
+* **The flagship needs `p` PRIME**: `ω (p·m) = ω m + 1 − [p ∣ m]` is false for composite `p`
+  (`ω (6·1) = 2 > ω 1 + 1`), so the hypothesis was tightened rather than the statement
+  weakened.
+* The direct reindexing `∑' k, f (p·k) = ∑' n, [1 ≤ n, p ∣ n] f n` needs `f 0 = 0` (the index
+  `n = 0` is a multiple of `p` but is matched by `k = 0` on the right only in that case).  The
+  unguarded form holds for every nonneg summable `f` and is what `hasSum_stride_gen` proves.
+
+### The blocker, after round 98, stated exactly
+
+Unchanged: the aperiodicity of the binary digits of `jsp87Series`
+(`jsp87_digit_not_eventuallyPeriodic`), i.e. the arithmetic content of the uniform
+prime-`k`-tuples hypothesis of Pratt's published result (arXiv:2409.15185).
+
+New, and specific to this round: the stride family relates `S(q)` to `S(q^p)` **as values**,
+but `jsp87Base (q^p)` is a *different real* whose own binary digits have never been examined,
+and nothing yet pushes the **rationality hypothesis** `S(2) = a/b` through the digit machinery
+of rounds 38–64.  `policy.json` records three concrete next steps: (1) the carry-level
+analogue of the flagship (the base-`4` carry and the two half-tails, sketched but dropped for
+budget), (2) iterating the rationality transfer to the base `2^(2^k)` series with the Mersenne
+denominators `2^(2^k) − 1` of round 39, (3) the general residue-class decomposition
+`jsp87Residue r p q` with `jsp87Base q = ∑_{r<p} jsp87Residue r p q`, where the odd residues may
+admit a second self-similarity via `omega_mul_of_coprime`.
