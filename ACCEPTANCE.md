@@ -3098,3 +3098,103 @@ exactly `b/p`, and the `mod 1` defect is an integer exactly at the dilations who
 Mersenne number divides `b` — at most those with `p ≤ b`.  What remains is the
 single analytic hypothesis `(hsmall)`, with `jsp87Series_irrational_of_FCube_one_small`
 (`JSPProblem/CubeSplit.lean`) turning it into the headline.
+
+
+---
+
+## Round 96 — THE `ω`-TAIL AT AN ARBITRARY CUT POINT IS A PRIME-LAMBERT SERIES
+
+New module `lean/JSPProblem/LambertTail.lean` (863 lines, **41 new public
+theorems and 4 new definitions**, 0 `sorry`, 0 `admit`; **1480 proved theorems
+and lemmas** in the tree at the `^(theorem|lemma)` level — 1443 before this round —
+`lake build` clean at **3141 jobs**).
+
+This round **abandons the window/cube family of rounds 88–95** and returns to the
+original reduction.  Round 90 itself recorded that the Tao–Teräväinen cubes vanish
+for *every* function, and round 91's flagship criterion rests on `(hsmall)`, which
+is **false** (it forces the window `W` to be constant, while `jsp87Carry_succ`
+gives `W (n+1) = 2 W n - ω (n+1)` with `ω` unbounded).  Rounds 94 and 95 were idle.
+
+`JSPProblem/LambertIdentity.lean` (round 40) reduced the Erdős series to the
+prime-restricted Lambert series — but **only at the cut point `N = 0`**:
+
+`∑' n, ω(n) / 2^(n+1) = ∑' p, 1 / (2^p - 1)`.
+
+No round had ever asked what the Lambert side looks like at an arbitrary cut point,
+which is exactly what an Erdős-style argument needs, because such an argument
+*moves* the cut point and compares two of them.  This round closes that gap.
+
+### 1. THE FLAGSHIP: THE REMAINDER-WEIGHTED PRIME-LAMBERT SUM
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87Tail_eq_remSum`** | **for `1 ≤ N`, `2^N · τ N = jsp87RemSum N`**, i.e. the `ω`-tail at the cut point `N` is `∑' p prime, 2^(e N p) / (2^p - 1)` with `e N p = if p ∣ N then p - 1 else N mod p - 1` |
+| `jsp87RemExp` (def) | the residue exponent `e N p` |
+| `jsp87RemExp_le`, `jsp87RemExp_lt` | the exponent never reaches `p` |
+| **`jsp87RemExp_of_lt`** | **above the cut point the residue exponent is the constant `N - 1`** |
+| `jsp87RemExp_dvd` | a prime dividing the cut point has exponent `p - 1` |
+
+In words: **each Lambert term `1/(2^p - 1)` is raised to the power `2^(N mod p)`**,
+the weight recording the position of the first multiple of `p` at or after the cut
+point.
+
+### 2. THE SINGLE-PRIME CLOSED FORM — no reindexing over an AP
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87PrimeTail` (def) | `∑' k, [p ∣ N + k] · 2^-(k+1)` |
+| **`jsp87PrimeTail_eq`** | **`= 2^(e N p) / (2^p - 1)`** |
+| `jsp87PrimeTail_succ` | the first-order recurrence (from `Summable.sum_add_tsum_nat_add`, exactly as `jsp87Tail_succ`) |
+| `jsp87PrimeTail_add` | a single-prime tail is `p`-**periodic in the cut point** |
+| `jsp87PrimeTail_iter`, `jsp87PrimeTail_split` | the tail splits after one full period |
+| `jsp87_dvd_add_index` | the unique `j < p` with `p ∣ b + j` is `p - b mod p` |
+| `jsp87_mul_lt_two` | a positive multiple of `p` below `2p` is `p` |
+
+Rounds 92–93 recorded that reindexing a `tsum` along an arithmetic progression is
+the obstacle that cost those rounds their budget.  This round deliberately avoids
+it: the recurrence plus the `p`-periodicity closes a linear equation whose
+right-hand side is a *finite* sum over `j < p`, and the uniqueness of that finite
+sum was already in the tree (`jsp87_exists_dvd_add`, `JSPProblem/DeltaMass.lean`).
+
+### 3. THE DOUBLE SUM AND THE SMALL/LARGE SPLIT
+
+| Theorem | Statement |
+| --- | --- |
+| `lamRemF` (def), `tsum_lamRemF_snd`, `tsum_lamRemF_fst` | the row and the column of the double sum over `(k, p)` |
+| `tsum_lamRemF_swap`, `tsum_lamRemF_eq` | the swap and the evaluation of the double sum |
+| `jsp87RemSumSml`, `jsp87RemSumBig`, `jsp87RemSum` (defs) | the split of the remainder-weighted sum at the cut point |
+| `jsp87RemSum_eq_tsumBig` | the large-prime half is `2^(N-1)` times a *plain* Lambert tail |
+| `jsp87RemSum_eq_tsum` | the full split |
+| `jsp87RemSumSml_zero` | the cut point `0` has no small-prime part |
+
+### 4. THE RATIONALITY TRANSFER, ON THE LAMBERT SIDE
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87RemTerm_pos`, **`jsp87RemTerm_lt_one`** | **every prime term lies strictly in `(0, 1)`** — a single prime can never detect a denominator |
+| **`jsp87Series_rational_imp_remSum_int`** | **if `jsp87Series = a/b` with `b > 0`, then `b · jsp87RemSum N ∈ ℤ` for every `1 ≤ N`** — the first statement putting the Diophantine obstruction of the `ω`-side and the Lambert side of round 40 into the same real number |
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is a published theorem (Tao–Teräväinen, arXiv:2512.01739 Thm 1.3,
+unconditional) but its analytic core — a Pilatte-type two-point correlation bound
+for multiplicative functions — has no Mathlib counterpart and cannot honestly be
+assumed here.  Attaching the catalog name to any weaker statement would
+misrepresent the headline.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 96, stated exactly
+
+Everything combinatorial and Diophantine on **both** sides of the reduction is now
+formalised, at *every* cut point: `2^N · τ N` is simultaneously the `ω`-tail, the
+prime-restricted remainder-weighted Lambert series, and (under rationality) a
+multiple of `1/b`.  The one analytic input is unchanged:
+
+> **`hsmall`-free corollary needed**: for every candidate denominator `b`, the
+> remainder-weighted prime-Lambert sums `jsp87RemSum N` cannot *all* be multiples of
+> `1/b`.  `jsp87RemTerm_lt_one` shows this must involve infinitely many primes at
+> once — precisely the content of the Pilatte correlation estimate.
