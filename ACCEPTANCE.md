@@ -2810,3 +2810,75 @@ sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
 missing_theorems=["jsp_000087_main"]`.  `lake build`: **Build completed
 successfully (3137 jobs)**.  The tree now has **1330 proved theorems and lemmas**
 (1310 before this round).
+
+---
+
+## Round 90 — THE GOWERS-CUBE CANCELLATION, COMPLETED (Tao–Teräväinen §5.2)
+
+Round 88 left the cube of §5.2 as four *definitions* (`jsp87Sign`, `jsp87AltShift`,
+`jsp87AltSub`, `jsp87AltSum`, `jsp87AltToggle`) and four drafted-but-cut lemmas.
+**This round proves the combinatorial heart of the published reduction**: the
+`2^K`-term alternating sum over the cube of `ω` **vanishes identically**, and it
+does so for *every* integer- and real-valued function of the cut point.  The
+cancellation is not an estimate — it is exact, unconditional and needs no
+analysis at all.
+
+### 1. Why the cube cancels (the mechanism)
+
+The shift of §5.2 is `r_{ε,h} = p₀·h + Σ_{k∈ε}(h−k)·v_k`.  Its coefficient at
+the `h`-th coordinate is `(h − h) = 0`, so `r_{ε,h}` is **independent of `ε_h`**:
+the cube is *degenerate* in its `h`-th direction.  Flipping `ε_h` therefore leaves
+the argument of `ω` fixed and reverses the sign, and the pairing
+`ε ↔ ε ⊕ e_h` kills all `2^K` terms.
+
+### 2. New results (21 public theorems, 5 new defs, 1 private helper, 0 `sorry`)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87AltToggle_invol` | the toggle is its own inverse |
+| `jsp87AltSign_toggle` | **THE SIGN REVERSAL** `(−1)^{|s Δ {j}|} = −(−1)^{|s|}` |
+| `jsp87AltShift_toggle` | **THE BLIND SPOT**: `j.val + 1 = h → r_{ε Δ {j},h} = r_{ε,h}` |
+| `jsp87AltShift_edge` | **THE EDGE LENGTH** `r_{ε∪{j}} − r_ε = (h − (j+1))·v_j` |
+| `jsp87AltShift_edge_zero_iff` | **AN EDGE IS BLANK IFF `v_j = 0` OR IT IS THE `h`-TH DIRECTION** — the exact place where the analytic input must enter |
+| `jsp87_cube_invariance` | the uniform measure on the `2^K` vertices is invariant under a toggle |
+| `jsp87_cube_cancel` | **THE INVOLUTION–SUM**: any function odd under one toggle sums to `0` |
+| **`jsp87AltSumF_zero`** | **THE FLAGSHIP**: `Σ_ε (−1)^{|ε|}·f(n + r_{ε,h}) = 0` for **every** `f : ℕ → ℤ`, every `K`, every `n`, `p₀`, and every level `1 ≤ h ≤ K` |
+| **`jsp87AltSum_zero`** | the same for `f = ω`: `jsp87AltSum v p₀ n h = 0` |
+| `jsp87AltSum_zero_all` | a single `n`, `p₀` cancels at **every level** `h ∈ [1,K]` at once |
+| `jsp87AltSum_omega` | **THE MASS BALANCE OF THE CUBE**: the total `ω`-mass on the even faces equals that on the odd faces |
+| `jsp87AltSumF_eq_add` | **THE FACE SPLIT**: the alternating sum is (even face mass) − (odd face mass) |
+| `jsp87AltSumF_le_mass` | the cube sum is bounded by the total `f`-mass of the `2^K` vertices |
+| `jsp87AltEven`, `jsp87AltOdd`, `jsp87AltEven_union_odd` | the two faces, and their partition of the cube |
+| `jsp87AltSumR`, `jsp87_cube_cancelR`, `jsp87AltSumR_zero` | the same cancellation in `ℝ`, for real-valued objects of the cut point |
+| **`jsp87AltWinD_zero`** | **the `2^K` alternating sum of the paper's dilated windows `W_p` is exactly `0`** |
+
+`jsp87AltSumF` is the *general* alternating sum (any integer-valued `f`), and
+`jsp87AltSum v p₀ n h = jsp87AltSumF ω v p₀ n h` by `rfl`; `jsp87AltSumR` is its
+real-valued counterpart.  `jsp87Omega` is `ω` read as a `ℕ → ℤ` function (the
+identifier `omega` is taken by the tactic inside `AltSum.lean`).
+
+### 3. What this does and does not do
+
+**Does**: closes the *combinatorial* half of the Tao–Teräväinen reduction that
+fifty-two rounds of this tree had left as prose.  It also delivers **negative
+knowledge about the method itself**: the cube sum is `0` for *every* function, so
+the cancellation can never contradict rationality on its own; what one needs is a
+**lower bound on a cube whose every direction is non-degenerate** (`v_j ≠ 0`), and
+`jsp87AltShift_edge_zero_iff` pins down exactly which cubes those are.
+
+**Does not**: `jsp_000087_main` remains undeclared.  Its status is unchanged from
+round 88 — the statement is a *published theorem* (Tao–Teräväinen,
+arXiv:2512.01739, Theorem 1.3), but its proof needs the Pilatte-type
+two-point correlation estimate for multiplicative functions (§3 of that paper),
+which has no Mathlib counterpart; attaching the catalog name to a weaker
+statement would misrepresent the headline.
+
+### 4. Gate status
+
+`lake build`: **Build completed successfully (3137 jobs)**.
+`harness/score.py problems/JSP-000087 --strict-prize`: `build_ok=true, sorry=0,
+admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+The tree has **1349 public** theorems and lemmas (1328 before this round) plus 157
+private helpers.  The only warnings `AltSum.lean` emits are the
+`if_pos`/`if_neg` deprecation notices the rest of the tree already emits.

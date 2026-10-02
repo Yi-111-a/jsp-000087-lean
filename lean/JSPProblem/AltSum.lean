@@ -1,5 +1,8 @@
 /-
 # JSP-000087, round 88 — THE TAO–TERÄVÄINEN ALTERNATING-SUM REDUCTION (§5)
+# JSP-000087, round 90 — the GOWERS CUBE of §5.2 is now PROVED to cancel
+#   (`jsp87AltSumF_zero`, `jsp87AltSum_zero`, `jsp87AltWinD_zero`); see the
+#   section `THE GOWERS-CUBE CANCELLATION` below.
 
 ## Status of the headline — this supersedes rounds 37–87
 
@@ -518,5 +521,396 @@ def jsp87AltSum {K : ℕ} (v : Fin K → ℤ) (p0 n h : ℕ) : ℤ :=
 /-- Toggling the `j`-th coordinate of the cube. -/
 def jsp87AltToggle {K : ℕ} (j : Fin K) (s : Finset (Fin K)) : Finset (Fin K) :=
   if j ∈ s then s.erase j else insert j s
+
+/-! ## §5  THE GOWERS-CUBE CANCELLATION (the combinatorics of Tao–Teräväinen §5.2)
+
+The shift `r_{ε,h} = p₀·h + Σ_{k∈ε}(h−k)·v_k` does **not** depend on the
+`h`-th coordinate `ε_h`: its coefficient is `(h − h) = 0`.  Hence pairing every
+vertex `ε` of the cube with the vertex obtained by flipping `ε_h` leaves the
+argument of `ω` unchanged and reverses the sign, and the `2^K`-term alternating
+sum **vanishes identically**.  This is the combinatorial heart of the reduction,
+and this section proves it, together with the exact description of *which*
+edges of the cube are degenerate. -/
+
+/-- `ω` read as an integer-valued function, for the cube sums below (the
+name `omega` is taken by the tactic in this file). -/
+def jsp87Omega : ℕ → ℤ := fun m => omega m
+
+/-- `jsp87AltToggle` is its own inverse. -/
+theorem jsp87AltToggle_invol {K : ℕ} (j : Fin K) (s : Finset (Fin K)) :
+    jsp87AltToggle j (jsp87AltToggle j s) = s := by
+  unfold jsp87AltToggle
+  by_cases hj : j ∈ s
+  · rw [if_pos hj,
+      if_neg (show j ∉ s.erase j by
+        intro hmem; rw [Finset.mem_erase] at hmem; exact hmem.1 rfl)]
+    exact Finset.insert_erase hj
+  · rw [if_neg hj, if_pos (Finset.mem_insert_self j s)]
+    exact Finset.erase_insert hj
+
+/-- Toggling is a bijection of the vertex set onto itself. -/
+theorem jsp87AltToggle_mem_univ {K : ℕ} (j : Fin K) (s : Finset (Fin K)) :
+    jsp87AltToggle j s ∈ (Finset.univ : Finset (Finset (Fin K))) :=
+  Finset.mem_univ _
+
+/-- **THE SIGN REVERSAL.**  Flipping one coordinate of a vertex reverses its
+sign `(-1)^{|s|}`. -/
+theorem jsp87AltSign_toggle {K : ℕ} (j : Fin K) (s : Finset (Fin K)) :
+    jsp87Sign (jsp87AltToggle j s).card = - jsp87Sign s.card := by
+  by_cases hj : j ∈ s
+  · rw [jsp87AltToggle, if_pos hj]
+    have h2 : (s.erase j).card + 1 = s.card := by
+      have hc := Finset.card_erase_of_mem hj
+      have h1 : 1 ≤ s.card := Finset.card_pos.mpr ⟨j, hj⟩
+      omega
+    have h3 : -(jsp87Sign (s.erase j).card) = jsp87Sign s.card := by
+      rw [← h2]
+      exact (jsp87Sign_succ _).symm
+    have hne := jsp87Sign_ne_zero (s.erase j).card
+    linarith
+  · rw [jsp87AltToggle, if_neg hj, Finset.card_insert_of_notMem hj]
+    exact jsp87Sign_succ s.card
+
+/-- **THE BLIND SPOT.**  The coefficient of `v_j` in the shift `r_{ε,h}` is
+`(h − (j+1))`, which vanishes for `j = h − 1`; so the shift is *independent of the
+`h`-th coordinate*, exactly as §5.2 requires. -/
+theorem jsp87AltShift_toggle {K : ℕ} (v : Fin K → ℤ) (p0 h : ℕ) (j : Fin K)
+    (s : Finset (Fin K)) (hj : j.val + 1 = h) :
+    jsp87AltShift v p0 h (jsp87AltToggle j s) = jsp87AltShift v p0 h s := by
+  have hz : ((h : ℤ) - (j.val + 1 : ℤ)) * v j = 0 := by
+    have h3 : (h : ℤ) = (j.val + 1 : ℤ) := by omega
+    rw [h3]
+    ring
+  by_cases hmem : j ∈ s
+  · rw [jsp87AltToggle, if_pos hmem]
+    have hs := Finset.sum_erase_add s (fun k : Fin K => ((h : ℤ) - (k.val + 1)) * v k)
+      hmem
+    rw [hz, add_zero] at hs
+    unfold jsp87AltShift
+    rw [hs]
+  · rw [jsp87AltToggle, if_neg hmem]
+    unfold jsp87AltShift
+    rw [Finset.sum_insert hmem, hz, zero_add]
+
+/-- **THE EDGE LENGTH.**  The `j`-th edge of the cube, out of the vertex `s`,
+has length `(h − (j+1))·v_j`. -/
+theorem jsp87AltShift_edge {K : ℕ} (v : Fin K → ℤ) (p0 h : ℕ) (j : Fin K)
+    (s : Finset (Fin K)) (hj : j ∉ s) :
+    jsp87AltShift v p0 h (insert j s) = jsp87AltShift v p0 h s
+      + ((h : ℤ) - (j.val + 1)) * v j := by
+  unfold jsp87AltShift
+  rw [Finset.sum_insert hj]
+  ring
+
+/-- **AN EDGE IS BLANK IFF ITS STEP VANISHES OR IT IS THE DEGENERATE
+DIRECTION.**  This is the precise statement of §5.2: the `h`-th direction of the
+cube is blank for *every* choice of the steps, while every other direction is
+blank exactly when its step is zero — and a non-vanishing step is where the
+analytic input of the published proof has to act. -/
+theorem jsp87AltShift_edge_zero_iff {K : ℕ} (v : Fin K → ℤ) (p0 h : ℕ) (j : Fin K)
+    (s : Finset (Fin K)) (hj : j ∉ s) :
+    jsp87AltShift v p0 h (insert j s) = jsp87AltShift v p0 h s
+      ↔ (v j = 0 ∨ h = j.val + 1) := by
+  constructor
+  · intro he
+    by_cases hc : h = j.val + 1
+    · exact Or.inr hc
+    · left
+      by_contra! hv
+      -- the edge is zero, so its length `((h : ℤ) - (j.val + 1)) * v j` vanishes
+      rw [jsp87AltShift_edge v p0 h j s hj] at he
+      have hL : ((h : ℤ) - (j.val + 1)) * v j = 0 := by linarith
+      rcases mul_eq_zero.mp hL with hco | hco
+      · have hjval : h = j.val + 1 := by omega
+        exact hc hjval
+      · exact absurd hco hv
+  · intro hz
+    rcases hz with hv | hc
+    · rw [jsp87AltShift_edge v p0 h j s hj, hv]
+      ring
+    · have htog : jsp87AltToggle j s = insert j s := by
+        rw [jsp87AltToggle, if_neg hj]
+      rw [← htog]
+      exact jsp87AltShift_toggle v p0 h j s hc.symm
+
+/-- The alternating sum over all `2^K` vertices of a cube, for an arbitrary
+integer-valued `f`: the general form of the object `(-1)^{|ε|}·f(n + r_ε)` of
+§5.2. -/
+def jsp87AltSumF {K : ℕ} (f : ℕ → ℤ) (v : Fin K → ℤ) (p0 n h : ℕ) : ℤ :=
+  ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))),
+    jsp87Sign s.card * f ((n : ℤ) + jsp87AltShift v p0 h s).toNat
+
+/-- The general alternating sum is the `ω`-alternating sum. -/
+theorem jsp87AltSum_eq_jsp87AltSumF {K : ℕ} (v : Fin K → ℤ) (p0 n h : ℕ) :
+    jsp87AltSumF jsp87Omega v p0 n h = jsp87AltSum v p0 n h := rfl
+
+/-- **AN EVEN VERTEX CONTRIBUTES `+f`.** -/
+theorem jsp87AltSumF_eq_of_even (f : ℕ → ℤ) {K : ℕ} (v : Fin K → ℤ)
+    (p0 n h : ℕ) (s : Finset (Fin K)) (he : s.card % 2 = 0) :
+    jsp87Sign s.card * f ((n : ℤ) + jsp87AltShift v p0 h s).toNat
+      = f ((n : ℤ) + jsp87AltShift v p0 h s).toNat := by
+  unfold jsp87Sign
+  rw [if_pos he]
+  ring
+
+/-- **AN ODD VERTEX CONTRIBUTES `−f`.** -/
+theorem jsp87AltSumF_eq_neg_of_odd (f : ℕ → ℤ) {K : ℕ} (v : Fin K → ℤ)
+    (p0 n h : ℕ) (s : Finset (Fin K)) (ho : s.card % 2 ≠ 0) :
+    jsp87Sign s.card * f ((n : ℤ) + jsp87AltShift v p0 h s).toNat
+      = - f ((n : ℤ) + jsp87AltShift v p0 h s).toNat := by
+  unfold jsp87Sign
+  rw [if_neg ho]
+  ring
+
+/-- The even-cardinality vertices of the cube. -/
+def jsp87AltEven {K : ℕ} : Finset (Finset (Fin K)) :=
+  (Finset.univ : Finset (Finset (Fin K))).filter (fun s => s.card % 2 = 0)
+
+/-- The odd-cardinality vertices of the cube. -/
+def jsp87AltOdd {K : ℕ} : Finset (Finset (Fin K)) :=
+  (Finset.univ : Finset (Finset (Fin K))).filter (fun s => s.card % 2 = 1)
+
+/-- **THE EVEN AND ODD FACES PARTITION THE CUBE.** -/
+theorem jsp87AltEven_union_odd {K : ℕ} :
+    jsp87AltEven ∪ jsp87AltOdd = (Finset.univ : Finset (Finset (Fin K))) := by
+  ext s
+  simp only [Finset.mem_union, jsp87AltEven, jsp87AltOdd, Finset.mem_filter,
+    Finset.mem_univ, true_and]
+  rcases Nat.mod_two_eq_zero_or_one s.card with h | h <;> simp [h]
+
+/-- A difference of two sums is a sum of differences. -/
+private theorem sum_sub_eq (s : Finset ι) (f g : ι → ℤ) :
+    (∑ x ∈ s, f x) - ∑ x ∈ s, g x = ∑ x ∈ s, (f x - g x) :=
+  (Finset.sum_sub_distrib f g).symm
+
+/-- **THE FACE SPLIT.**  The alternating sum is the difference of the two face
+sums: the total `f`-mass on the even vertices minus the total `f`-mass on the
+odd vertices. -/
+theorem jsp87AltSumF_eq_add {K : ℕ} (f : ℕ → ℤ) (v : Fin K → ℤ) (p0 n h : ℕ) :
+    jsp87AltSumF f v p0 n h
+      = (∑ s ∈ jsp87AltEven, f ((n : ℤ) + jsp87AltShift v p0 h s).toNat)
+        - (∑ s ∈ jsp87AltOdd, f ((n : ℤ) + jsp87AltShift v p0 h s).toNat) := by
+  have hB : (∑ s ∈ (Finset.univ : Finset (Finset (Fin K))),
+        (if s.card % 2 = 0 then f ((n : ℤ) + jsp87AltShift v p0 h s).toNat else 0))
+      = ∑ s ∈ jsp87AltEven, f ((n : ℤ) + jsp87AltShift v p0 h s).toNat :=
+    (Finset.sum_filter _ _).symm
+  have hC : (∑ s ∈ (Finset.univ : Finset (Finset (Fin K))),
+        (if s.card % 2 = 1 then f ((n : ℤ) + jsp87AltShift v p0 h s).toNat else 0))
+      = ∑ s ∈ jsp87AltOdd, f ((n : ℤ) + jsp87AltShift v p0 h s).toNat :=
+    (Finset.sum_filter _ _).symm
+  have hkey : jsp87AltSumF f v p0 n h
+      = ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))),
+        ((if s.card % 2 = 0 then f ((n : ℤ) + jsp87AltShift v p0 h s).toNat else 0)
+          - (if s.card % 2 = 1 then f ((n : ℤ) + jsp87AltShift v p0 h s).toNat else 0)) := by
+    unfold jsp87AltSumF
+    refine Finset.sum_congr rfl fun s _ => ?_
+    unfold jsp87Sign
+    rcases Nat.mod_two_eq_zero_or_one s.card with he | ho
+    · rw [if_pos he, if_neg (by omega : ¬ (s.card % 2 = 1)), if_pos he]
+      ring
+    · rw [if_neg (by omega : ¬ (s.card % 2 = 0)), if_pos ho,
+        if_neg (by omega : ¬ (s.card % 2 = 0))]
+      ring
+  rw [hkey, ← sum_sub_eq, hB, hC]
+
+/-- **THE CUBE MEASURE IS INVARIANT.**  The uniform measure on the vertices is
+carried to itself by a coordinate toggle. -/
+theorem jsp87_cube_invariance {ι : Type*} [AddCommGroup ι] {K : ℕ} (j : Fin K)
+    (g : Finset (Fin K) → ι) :
+    ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s
+      = ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g (jsp87AltToggle j s) := by
+  set U : Finset (Finset (Fin K)) := Finset.univ
+  have hmem : ∀ s : Finset (Fin K), s ∈ U → jsp87AltToggle j s ∈ U :=
+    fun s _ => Finset.mem_univ _
+  have hinj : ∀ a : Finset (Fin K), a ∈ U → ∀ b : Finset (Fin K), b ∈ U →
+      jsp87AltToggle j a = jsp87AltToggle j b → a = b := by
+    intro a _ b _ heq
+    calc a = jsp87AltToggle j (jsp87AltToggle j a) := (jsp87AltToggle_invol j a).symm
+      _ = jsp87AltToggle j (jsp87AltToggle j b) := congrArg (jsp87AltToggle j) heq
+      _ = b := jsp87AltToggle_invol j b
+  have hsurj : ∀ b : Finset (Fin K), b ∈ U →
+      Exists fun a : Finset (Fin K) => Exists fun (_ : a ∈ U) =>
+        jsp87AltToggle j a = b := by
+    intro b _
+    exact ⟨jsp87AltToggle j b, Finset.mem_univ _, by rw [jsp87AltToggle_invol]⟩
+  exact (Finset.sum_bij (fun s (_ : s ∈ U) => jsp87AltToggle j s) hmem hinj hsurj
+    (fun _ _ => rfl)).symm
+
+/-- **THE INVOLUTION–SUM.**  Any `ℤ`-valued function on the vertex set that is
+*odd* under one coordinate toggle sums to zero. -/
+theorem jsp87_cube_cancel {K : ℕ} (j : Fin K) (g : Finset (Fin K) → ℤ)
+    (hg : ∀ s : Finset (Fin K), g (jsp87AltToggle j s) = - g s) :
+    ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s = 0 := by
+  set U : Finset (Finset (Fin K)) := Finset.univ
+  have hmem : ∀ s : Finset (Fin K), s ∈ U → jsp87AltToggle j s ∈ U :=
+    fun s _ => Finset.mem_univ _
+  have hinj : ∀ a : Finset (Fin K), a ∈ U → ∀ b : Finset (Fin K), b ∈ U →
+      jsp87AltToggle j a = jsp87AltToggle j b → a = b := by
+    intro a _ b _ heq
+    calc a = jsp87AltToggle j (jsp87AltToggle j a) := (jsp87AltToggle_invol j a).symm
+      _ = jsp87AltToggle j (jsp87AltToggle j b) := congrArg (jsp87AltToggle j) heq
+      _ = b := jsp87AltToggle_invol j b
+  have hsurj : ∀ b : Finset (Fin K), b ∈ U →
+      Exists fun a : Finset (Fin K) => Exists fun (_ : a ∈ U) =>
+        jsp87AltToggle j a = b := by
+    intro b _
+    exact ⟨jsp87AltToggle j b, Finset.mem_univ _, by rw [jsp87AltToggle_invol]⟩
+  have hbij : (∑ s ∈ U, g (jsp87AltToggle j s)) = ∑ s ∈ U, g s :=
+    Finset.sum_bij (fun s (_ : s ∈ U) => jsp87AltToggle j s) hmem hinj hsurj
+      (fun _ _ => rfl)
+  have key : (∑ s ∈ U, g s) = -(∑ s ∈ U, g s) := by
+    calc (∑ s ∈ U, g s) = ∑ s ∈ U, (- g s) := by
+          rw [← hbij]
+          exact Finset.sum_congr rfl fun s _ => hg s
+      _ = -(∑ s ∈ U, g s) := by
+          rw [Finset.sum_neg_distrib]
+  linarith
+
+/-- **THE FLAGSHIP: THE GOWERS-CUBE CANCELLATION.**  For every integer-valued
+function `f`, every cube of every dimension `K`, every base `p₀`, every cut
+point `n` and every level `1 ≤ h ≤ K`, the `2^K`-term alternating sum of §5.2
+**vanishes**: the cube degenerates in its `h`-th direction, so the sign flip is
+always an exact cancellation. -/
+theorem jsp87AltSumF_zero (f : ℕ → ℤ) {K : ℕ} (v : Fin K → ℤ) (p0 n h : ℕ)
+    (h1 : 1 ≤ h) (h2 : h ≤ K) :
+    jsp87AltSumF f v p0 n h = 0 := by
+  have hlt : h - 1 < K := by omega
+  set j : Fin K := ⟨h - 1, hlt⟩
+  have hjval : j.val + 1 = h := by
+    show h - 1 + 1 = h
+    omega
+  have hg : ∀ s : Finset (Fin K),
+      jsp87Sign (jsp87AltToggle j s).card
+        * f ((n : ℤ) + jsp87AltShift v p0 h (jsp87AltToggle j s)).toNat
+        = - (jsp87Sign s.card * f ((n : ℤ) + jsp87AltShift v p0 h s).toNat) := by
+    intro s
+    rw [jsp87AltSign_toggle, jsp87AltShift_toggle v p0 h j s hjval]
+    ring
+  exact jsp87_cube_cancel j (fun s => jsp87Sign s.card
+    * f ((n : ℤ) + jsp87AltShift v p0 h s).toNat) hg
+
+/-- **THE FLAGSHIP FOR `ω`**: the Erdős function's cube sum vanishes. -/
+theorem jsp87AltSum_zero {K : ℕ} (v : Fin K → ℤ) (p0 n h : ℕ)
+    (h1 : 1 ≤ h) (h2 : h ≤ K) :
+    jsp87AltSum v p0 n h = 0 := by
+  rw [← jsp87AltSum_eq_jsp87AltSumF]
+  exact jsp87AltSumF_zero jsp87Omega v p0 n h h1 h2
+
+/-- **THE WHOLE CUBE, ALL LEVELS AT ONCE.**  A single choice of `n` and `p₀`
+cancels at *every* level of the cube, simultaneously: this is the uniformity in
+the level that the published reduction iterates over. -/
+theorem jsp87AltSum_zero_all {K : ℕ} (v : Fin K → ℤ) (p0 n : ℕ) :
+    ∀ h ∈ Finset.Icc 1 K, jsp87AltSum v p0 n h = 0 := by
+  intro h hmem
+  rw [Finset.mem_Icc] at hmem
+  exact jsp87AltSum_zero v p0 n h hmem.1 hmem.2
+
+/-- **THE MASS BALANCE OF THE CUBE.**  At a level `1 ≤ h ≤ K` the total `ω`-mass
+on the even faces of the cube equals the total `ω`-mass on the odd faces: the
+cancellation of §5.2, read as a statement about the two halves of the cube. -/
+theorem jsp87AltSum_omega {K : ℕ} (v : Fin K → ℤ) (p0 n h : ℕ)
+    (h1 : 1 ≤ h) (h2 : h ≤ K) :
+    (∑ s ∈ jsp87AltEven, omega ((n : ℤ) + jsp87AltShift v p0 h s).toNat)
+      = ∑ s ∈ jsp87AltOdd, omega ((n : ℤ) + jsp87AltShift v p0 h s).toNat := by
+  have hz : jsp87AltSumF jsp87Omega v p0 n h = 0 :=
+    jsp87AltSumF_zero jsp87Omega v p0 n h h1 h2
+  have key := jsp87AltSumF_eq_add jsp87Omega v p0 n h
+  rw [key] at hz
+  unfold jsp87Omega at hz
+  linarith
+
+/-- **THE CUBE SUM IS AT MOST THE TOTAL MASS.**  Every summand is `±f` of a
+vertex, so the absolute value of the cube sum is bounded by the total `f`-mass
+of the `2^K` vertices. -/
+theorem jsp87AltSumF_le_mass (f : ℕ → ℤ) {K : ℕ} (v : Fin K → ℤ) (p0 n h : ℕ) :
+    |jsp87AltSumF f v p0 n h|
+      ≤ ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))),
+        |f ((n : ℤ) + jsp87AltShift v p0 h s).toNat| := by
+  have hkey : jsp87AltSumF f v p0 n h
+      = ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))),
+        ((if s.card % 2 = 0 then f ((n : ℤ) + jsp87AltShift v p0 h s).toNat else 0)
+          - (if s.card % 2 = 1 then f ((n : ℤ) + jsp87AltShift v p0 h s).toNat else 0)) := by
+    unfold jsp87AltSumF
+    refine Finset.sum_congr rfl fun s _ => ?_
+    unfold jsp87Sign
+    rcases Nat.mod_two_eq_zero_or_one s.card with he | ho
+    · rw [if_pos he, if_neg (by omega : ¬ (s.card % 2 = 1)), if_pos he]
+      ring
+    · rw [if_neg (by omega : ¬ (s.card % 2 = 0)), if_pos ho,
+        if_neg (by omega : ¬ (s.card % 2 = 0))]
+      ring
+  rw [hkey]
+  refine le_trans (Finset.abs_sum_le_sum_abs
+    (fun s : Finset (Fin K) =>
+      (if s.card % 2 = 0 then f ((n : ℤ) + jsp87AltShift v p0 h s).toNat else 0)
+        - (if s.card % 2 = 1 then f ((n : ℤ) + jsp87AltShift v p0 h s).toNat else 0))
+    (Finset.univ : Finset (Finset (Fin K)))) ?_
+  refine Finset.sum_le_sum fun s _ => ?_
+  rcases Nat.mod_two_eq_zero_or_one s.card with he | ho
+  · rw [if_pos he, if_neg (by omega : ¬ (s.card % 2 = 1))]
+    simp
+  · rw [if_neg (by omega : ¬ (s.card % 2 = 0)), if_pos ho]
+    simp
+
+/-! ### The same combinatorics on the window objects
+
+The cancellation above is a fact about the *cube*, not about `ω`: it holds for
+every real-valued function of the cut point.  Applied to the paper's **dilated
+window** `W_p` of §5.1–5.2 it says that the alternating sum of the `2^K`
+dilated windows of §5.3 vanishes exactly, so that any lower bound on a
+*non-degenerate* cube sum of windows would be a contradiction — which is where
+the analytic input of the published proof enters. -/
+
+/-- The real-valued cube sum. -/
+def jsp87AltSumR {K : ℕ} (f : ℕ → ℝ) (v : Fin K → ℤ) (p0 n h : ℕ) : ℝ :=
+  ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))),
+    (jsp87Sign s.card : ℝ) * f ((n : ℤ) + jsp87AltShift v p0 h s).toNat
+
+/-- The involution–sum in `ℝ`. -/
+theorem jsp87_cube_cancelR {K : ℕ} (j : Fin K) (g : Finset (Fin K) → ℝ)
+    (hg : ∀ s : Finset (Fin K), g (jsp87AltToggle j s) = - g s) :
+    ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s = 0 := by
+  have hinv := jsp87_cube_invariance (j := j) (g := g)
+  have step : (∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s)
+      = ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), (- g s) := by
+    rw [hinv]
+    exact Finset.sum_congr rfl fun s _ => hg s
+  have hneg : (∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), (- g s))
+      = - ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s := by
+    rw [Finset.sum_neg_distrib]
+  have key : (∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s)
+      = - (∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s) := by
+    calc (∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s)
+        = ∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), (- g s) := step
+      _ = - (∑ s ∈ (Finset.univ : Finset (Finset (Fin K))), g s) := hneg
+  linarith
+
+/-- **THE REAL GOWERS-CUBE CANCELLATION.** -/
+theorem jsp87AltSumR_zero (f : ℕ → ℝ) {K : ℕ} (v : Fin K → ℤ) (p0 n h : ℕ)
+    (h1 : 1 ≤ h) (h2 : h ≤ K) :
+    jsp87AltSumR f v p0 n h = 0 := by
+  have hlt : h - 1 < K := by omega
+  set j : Fin K := ⟨h - 1, hlt⟩
+  have hjval : j.val + 1 = h := by
+    show h - 1 + 1 = h
+    omega
+  have hg : ∀ s : Finset (Fin K),
+      (jsp87Sign (jsp87AltToggle j s).card : ℝ)
+        * f ((n : ℤ) + jsp87AltShift v p0 h (jsp87AltToggle j s)).toNat
+        = - ((jsp87Sign s.card : ℝ)
+          * f ((n : ℤ) + jsp87AltShift v p0 h s).toNat) := by
+    intro s
+    rw [jsp87AltSign_toggle, jsp87AltShift_toggle v p0 h j s hjval]
+    push_cast
+    ring
+  exact jsp87_cube_cancelR j (fun s => (jsp87Sign s.card : ℝ)
+    * f ((n : ℤ) + jsp87AltShift v p0 h s).toNat) hg
+
+/-- **THE DILATED-WINDOW CUBE SUM VANISHES.**  The `2^K` alternating sum of the
+paper's dilated windows `W_p` over the cube of §5.2–5.3 is exactly `0`. -/
+theorem jsp87AltWinD_zero {K : ℕ} (v : Fin K → ℤ) (p0 n p h : ℕ)
+    (h1 : 1 ≤ h) (h2 : h ≤ K) :
+    jsp87AltSumR (fun m => jsp87WinD m p) v p0 n h = 0 :=
+  jsp87AltSumR_zero (fun m => jsp87WinD m p) v p0 n h h1 h2
 
 end JSP87
