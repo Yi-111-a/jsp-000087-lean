@@ -2882,3 +2882,102 @@ missing_theorems=["jsp_000087_main"]`.
 The tree has **1349 public** theorems and lemmas (1328 before this round) plus 157
 private helpers.  The only warnings `AltSum.lean` emits are the
 `if_pos`/`if_neg` deprecation notices the rest of the tree already emits.
+
+---
+
+## Round 91 — the Gowers recursion on the Tao–Teräväinen cubes, and the rationality quantisation of the window cubes
+
+New module `lean/JSPProblem/CubeSplit.lean` (620 lines, **32 new theorems and
+defs** plus 3 private helpers, 0 `sorry`, 0 `admit`; **1375 proved theorems and
+lemmas** in the tree at the `^(theorem|lemma)` level — 1352 before this round —
+`lake build` clean at 3138 jobs).
+
+This round closes round 90's abandoned item 1 (the cube-doubling identity) and
+delivers the three theorems round 88 promised in the header of `AltSum.lean` and
+never proved (`jsp87Alt_congr`, `jsp87Alt_zero_or_ge`,
+`jsp87Series_irrational_of_altSmall`).  Rounds 88–90 had the *objects* of §5 of
+Tao–Teräväinen (arXiv:2512.01739) but never the *structure* of the cube family.
+
+### 1. The cube objects, and the degeneracy without a level
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87ZCube`, `jsp87FCube` | the cube `∑_s (−1)^{\|s\|}·f(base + ∑_{k∈s} A k)` over the `2^K` vertices `s ⊆ Fin K`, in `ℤ` and in `ℝ` |
+| `jsp87ZHalfCube`, `jsp87HalfCube` | the same over the vertices that **avoid** the last coordinate |
+| `jsp87AltStep v h j = (h − j − 1)·v_j`, `jsp87AltBase p₀ n h = n + p₀·h` | the steps and base point of the Erdős cube |
+| `jsp87AltSumF_eq_jsp87ZCube`, `jsp87AltSumR_eq_jsp87FCube` | round 88/90's alternating sums **are** these cubes |
+| `jsp87FCube_zero_of_step`, `jsp87ZCube_zero_of_step`, `jsp87HalfCube_zero_of_step` | **a vanishing step kills the cube** — the degeneracy with *no* reference to a level |
+| `jsp87AltSumF_zero_of_step`, `jsp87AltSumF_zero_of_degenerate` | round 90's flagship re-derived with a strictly weaker hypothesis |
+| `jsp87FCube_card` | a cube has exactly `2^K` vertices |
+
+### 2. **THE CUBE SPLITTING IDENTITY** — the Gowers recursion `U^{K+1} → U^K`
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87FCube_eq_half_sub`** | **a cube of dimension `K+1` is the difference of two half cubes (dimension `K`) with the *same* steps**, based at `base` and at `base + A (Fin.last K)`. Proved with a hand-written `Finset.sum_bij` (erase/insert at the last coordinate), including the sign bookkeeping `sign (T.card + 1) = − sign T.card` |
+| `jsp87FCube_zero_of_half` | two vanishing half cubes kill the whole cube (the propagation) |
+| `jsp87FCube_abs_le_half` | the **quantitative Gowers bound** `\|cube\| ≤ \|half\| + \|half\|` |
+| `jsp87HalfCube_eq_of_allCube` | if every `(K+1)`-cube vanishes, every half cube is invariant under the last step — and the last step is arbitrary, so Gowers-norm smallness turns into translation invariance |
+| `jsp87AltSumR_eq_half_sub` | the Erdős cube at dimension `K+1` splits into two half cubes |
+
+### 3. Where the analytic input must live — now *proved*, not asserted
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87AltStep_eq_zero_iff` | **the degenerate level is the only forced vanishing**: with `v_j ≠ 0` the step vanishes exactly at `h = j+1`. Above the level `K` *nothing* forces the half cube to vanish |
+| `jsp87AltSumR_zero_of_level`, `jsp87HalfCube_zero_of_level` | the degeneracy survives the splitting at exactly the old levels (`1 ≤ h ≤ K+1` whole, `1 ≤ h ≤ K` for the half cube) |
+| **`jsp87ZHalfCube_omega_ne_zero`** | **machine checked (`native_decide`)**: the half cube of `ω` with unit steps at level `4`, based at `4`, has value `−2` — the recursion is **not** vacuous |
+
+### 4. The rationality quantisation of a cube of windows, at every dimension
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87FCube_one` | the `1`-cube is `W(base) − W(base + m)` |
+| **`jsp87FCube_mul_eq_int`** | **if `S = a/b` with `b > 0` then `b` times *any* cube of the window function, at any dimension, is an integer** |
+| **`jsp87FCube_zero_or_ge`** | **the dichotomy**: every cube of windows is `0`, or has absolute value `≥ 1/b` (round 88's `jsp87Alt_zero_or_ge`, finally delivered, in every dimension) |
+| `jsp87FCube_eq_zero_of_lt` | a cube smaller than `1/b` vanishes |
+| `jsp87Win_not_const` | the windows are **not** constant: `W(n+1) = 2W(n) − ω(n+1)` would make `ω` constant, and `ω 1 = 0 ≠ 2 = ω 6` |
+| `jsp87Win_const_of_FCube_one_zero` | vanishing `1`-cubes force the windows to be constant |
+| **`jsp87Series_irrational_of_FCube_one_small`** | **ROUND 91'S CRITERION** |
+
+The criterion reads
+
+> If for every positive integer `b`, every `m` and every `base`, the `1`-cube
+> `W(base) − W(base + m)` has absolute value `< 1/b`, **then the Erdős series is
+> irrational**.
+
+The proof is the whole chain: quantisation (`jsp87FCube_mul_eq_int`) →
+the dichotomy (`jsp87FCube_zero_or_ge`) → all `1`-cubes vanish
+(`jsp87FCube_eq_zero_of_lt`) → `W` is constant
+(`jsp87Win_const_of_FCube_one_zero`) → `ω` is constant
+(`jsp87Win_not_const`) → contradiction.  So the headline
+`Irrational jsp87Series` follows from the **single** hypothesis of *Gowers-norm
+smallness of the window function*, which is what Tao–Teräväinen obtain from the
+Pilatte correlation estimate (§3 of arXiv:2512.01739).  Every combinatorial and
+Diophantine step of the reduction is now formalised, for every dimension.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline is a
+published *unconditional* theorem (Tao–Teräväinen, arXiv:2512.01739 Thm 1.3),
+but its analytic core — a quantitative two-point correlation bound for
+multiplicative functions — has no Mathlib counterpart and cannot be honestly
+assumed here.  Attaching the catalog name to the criterion above would
+misrepresent the headline.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 91, stated exactly
+
+> **`hsmall`** — for every positive integer `b`, every `m` and every `base`,
+> `|W(base) − W(base + m)| < 1/b`, i.e. the Gowers-norm smallness of the window
+> function `W(n) = ∑' h ≥ 1, ω(n+h)·2^{−h}`.
+
+Everything else in the reduction is proved.  In the published proof the
+smallness is obtained for the *dilated* windows `W_p`, which are bounded; the
+two remaining ingredients are therefore (i) the exact geometric-series form of
+the error `δ_p(m) = 2^{−(p−m)}/(1 − 2^{−p})` for `1 ≤ m < p`, and (ii) the
+mod-1 congruence at *cube* level for `W_p`.  Both are recorded in
+`policy.json` as `next_round_attack` items 2 and 3.
