@@ -3749,3 +3749,106 @@ the doubling orbit `Int.fract (θ N)`).
 `harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
 sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
 missing_theorems=["jsp_000087_main"]`.
+
+---
+
+## Round 106 — the WEIGHTED level reflection, and the partition of unity
+
+New module `lean/JSPProblem/WeightJoin.lean` (850 lines, **54 new theorems and
+lemmas** + 4 new defs + 10 private helpers, 0 `sorry`, 0 `admit`, **0 new linter
+warnings**; **1677 theorem/lemma declarations** in the tree at the
+`^(theorem|lemma)` level, 1623 before this round, `lake build` clean).
+
+This is a **new attack family**: it executes item 1 of round 104's
+`next_round_attack`, the identity round 83 recorded only as *numerical
+commentary* in `LevelSets.lean` §3 (`"jsp87Series = ∑ k, k · L k numerically"`) and
+which no round had ever written down as a theorem.
+
+### 1. The level series decay *doubly* exponentially (new)
+
+A level-`k` digit is `1` only at integers with exactly `k` distinct prime factors,
+and `ω n = k` forces `2^k ≤ n` (`two_pow_omega_le`).  So the primary series of the
+level indicator vanishes below `n = 2^k`, its *prefix* at that cut point is `0`
+(`jsp87BinaryInt_level_eq_zero`), and the "no carrying" split
+`2^N · T f = A f N + U f N` gives the sharp bound
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Level_eq_zero_of_lt_two_pow`, `jsp87AtLeast_eq_zero_of_lt_two_pow` | a level (resp. "at least") digit vanishes below `n = 2^k` |
+| `jsp87BinaryInt_level_eq_zero`, `jsp87BinaryInt_atLeast_eq_zero` | the `2^k`-prefix is exactly `0` |
+| **`jsp87LevelSeries_mul_two_pow_two_pow`** | **`2^(2^k) · L k ≤ 1`** — the double-exponential bound |
+| `jsp87LevelSeries_le_two_pow_sharp` | `L k ≤ 2^-(2^k)` |
+| `jsp87LevelSeries_mul_two_pow`, `jsp87LevelSeries_le_two_pow` | `2^k · L k ≤ 1`, `L k ≤ 2^-k` |
+| `jsp87LevelSeries_one_le` | `4 · L 1 ≤ 1` (the level-`1` series is the prime-power indicator) |
+| `jsp87AtLeastSeries_mul_two_pow_two_pow`, `jsp87AtLeastSeries_mul_two_pow` | the same for the "at least" family `A k` |
+
+Round 83 could only prove `L k < 1` and `L k ≤ 1/4`; the double-exponential decay
+is new and is the quantitative reason the reflection below converges.
+
+### 2. The weighted columns, and the weighted saturation point
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_weightCount` | `∑_{k<M} k · [ω n = k] = if ω n < M then ω n else 0` — only the layer of index `ω n` carries weight, and it is visible exactly when `ω n < M` |
+| `jsp87WeightColumn M n` | that count, weighted by `2^-(n+1)` |
+| `jsp87_weightedLevel_sum_eq` | the `M` weighted rows, read at the single cut point `n`, are the weighted column |
+| `jsp87WeightColumn_le_term`, `summable_jsp87WeightColumn` | the weighted columns are dominated by the Erdős series |
+| **`jsp87WeightColumn_eq_term`** | **the weighted saturation point**: `1 ≤ M`, `n < 2^M ⟹ the weighted column IS the `n`-th term of the Erdős series** |
+
+### 3-4. The reflection itself
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_weightPartial_eq_tsum` | the weighted rows at height `M` are the `tsum` of the weighted columns — exact, by the finite `Summable.tsum_finsetSum` interchange |
+| `jsp87_weightPartial_le_series`, `jsp87_colPartial_le_weightPartial` | the weighted rows never overshoot `S`, and dominate the columns below `n = 2^M` |
+| `jsp87_colPartial_le_series`, `jsp87_termTail_nonneg` | every partial sum of the Erdős series is `≤ S` |
+| `jsp87_weightGap_le_tail`, `tendsto_jsp87_weightGap`, `tendsto_jsp87_weightPartial` | the weighted gap is bounded by the column tail and tends to `0` |
+| `hasSum_weightedLevels`, `summable_weightedLevels` | the weighted level series is a `HasSum` for `S` |
+| **`jsp87Series_eq_tsum_weightedLevels`** | **THE REFLECTION: `jsp87Series = ∑' k, k · jsp87LevelSeries k`** |
+
+### 5. Every summand of the reflection is irrational
+
+`jsp87_weightedLevel_irrational` (for every `k ≥ 1`, `Irrational (k · L k)`),
+`jsp87_series_eq_tsum_weightedLevels_onzero` (the rational member `k = 0` removed),
+`jsp87_weightPartial_le_sub` (the rows miss at least the `K`-th weighted level),
+`jsp87_weightPartial_succ` / `_mono` / `_strictMono'` / `_pos`.
+
+### 6. THE PARTITION OF UNITY
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_levelCount`, `jsp87LevelColumn M n` | exactly one level contains `n`, so the unweighted columns are the indicators `[ω n < M] · 2^-(n+1)` |
+| `jsp87_levelPartial_le_one`, `jsp87_levelPartial_ge_colPartial`, `tendsto_jsp87_levelPartial` | the level partial sums are squeezed between the geometric partial sums below `n = 2^M` and `1` |
+| **`jsp87_tsum_levelSeries_eq_one`** | **`∑' k, jsp87LevelSeries k = 1`**: the level sets partition the integers, so the level series partition `[0,1]` |
+| `jsp87_levelPartial_le_sub_one` | the partition is *nested*: `∑_{k<K} L k ≤ 1 − L K` |
+| `jsp87_tsum_levelSeries_tail_eq_quarter` | the `k ≥ 1` part of the partition is exactly `1/4` (the level `k = 0` is `ω n = 0`, i.e. `n = 0, 1`, carrying `3/4`) |
+
+This is the first time the round-83 level series have been proved to sum to
+anything at all, and it is the exact unweighted mirror image of the reflection.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  A countable sum of
+provably irrational numbers need not be irrational
+(`jsp87Series_rational_of_atLeast_periodic`), so neither the row form nor the
+weighted reflection transfers irrationality to `S`; and the headline irrationality
+is **conditional** in the published literature (Pratt, arXiv:2409.15185, uniform
+prime `k`-tuples) while the catalog records *Solved; Lean proof: No; Eligible to
+claim: No*.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 106, stated exactly
+
+Unchanged: **`jsp87_digit_not_eventuallyPeriodic`** — the binary digits
+`d N = ⌊2^{N+1} S⌋ − 2⌊2^N S⌋` of the *carried* Erdős series are not eventually
+periodic.  Round 106 makes the surrounding structure exact in both directions
+(`S = ∑' k, k·L k` and `∑' k, L k = 1`, with doubly-exponential decay), but the
+level series are aperiodic *unconditionally* (round 83) while the digits of `S`
+are not the level indicators (round 47 proved `jsp87_digit_one`: the first digit
+of `S` is `1` although `ω 1 = 0`), so no amount of structure in the level family
+reaches the digit string.  Nothing unconditional is known about that
+aperiodicity: it is the content of the uniform prime-`k`-tuples hypothesis of the
+published result.
