@@ -55,3 +55,4 @@ import JSPProblem.LevelSeries
 import JSPProblem.RowJoin
 import JSPProblem.WeightJoin
 import JSPProblem.MomentLadder
+import JSPProblem.CumSqLadder
