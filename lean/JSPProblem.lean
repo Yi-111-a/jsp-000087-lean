@@ -60,3 +60,4 @@ import JSPProblem.RoughJoin
 import JSPProblem.Squarefree
 import JSPProblem.PrimePowerExcess
 import JSPProblem.TTRoute
+import JSPProblem.LambertMaster
