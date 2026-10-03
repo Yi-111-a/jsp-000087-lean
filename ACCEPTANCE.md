@@ -4114,3 +4114,109 @@ The obstacle is that `hasSum_lamF_fst` is stated only for **primes**, and its
 proof needs a reindex lemma `sum_multiples_reindex` that also requires
 `p.Prime` (only for `0 < p`).  Porting that lemma to arbitrary `d ≥ 1` is a
 mechanical copy and is the first item of the next round.
+
+---
+
+## Round 112 — **THE PROBLEM WAS SOLVED UNCONDITIONALLY IN THE LITERATURE**, and the
+## Tao–Teräväinen reduction, formalized
+
+### 0. THE STATUS OF THE CATALOG RECORD IS OUT OF DATE (correction)
+
+Every round from 37 to 111 of this development recorded the same gate note:
+
+> *the irrationality of `∑ ω(n)/2^n` is **conditional** in the published
+> literature (Pratt, arXiv:2409.15185, under a uniform prime `k`-tuples
+> hypothesis), and the catalog status is "Solved; Lean proof: No; Eligible to
+> claim: No".*
+
+**That note is superseded.**  T. Tao and J. Teräväinen, *Quantitative
+correlations and some problems on prime factors of consecutive integers*,
+**arXiv:2512.01739** (v1 1 Dec 2025; v2 25 Apr 2026), prove **unconditionally**
+that
+
+```
+∑_{n=1}^{∞} ω(n) / 2^n  =  ∑_{p prime} 1 / (2^p − 1)      is irrational.
+```
+
+Their Theorem 1.3 is titled "*Erdős #69*"; it settles exactly this problem, and
+it is also the prime case of Erdős problem #257 (`∑_{n∈A} 1/(2^n−1)` irrational
+for `A` the primes, with `A` the prime powers as a second case).  The same paper
+also settles Erdős–Straus #248 (`ω(n+k) ≤ Ω(n+k) ≪ k` for infinitely many `n`)
+and Erdős–Pomerance–Sárközy (local limit theorem for `ω(n) = ω(n+1)`).
+
+Consequences for this file:
+
+* `jsp_000087_main : jsp87Series.Irrational` is now a **theorem in the
+  literature**, not a conjecture.  It is therefore legitimate to declare it;
+  what is missing is the **proof**, not the statement.
+* The blocker recorded 111 times, `jsp87_digit_not_eventuallyPeriodic` (aperiodicity
+  of the binary digits), is no longer an open problem: it is a *theorem*, and
+  Tao–Teräväinen's §5 is a proof of it.
+* The ACCEPTANCE.md text and `acceptance.json`'s `catalog_status` were copied
+  from the catalog record and are now **stale**; the catalog itself lags the
+  literature by one paper.
+
+### 1. What Tao–Teräväinen actually need — and the new Lean module
+
+Their introduction states the analytic content precisely:
+
+> upper bounds on consecutive values `ω(n+1), …, ω(n+H)` of `ω` are
+> insufficient; **some control on the distribution of various linear
+> combinations of such values (e.g. `∑_{h=1}^{H} ω(n+h)/2^h`) is needed**.
+
+That object is a **truncated carry** of the Erdős series, and it was not in the
+111-round tree.  `lean/JSPProblem/TTRoute.lean` (new, 26 declarations, 0 `sorry`,
+0 `admit`) builds it:
+
+| Declaration | Statement |
+| --- | --- |
+| `jsp87TruncCarry N H` | `∑_{k<H} ω(N+k) 2^-(k+1)` — the truncated carry at the cut point `N` |
+| `jsp87Carry_le_all M` | `θ M ≤ M+1` **at every** `M ≥ 0` (round 40's bound needed `1 ≤ M`) |
+| `jsp87TruncCarry_eq_split` | `θ N = jsp87TruncCarry N H + 2^-H · θ (N+H)`, the exact truncation form of round 44's `jsp87Carry_split` |
+| `jsp87Carry_sub_truncCarry_le` | **`0 ≤ θ N − jsp87TruncCarry N H ≤ 2^-H (N+H+1)`** — the quantitative tail bound |
+| `jsp87Series_rational_imp_carry_mul_int` | `S = a/b`, `b>0` ⟹ `b · θ N ∈ ℤ` for every `N ≥ 1` |
+| **`jsp87Series_rational_imp_truncCarry_nearInt`** | **THE REDUCTION.** `S = a/b`, `b>0` ⟹ for every `N ≥ 1` and every `H` there is `c ∈ ℤ` with `\|b·jsp87TruncCarry N H − c\| ≤ b·2^-H·(N+H+1)` |
+| `jsp87IntDist x` | `min (Int.fract x) (1 − Int.fract x)`, the distance to `ℤ` |
+| `jsp87IntDist_lt_iff` | `jsp87IntDist x < ε ↔ ∃ k ∈ ℤ, \|x − k\| < ε` |
+| `jsp87Series_rational_imp_truncCarry_dist_le` | the lattice form of the reduction: `b·jsp87TruncCarry N H` stays within `b·2^-H(N+H+1)` of `(1/b)ℤ` |
+| `jsp87TruncCarryEscapes b` | **the named analytic hypothesis**: the truncated carry escapes the `b`-grid by more than its own tail bound |
+| `jsp87Series_irrational_of_truncCarry_away` | **`∀ b ≥ 1, jsp87TruncCarryEscapes b` ⟹ `jsp87Series.Irrational`** |
+| `pow_two_ge_sq_add_three` | `2^H ≥ (H+3)^2` for `H ≥ 8` |
+| `jsp87Series_irrational_of_truncCarry_far` | **the uniform-spacing criterion**: `∀ b ≥ 1, ∃ c_b > 0, ∀ N H, jsp87IntDist (b·jsp87TruncCarry N H) ≥ c_b` ⟹ irrational — the shape of the variance estimate of arXiv:2512.01739 §5.3–§5.14 |
+| `jsp87PlusLambert` | `∑' n, ω(n)/(2^n+1)` — the **`+1` Lambert series** of their §5.2 "*taking an alternating sum to cancel terms*" |
+| `jsp87ScaleLambert k` | `∑' n, ω(n) 2^(-kn)` — the **dilations** of their §5.1 "*shifting and dilating*" |
+| `jsp87PlusLambert_le_two_mul_series` | `∑' n, ω(n)/(2^n+1) ≤ 2 · jsp87Series` |
+| `jsp87ScaleLambert_one` | the dilation at `2^{-1}` is twice the Erdős series |
+
+**The quantifier over `b` in the two criteria must be universal.**  This is not a
+technicality and is proved by inspection: the escape estimate at a single `b` is
+*compatible* with a rational value whose denominator is `q ≠ b`, because §2
+constrains the lattice `q^{-1}ℤ`, not `b^{-1}ℤ`.
+
+### 2. Gate status
+
+`lake build` succeeds; the tree contains **0 `sorry` / 0 `admit`** and **1952**
+proved theorems and lemmas; `jsp_000087_main` remains **undeclared**, so
+`prize_ready = false` and `missing_theorems = ['jsp_000087_main']`.
+
+### 3. The concrete blocker after round 112
+
+The single missing input is now **one named analytic hypothesis**, not a method:
+
+> `jsp87TruncCarryEscapes b` (equivalently the uniform-spacing hypothesis of
+> `jsp87Series_irrational_of_truncCarry_far`) for every `b ≥ 1`.
+
+This is the content of Tao–Teräväinen's §5.3–§5.14, which rests on their
+Theorem 3.1: the quantitative two-point correlation estimate for multiplicative
+functions derived from **Pilatte's** recent quantitative Elliott-type work.  That
+estimate (`(W/N)·Σ_{N<n≤2N}(g₁(n+h₁)−δ_N)g₂(n+h₂)1_{n≡b mod W} ≪ ℒ^{-c}` for
+`1-bounded multiplicative g₁, g₂`, `W,b ≤ ℒ^c`, `1 ≤ ℒ ≪ log N`) has **no
+counterpart in Mathlib**, and neither does the Erdős–Kac machinery, the
+Gowers-uniformity manipulations, or the probabilistic (expectation / variance)
+argument.  Mathlib contains no statement whatsoever about two-point correlations
+of multiplicative functions, about prime-`k`-tuples, or about a two-point Chowla
+bound for the Liouville function.
+
+So: the deterministic reduction of the published proof is now machine checked
+end-to-end, and the remaining gap is a single, precisely stated, *known* theorem
+of analytic number theory rather than a research-level unknown.
