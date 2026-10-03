@@ -4350,3 +4350,101 @@ bound for the Liouville function.
 So: the deterministic reduction of the published proof is now machine checked
 end-to-end, and the remaining gap is a single, precisely stated, *known* theorem
 of analytic number theory rather than a research-level unknown.
+
+
+---
+
+## Round 115 — the Chowla-type correlations of `ω`
+
+New module `lean/JSPProblem/Chowla.lean` (757 lines, **23 new public
+theorems** and 9 new objects, 0 `sorry`, 0 `admit`; **2023 proved theorems and
+lemmas** in the tree at the `^(theorem|lemma)` level — 2003 before this round —
+`lake build` clean, no new linter warnings).
+
+**Why this family.** Round 112–114 reduced the headline to the Tao–Teräväinen
+object of arXiv:2512.01739 — a *truncated carry* — and recorded that the missing
+input is a **variance** bound (§5.4).  A variance is a correlation sum, and
+**no theorem name in the whole 2000-theorem tree contained `chowla` or
+`corr`**: rounds 37–114 computed first moments (round 58) and pointwise bounds,
+but never wrote down a correlation of `ω` with anything.  This round makes the
+correlations objects of the development and computes them exactly.
+
+### 1. The counting layer — one residue class per prime pair
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87ShiftCount` | the new object: `# {n ∈ [1,N] : p ∣ n, q ∣ n+1}` — the solutions of `n ≡ 0 (mod p)`, `n ≡ −1 (mod q)` |
+| `jsp87ShiftCount_dvd_sub` | **two solutions are congruent mod `p q`** (CRT, from scratch): `p q ∣ a − b` |
+| `jsp87ShiftCount_card_le` | **one solution per period**: `≤ ⌊(N−1)/(p q)⌋ + 1` |
+| `jsp87ShiftCount_card_le_one` | **at most one solution when `N ≤ p q`** |
+| `jsp87ShiftCount_eq_zero_of_diag` | **the diagonal is empty** — no `m ≥ 2` divides both `n` and `n+1`, so the term `p = q` contributes nothing to any shift correlation |
+
+### 2. The exact Chowla decomposition
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Chowla` | the new object `C N = ∑_{1 ≤ n ≤ N} ω(n) ω(n+1)` — the Chowla sum of `ω` |
+| `jsp87Chowla_eq` | **THE MAIN THEOREM OF THE ROUND**: `C N = ∑_{p ≤ N} ∑_{q ≤ N+1} jsp87ShiftCount p q N`. Every ordered prime pair is counted exactly once; the analytic question becomes a purely combinatorial one |
+| `jsp87_chowla_eq_corrAt` | `C N = jsp87CorrAt (N+1) 0 1` — `jsp87Chowla` is the `(0,1)` instance of the general shift-pair correlation |
+| `jsp87Chowla_le`, `jsp87ShiftCount_le_pair` | the pointwise mean-field bound |
+| **`jsp87Chowla_le_add`** | **THE CORRELATION IS THE MEAN-FIELD TERM PLUS THE BOUNDARY ERROR**: `C N ≤ jsp87ChowlaMain N + jsp87ChowlaErr N`, the error being exactly the number of ordered distinct prime pairs up to `N+1`, i.e. of size `π(N+1)²`. **Any improvement of the published proof over this elementary bound must absorb this term** — this is the exact shape of the analytic problem |
+
+### 3. Pratt's object, squeezed unconditionally
+
+`jsp87PrimeShiftCorr N = ∑_{1 ≤ n ≤ N} ω(n)·[n+1 prime]` is the object K. Pratt's
+uniform prime `k`-tuples hypothesis is *about*.
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87PrimeShiftCorr_eq` | the exact decomposition `= ∑_{p ≤ N} # {n ∈ [1,N] : p ∣ n, n+1 prime}` — the sieve content, prime by prime |
+| `jsp87PrimeShiftCorr_ge` | `# {q prime : 3 ≤ q ≤ N+1} ≤ jsp87PrimeShiftCorr N` (each such `q` contributes at `n = q−1`, where `ω(q−1) ≥ 1`) |
+| `jsp87PrimeShiftCorr_ge_odd` | **`π(N+1) ≤ jsp87PrimeShiftCorr N + 1`** |
+| `jsp87PrimeShiftCorr_le_omegaCount` | **`jsp87PrimeShiftCorr N ≤ ∑_{p ≤ N} ⌊N/p⌋ = jsp87OmegaCount N`** |
+
+i.e. the **unconditional sandwich `π(N+1) − 1 ≤ corr ≤ A N`**: at primes the
+correlation is at least one per prime, and unconditionally it is worth no more
+than the first moment. **The gap between the two bounds is exactly where the
+hypothesis of the literature lives.**
+
+### 4. The join with the Tao–Teräväinen route
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_truncSum_eq` | **THE MEAN OF THE TRUNCATED CARRY**: `∑_{N<L} jsp87TruncCarry N H = ∑_{k<H} 2^{-(k+1)} · (ω-mass of the window at k)` — the mean term of §5.3 is exactly round 58's first moment |
+
+### 5. Machine-checked instances
+
+`jsp87Chowla 10 = 13`, `jsp87Chowla 100 = 284`, `jsp87Chowla 1000 = 4319`;
+`jsp87PrimeShiftCorr 10 = 6`, `= 53` at `N = 100`; `jsp87ShiftCount 2 3 10 = 2`,
+`jsp87ShiftCount 2 3 5 = 1`, `jsp87ShiftCount 2 5 10 = 1`; and
+`jsp87CorrAt 11 0 1 = jsp87Chowla 10` (an instance of `jsp87_chowla_eq_corrAt`).
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is a theorem in the literature (Tao–Teräväinen, arXiv:2512.01739,
+Thm 1.3 = Erdős problem #69, *unconditional*); only the Lean proof is missing,
+and it rests on their quantitative two-point correlation estimate for `ω`
+(Thm 3.1, from Pilatte's work), which Mathlib does not contain.  Round 115 turns
+that estimate from prose into a **Lean object with an exact unconditional
+baseline**: the mean-field main term plus a `π(N+1)²` boundary error.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 115, stated exactly
+
+> **The missing analytic input is a bound on `jsp87Chowla N` that beats the
+> boundary error `jsp87ChowlaErr N`.**  Everything else is machine-checked: the
+> exact decomposition (`jsp87Chowla_eq`), the elementary bound
+> (`jsp87Chowla_le_add`), the equivalent shifted-prime statement with its
+> unconditional sandwich, and the mean of the Tao–Teräväinen truncated carry
+> (`jsp87_truncSum_eq`).
+
+A second, purely `Lean`-technical blocker was opened and left open:
+**`jsp87_truncSq_diag`** — the diagonal/off-diagonal split of the second moment
+of the truncated carry, i.e. `∑_{N<L} T(N,H)² = ∑_{k,k'<H} 2^{-(k+1)-(k'+1)} ·
+jsp87CorrAt L k k'`.  The statement and the exact remaining step are recorded
+verbatim in `lean/JSPProblem/Chowla.lean` (section *The second moment of the
+truncated carry*).
