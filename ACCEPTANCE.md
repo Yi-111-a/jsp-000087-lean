@@ -3852,3 +3852,140 @@ of `S` is `1` although `ω 1 = 0`), so no amount of structure in the level famil
 reaches the digit string.  Nothing unconditional is known about that
 aperiodicity: it is the content of the uniform prime-`k`-tuples hypothesis of the
 published result.
+
+---
+
+## Round 107 — the moment ladder: the two families are one partition, and the second moment
+
+New module `lean/JSPProblem/MomentLadder.lean` (**61 public theorems/defs**,
+0 `sorry`, 0 `admit`, 0 new linter warnings, `lake build` clean; **1733** proved
+theorems and lemmas at the `^(theorem|lemma)` level in the tree).
+
+This round executes the two quantitative items of round 106's plan and closes the
+classification begun in round 83.  It is a **new attack family**: not the Lambert
+reduction, the carry scaffold, the gcd arithmetic, the carry dynamics, the digit
+bookkeeping, the carry-excess sieve content, the base-`2` block arithmetic, the
+primary expansion, the doubling orbit, the `2`-adic route, the radix family, the
+dilation/multiplier family, the sieve model, the CRT/stride family, the subword
+complexity family — but the **layer-cake arithmetic of the level family and of its
+cumulative partner, read as moments of `ω`**.
+
+### 1. §1 — the level family and the "at least" family are ONE partition and its tails
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_tailLevel_sum M t` | **THE FINITE TAIL-SUM RELATION** `∑_{j<t} L (M+j) = A M − A (M+t)` — summing `L j = A j − A (j+1)` over the window `[M, M+t)` |
+| `jsp87_levelPartial_add_atLeast M` | **THE EXACT COMPLEMENT** `∑_{k<M} L k + A M = 1` for every height `M` — round 106's partition of unity `∑' k, L k = 1` is its limit |
+| `jsp87_levelPartial_eq_one_sub_atLeast` | `∑_{k<M} L k = 1 − A M` |
+| `jsp87_levelPartial_zero`, `jsp87_levelPartial_one` | the values at heights `0` and `1`: `0` and `3/4` |
+| `jsp87_levelPartial_pos_iff` | `0 < ∑_{k<M} L k ↔ 1 ≤ M` |
+| **`jsp87_levelPartial_irrational_iff`** | **THE ROW PARTIAL SUMS ARE IRRATIONAL EXACTLY FOR `M ≥ 2`** — this closes the classification of round 83, which had proved `L k` and `A k` irrational exactly for `k ≥ 1` and `k ≥ 2` but never the *partial sums* |
+
+So the row sum of round 104 (`∑' k, A k = S + 1`) and the partition of unity of
+round 106 (`∑' k, L k = 1`) are the same statement read at the two ends of one
+sequence, and the rational members are exactly the two finite ones (`0`, `3/4`).
+
+### 2. §2 — the complement decays doubly exponentially
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87AtLeastSeries_le_two_pow_sharp` | the closed form `A k ≤ 2^-(2^k)` (round 106 had proved only the product form `2^(2^k) · A k ≤ 1`) |
+| **`jsp87_levelPartial_ge_two_pow_sharp`** | `1 − 2^-(2^M) ≤ ∑_{k<M} L k` for `M ≥ 1` — **an explicit doubly-exponential error for the partition of unity** |
+| `jsp87_levelPartial_dist_one_le` | the metric form `dist (∑_{k<M} L k) 1 ≤ 2^-(2^M)`: a convergence **rate**, not just a limit |
+| `jsp87_levelPartial_ge_three_quarters` | `3/4 ≤ ∑_{k<M} L k` for every `M ≥ 1` |
+
+### 3. §3 — the second-moment reflection (policy item 1)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_tri` | the triangular numbers `tri k = k(k+1)/2` |
+| `jsp87_tri_sum_range` | `∑_{k<m+1} k = tri m` (from Mathlib's `Finset.sum_range_id`) |
+| `jsp87_weightCumCount_sat` | **the weighted cumulative count in the saturated range**: `ω n + 1 ≤ M ⟹ ∑_{k<M} k [k ≤ ω n] = tri (ω n)` |
+| `jsp87_weightCumCount_unsat` | in the unsaturated range every indicator is `1` |
+| `jsp87_weightCumCount_le`, `…_cast` | the truncation never overcounts: `∑_{k<M} k [k ≤ ω n] ≤ tri (ω n)` |
+| `jsp87CumWeightColumn`, `jsp87_weightedCum_sum_eq`, `jsp87CumWeightColumn_nonneg`, `…_le_triTerm` | the triangular column and its domination by the `n`-th triangular moment |
+| **`jsp87CumWeightColumn_eq_triTerm`** | **THE TRIANGULAR SATURATION POINT** `n < 2^M ⟹ the column is the full triangular moment` (mirror of round 106's linear saturation point) |
+| `jsp87_tri_le_mul_omega_add_one`, `jsp87_mul_omega_add_one_le_poly` | `tri (ω n) ≤ ω n (n+1) ≤ n² + n` |
+| `summable_jsp87TriTerm`, `jsp87TriSeries`, `jsp87TriSeries_nonneg` | the second moment `S^(2) = ∑' n, tri (ω n) · 2^-(n+1)` exists |
+| `jsp87CumWeightPartial`, `jsp87_cumWeightPartial_eq_tsum`, `summable_jsp87CumWeightColumn`, `jsp87_cumWeightPartial_le_triSeries`, `jsp87_colPartial_le_cumWeightPartial` | the finite weighted interchange for the cumulative rows |
+| **`jsp87TriSeries_eq_tsum_weightedAtLeast`** | **THE SECOND-MOMENT REFLECTION** `∑' k, k · A k = ∑' n, (ω n(ω n+1)/2) · 2^-(n+1)` |
+| `hasSum_weightedAtLeast`, `summable_weightedAtLeast`, `jsp87_weightedAtLeast_irrational` | the weighted family is summable and **every member of height `≥ 2` is irrational** |
+
+Together with round 106's `jsp87Series_eq_tsum_weightedLevels` (`S = ∑' k, k L k`,
+the first moment) the power-sum ladder now has its first two rungs, both proved
+from the same layer-cake arithmetic.
+
+### 4. §4 — the pure square moment
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87SqTerm`, `jsp87SquareSeries`, `summable_jsp87SqTerm` | the square moment `∑' n, ω n² · 2^-(n+1)` converges |
+| `jsp87_tri_mul_two` | `2 · tri (ω n) = ω n² + ω n` (via `Nat.two_mul_div_two_of_even`, `Nat.even_mul_succ_self`) |
+| `jsp87TriTerm_two_eq`, `jsp87TriSeries_two_eq_add_sq` | **THE SECOND MOMENT IS THE SUM OF THE SQUARE MOMENT AND `S`**: `2 S^(2) = ∑' n, ω n² · 2^-(n+1) + S` |
+| **`jsp87SquareSeries_add_eq_tsum_two_weightedAtLeast`** | `∑' n, ω n² · 2^-(n+1) + S = ∑' k, 2k · A k` — the square moment is a doubled copy of the same weighted family |
+| `jsp87SquareSeries_le_two_triSeries` | the ladder inequality `square moment ≤ 2 S^(2)` |
+| **`jsp87TriSeries_eq_add_shiftedWeight`** | `S^(2) = S + ∑' k, k · A (k+1)` — the two rungs are related by a single index shift of the same weighted family |
+
+### 5. §5–§6 — quantitative brackets and one sharp closed form (policy item 2)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_weightedAtLeast_le_two_pow` | the geometric majorant `k · A k ≤ k · 2^-k` |
+| **`jsp87TriSeries_le_two`** | **THE SECOND MOMENT IS AT MOST `2`** — the mirror of `jsp87Series ≤ 1`, since `∑' k, k 2^-k = 2` |
+| `jsp87TriSeries_ge_thirtyThree` | **and at least `33/128`** — the seven places `n < 7` already contribute `33/128` |
+| `jsp87SquareSeries_ge_fifteen` | `15/64 ≤ ∑' n, ω n² · 2^-(n+1)` |
+| `jsp87TriSeries_pos`, `jsp87SquareSeries_pos`, `jsp87TriSeries_ge_series` | positivity of both moments; `S ≤ S^(2)` |
+| `jsp87TriSeries_sub_colPartial N` | the triangular tail is the **shifted second moment** `S^(2) − ∑_{n<N} tri n = ∑' k, tri(ω(N+k))·2^-(N+k+1)` (mirror of round 38's `jsp87_series_eq_sum_add_tail`) |
+| **`jsp87_weightGap_le_closed`** | **THE SHARP CLOSED-FORM ERROR TERM OF ROUND 106'S REFLECTION**: `0 ≤ S − ∑_{k<M} k L k ≤ (2^M+1) · 2^-(2^M)` for `M ≥ 1` — the quantitative item round 106 left open, obtained from `jsp87Tail_le` (round 38) at the cut point `2^M` |
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The round-107 results
+are exact identities for the *rows* of the level/level-cake partition and for the
+moments of `ω`; none of them constrains the **binary digit string** of `S`, which
+round 64 proved to be *equivalent* to the headline statement:
+
+> `Irrational jsp87Series ↔` the doubling orbit `N ↦ Int.fract (θ N)` of the
+> carries is not eventually periodic.
+
+Rationality of `S` freezes the digits and the carry orbit into a lattice `1/b · ℤ`
+(rounds 38, 41, 46, 64); it never freezes `ω` itself (round 47 machine-checked
+`jsp87_digit_one`: the first binary digit of `S` is `1` although `ω 1 = 0`).  The
+aperiodicity of the digit string is the arithmetic content of the uniform prime
+`k`-tuples hypothesis in Pratt's published result (arXiv:2409.15185) — an
+assumption of the **published** theorem and not of the catalog statement — or,
+unconditionally, of a Pilatte/Tao–Teräväinen-type correlation estimate that
+Mathlib cannot supply.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 107, stated exactly — unchanged
+
+> **`jsp87_digit_not_eventuallyPeriodic`** — the binary digits
+> `d N = ⌊2^{N+1} S⌋ − 2⌊2^N S⌋` of the Erdős series are not eventually periodic
+> in `N` (equivalently, `jsp87Series_irrational_of_blockNotPeriodic`: the `t`-digit
+> blocks of `S` are never eventually periodic; equivalently, the doubling orbit of
+> the carries is not eventually periodic).
+
+### Negative knowledge recorded this round (machine-checked, do not retry)
+
+1. **The triangular tail cannot be bounded by a constant multiple of the Erdős
+   tail.**  The natural plan `jsp87TriSeries − ∑_{n<N} tri n ≤ 2·(N+1)·τ N` is
+   **false**: it needs the per-term bound `tri (ω (N+k)) ≤ 2(N+1)·ω (N+k)`, i.e.
+   `k ≤ N+1`, which fails for `k > N`.  The correct rate needs the quadratic
+   geometric tail `∑' k, (N+k)² · 2^-(N+k+1)`, i.e. a closed form for
+   `∑' n, n² · 2^-(n+1) = 2` together with a shift estimate; the shift
+   decomposition itself (`jsp87TriSeries_sub_colPartial`) **is** proved this round.
+2. **There is no instance for the pointwise product of two `Summable` series in
+   this Mathlib** (`Summable.mul` does not exist; `Summable.mul_left/mul_right`
+   take a *constant* multiplier).  Quadratic majorants must be built with
+   `Summable.add` — done in the private `summable_poly_mul_two_pow_neg`.
+3. **A `tsum` over a threshold filter cannot be split additively in this Mathlib**
+   (`Finset.sum_eq_tsum`, `tsum_eq_zero_add_tsum` are absent, and
+   `Summable.tsum_subtype` needs injectivity).  Consequently the *infinite*
+   tail-sum identity `A k = ∑' j, (if k ≤ j then L j else 0)` could **not** be
+   proved; the *finite* form (`jsp87_tailLevel_sum`) and the exact complement
+   (`jsp87_levelPartial_add_atLeast`) were proved instead and carry the same
+   content.
