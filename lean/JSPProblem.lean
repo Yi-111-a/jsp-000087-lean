@@ -63,3 +63,4 @@ import JSPProblem.TTRoute
 import JSPProblem.LambertMaster
 import JSPProblem.PlusDilate
 import JSPProblem.Chowla
+import JSPProblem.Variance

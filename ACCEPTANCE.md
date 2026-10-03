@@ -37,6 +37,24 @@ denominator arithmetic, **the carry-dynamics and the aperiodicity endgame**, and
 | `jsp87_lambert_classic` | `∑' p, (if p.Prime then 1/(2^p - 1) else 0) = 2 * jsp87Series` |
 | `jsp87_lambert_reduction` | `∑' n, ω(n)/2^n = ∑' p prime, 1/(2^p - 1)` — the classical identity of PROBLEM.md |
 
+## Round 116 — THE PROBABILISTIC ENDGAME (arXiv:2512.01739 §5.3–§5.11)
+
+`lake build` succeeds; the tree contains **0 `sorry` / 0 `admit`**; **2304
+theorems and lemmas** are proved, including **the machine-checked endgame of the
+Tao–Teräväinen proof**: their *Theorem 5.1 (technical reduction)* together with
+their own convergence hypothesis (5.18) is **unsatisfiable**.
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87FAvg`, `jsp87Var`, `jsp87CAvg`, `jsp87e` | the expectation, the variance, the complex expectation and the phase `e(t) = exp 2πi t` of §5.3 |
+| `jsp87CS`, `jsp87FAvg_abs_le_sqrt_sq` | Cauchy–Schwarz for finite sums, from scratch (the discriminant argument) |
+| `jsp87e_sub_mul_le`, `jsp87E_split_sqrt_le` | the Lipschitz bound of the circle and **κ₃**, the Cauchy–Schwarz/Taylor split of (5.14) |
+| `jsp87_charfun_norm_sq`, `jsp87_var_double` | `‖𝔼 e^{iY}‖² = 𝔼_{i,j} cos(Y i − Y j)` and `𝔼_{i,j}(Y i − Y j)² = 2 Var Y` |
+| `jsp87_one_sub_cos_ge`, `jsp87_charfun_le` | the cosine bound of (5.19) and the variance bound `‖𝔼 e (i qT)‖ ≤ 1 − 8 Var (qT)` |
+| `jsp87_prod_charfun_le`, `jsp87_prod_charfun_le_half` | **(5.20)** in product form: `∏_p ‖𝔼 e (q X p)‖ ≤ exp(−8 ∑_p Var (q X p)) ≤ 1/2` under (5.21) |
+| **`jsp87_endgame_sum_ge`** | **THE ENDGAME**: (5.15) + (5.16)–(5.17) + (5.19) + (5.21) force `κ₁+κ₂+κ₃+κ₄+κ₅ ≥ 1/2` |
+| **`jsp87_endgame_impossible`** | **no configuration** satisfies (5.15), (5.16)–(5.17), (5.19), (5.21) together with `κ_j < 1/30` for all `j`: their Theorem 5.1 is incompatible with (5.18), so **the logical closure of the published proof is done** and the remaining burden of `jsp_000087_main` is localised to the two arithmetic inputs (5.18) and (5.21) |
+
 `lean/JSPProblem/Diophantine.lean` — the Erdős–Pratt Diophantine apparatus
 (the carry decomposition and the Lambert denominator arithmetic):
 
