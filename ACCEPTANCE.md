@@ -3313,3 +3313,112 @@ budget), (2) iterating the rationality transfer to the base `2^(2^k)` series wit
 denominators `2^(2^k) − 1` of round 39, (3) the general residue-class decomposition
 `jsp87Residue r p q` with `jsp87Base q = ∑_{r<p} jsp87Residue r p q`, where the odd residues may
 admit a second self-similarity via `omega_mul_of_coprime`.
+
+---
+
+## Round 100 — the **stride (dilation) decomposition of the carry**
+
+New module `lean/JSPProblem/StrideCarry.lean` (671 lines, **16 new public theorems
+and defs** plus 1 private helper, 0 `sorry`, 0 `admit`; 1697 proved theorems and
+lemmas in the tree at the `^(private )?(theorem|lemma)` level; `lake build` clean
+at 3143 jobs).
+
+This is a **new attack family**.  Round 98 decomposed the *series*
+`S q = ∑' n, ω n / q^(n+1)` by the divisibility of the index and explicitly left
+the *carry* `θ N = 2^N · τ N` — the object every other family of this development
+is built on — untouched.  Round 100 does the same for the carry.
+
+### 1. The new object and the flagship
+
+```
+jsp87StrideCarry M p  =  ∑' j, ω (M + p·j) · 2^-(p·j)
+```
+
+the `ω`-values sampled on the progression `M, M+p, M+2p, …` and re-weighted in
+base `2^p`.
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87StrideCarry` | **the new object** (above) |
+| `jsp87StrideCarry_term_nonneg`, `summable_jsp87StrideCarry`, `jsp87StrideCarry_nonneg` | the stride copies are nonnegative summable series, uniformly in the starting point |
+| `jsp87StrideCarry_le_tail`, `jsp87StrideCarry_le` | **a stride copy is at most `2·θ M`** — the dilation never inflates the object |
+| `jsp87Carry_iter_stride` | `θ N = ∑_{r<p} 2^-(r+1) ∑_{j<i} ω (N+r+pj) 2^-(pj) + 2^-(p·i) · θ (N+p·i)` — round 44's `jsp87Carry_split` iterated `i` times |
+| **`jsp87Carry_eq_sum_stride`** | **FLAGSHIP**: for every cut point `N` and every `p ≥ 1`, `θ N = ∑_{r<p} 2^-(r+1) · jsp87StrideCarry (N+r) p` — **the carry at an arbitrary cut point, split by the residue of its summation index, is `p` series at the coarser base `2^p`** |
+| `jsp87Series_eq_sum_stride`, `jsp87Series_eq_stride_two`, `jsp87Series_eq_sum_residue` | at the origin the carry is the Erdős series, so the series is its own residue-class decomposition (this closes **policy item 1 of round 98**) |
+
+The proof strategy matters: the flagship is obtained by iterating
+`jsp87Carry_split` and letting the number of iterations go to infinity
+(`tendsto_finsetSum` + `tendsto_nhds_unique`).  **No general residue-class lemma
+for `tsum` is used or needed.**  The finitary identity
+`∑_{r<p} ∑_{j<i} = ∑_{n<p·i}` is a `Finset.sum_bij` whose injectivity is routed
+through `Nat.add_mul_mod_self_left` (the residue mod `p` recovers the class).
+
+### 2. The residue-class subsums, and the join with round 98
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Residue` | the residue-class subsum `∑' k, ω (p·k+r) 2^-(p·k+r+1)` |
+| `summable_jsp87Residue` | the residue subsums are summable (an index-subset bound, *not* an elementwise `ω`-majorant — see §5) |
+| `jsp87Residue_eq_stride` | `jsp87Residue r p = 2^-(r+1) · jsp87StrideCarry r p` |
+| `jsp87Residue_zero_eq_stride` | the class-`0` subsum at base `2` is exactly round 98's `jsp87Stride p 2` |
+| `jsp87Residue_zero_prime_eq_base` | **the join**: for a prime `p`, `jsp87Residue 0 p = 2^(p-1) · jsp87Base (2^p) + 2^(p-1)/(2^p-1) − 2^(p²-1)/(2^p²-1)`, i.e. the residue decomposition *does* reach the coarser-base series, through the class `0` |
+
+### 3. NEGATIVE KNOWLEDGE: no dilation can make the stride copies small
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87StrideCarry_gt`** | **for every cut point `N` and every `p ≥ 2` there is a residue class `r < p` with `2^-(r+1) · jsp87StrideCarry (N+r) p > 1/p`** |
+| `jsp87StrideCarry_bounds` | the full picture: each copy lies in `[0, 2(N+r+1)]`, and their `2^-(r+1)`-weighted sum — the carry itself — exceeds `1` |
+
+Round 44 proved `θ N > 1` at **every** cut point.  The stride decomposition splits
+that excess across `p` copies, so the excess survives at **every** modulus: the
+"dilate the window until the object drops below `1`" strategy is dead for the
+carry side, permanently.
+
+### 4. Gate status
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports
+`build_ok=true, sorry=0, admit=0, placeholder_total=0, partial_ok=true,
+prize_ready=false, missing_theorems=["jsp_000087_main"]`.
+
+`jsp_000087_main` is **still deliberately not declared**.  The blocker is
+unchanged: the aperiodicity of the **binary digits** of the series
+(`jsp87_digit_not_eventuallyPeriodic`), equivalently of the doubling orbit of the
+carries (round 64).  Rationality pins the digit string and the fractional parts
+of the carries, **never `ω` itself** — round 47 machine-checked
+`jsp87_digit_ne_omega_one`, the digits of `S` are not even the parities of `ω`.
+
+### 5. Concrete blockers left by this round (recorded verbatim in `policy.json`)
+
+* **SECTION 6, proved in mathematics, not yet in Lean — finish this first.**
+  For every `p ≥ 1`, `ω` is *unbounded* and *not eventually periodic* along the
+  progression `n ↦ p·n + 1`:
+  `omega_ap_unbounded`, `omega_ap_periodic_bound`,
+  `omega_ap_not_eventuallyPeriodic`.  The proof is elementary (Euclid): take
+  `A 0 = 1 + p`, `A (i+1) = 1 + p · ∏_{v ≤ i} A v`; each `A i` is `≡ 1 (mod p)`,
+  `≥ 2`, and `A i ∣ A j − 1` for `i < j`, so the `A i` are pairwise coprime;
+  hence `M j = ∏_{i<j} A i` is `≡ 1 (mod p)`, `M j ≥ 2^j`, and
+  `ω (M j) ≥ j` by `omega_mul_of_coprime`; putting `n = (M j − 1)/p` gives
+  `ω (p·n+1) = ω (M j) ≥ j`.  Under an eventual period `t` from `N`, every
+  `ω (p·n+1)` with `n ≥ N` equals one at some `n₀ ∈ [N, N+t)`, hence is at most
+  `p(N+t)+1` — contradiction.  **The Lean obstacle is plumbing only**: the
+  recursive private `def` gets no termination proof from structural recursion
+  (the recursive call sits under `Finset.range`); it needs an explicit
+  `termination_by i` with a `decreasing_by` derived from `Finset.mem_range`.
+* **SECTION 4/5, the dilation rationality ladder (policy item 2).**  All three
+  statements (`jsp87Even_eq_dilation`, `jsp87Base_dilation`,
+  `jsp87Even_rat_iff_base_sq_rat`) reduce to a single `field_simp`; the
+  explicit-denominator corollary hit a heartbeats timeout and was cut.
+* **CORRECTION to the record.**  ACCEPTANCE.md (round 98) states that "rationality
+  of the Erdős series at base `2` and at base `4` are the same statement".  **That
+  does not follow.**  From `jsp87Base q = jsp87Odd q + jsp87Even q` and
+  `jsp87Odd q = jsp87Base q − jsp87Even q` one gets only "both parts rational ⟹
+  the other is"; rationality of a *sum* says nothing about rationality of the
+  *parts*.  What the squaring ladder really transports is the **even subsum**:
+  `jsp87Even q` rational `⟺` `jsp87Base (q^2)` rational.  Do not quote the round-98
+  formulation.
+* **Do not retry**: elementwise majorisation of `ω` by index.  `ω (M+p·k)` is
+  neither `≥` nor `≤` `ω (M+k)` in general (`M=5, k=1, p=3` gives `ω 6 = 2 >
+  ω 8 = 1`), so every summability majorant must go through
+  `summable_of_sum_range_le` with an *index subset*, never through
+  `Summable.of_nonneg_of_le`.

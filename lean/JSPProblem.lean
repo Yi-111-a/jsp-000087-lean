@@ -46,3 +46,4 @@ import JSPProblem.DeltaExact
 import JSPProblem.DeltaMass
 import JSPProblem.LambertTail
 import JSPProblem.StrideSplit
+import JSPProblem.StrideCarry
