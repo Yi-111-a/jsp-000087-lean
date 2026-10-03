@@ -4589,3 +4589,80 @@ the `S₁` primes for a positive proportion of the sample — exactly their
   `c * ∑ x ∈ s, f x = c * ∑ x ∈ s, g x`: use `rw [Finset.mul_sum]` first.
 * `ring` cannot close a goal whose summand is only *syntactically* constant:
   rewrite with `Finset.sum_congr` + `jsp87Sign_abs` first.
+
+---
+
+## Round 118 — THE CLASS-COUNT FORM OF THE VARIANCE BOUND `(5.21)`
+
+`lean/JSPProblem/VarLocal.lean` (931 lines, 36 new theorems/lemmas, 5 new
+definitions, 0 sorry, 0 admit; 2399 theorem/lemma declarations tree-wide,
+`lake build` clean).
+
+### What the round did
+
+`policy.json` `next_round_attack[1]` asked, for the first time in 118 rounds,
+for the **exact square-sum identity for `Var (q X_p)` in terms of the hit
+pattern**, "pure combinatorics over the hit set", on the ground that it would
+localise `(5.21)` to a statement about how many sample points share a pattern.
+The identity is proved — **and the hit-pattern formulation is FALSE.**  The
+level weights of (5.13) are a geometric sequence, `w_m = 2 w_{m+1}`
+(`jsp87W_succ`), so one binary carry makes two *different* patterns give the
+*same* value of `X_p` (`jsp87Xp0_code_collision`, `jsp87Xp0_eq_of_code_carry`).
+The correct object is the **hit value**, which lives on a fixed lattice.
+
+| Object | Statement |
+| --- | --- |
+| `jsp87XpCode` | the level code `c p n h = ∑_{ε hit} (−1)^{|ε|}`; under one-vertex, `c ∈ {−1,0,1}` (`jsp87XpCode_mem`), and `jsp87XpLevel_eq_code` / `jsp87Xp0_eq_code` collapse `X_p` to `∑_h c h w h` with **no hypothesis** |
+| `jsp87bin_gap` / `jsp87W_sum_sub_ge` | the **binary-weight gap**: distinct subsets of the levels have level sums at distance `≥ 2^{−(H+K)}` (uniqueness of binary expansion, from scratch: `1 + 2x` vs `2y`, an odd number cannot vanish) |
+| `jsp87XpIntDiff`, `jsp87Xp0_sub_eq_scale` | **THE DISCRETENESS OF THE CUBE SUM**: `X_p(n) − X_p(n′) = 2^{−(H+K)} · (an integer)` |
+| `jsp87Xp0_sub_eq_zero_or_ge` | **THE UNIFORM GAP**: two cube sums are either equal or at distance `≥ 2^{−(H+K)}` — the discrete replacement for the (false) aperiodicity of the hit patterns |
+| `jsp87Class`, `jsp87Class_const` | the **hit-value classes** `{n ∈ s : f n = A}`, and constancy of any function of `f` on a class |
+| `jsp87_sum_diff_sq_class` | **THE CLASS-COUNT IDENTITY**: `∑_{i,j} (f i − f j)² = ∑_{A,B} \|A\|\|B\| (A − B)²` over ordered pairs of attained values |
+| `jsp87Var_eq_classSum` | `2 \|s\|² Var f = ∑_{A,B classes} \|A\|\|B\| (v_A − v_B)²` — the exact weighted count of the pairs of sample points whose cube sums differ |
+| `jsp87Var_eq_zero_iff_const` | the other half: the variance vanishes exactly on a single class |
+| `jsp87Var_ge_twoClass` | **A BALANCED TWO-CLASS SPLIT FORCES VARIANCE**: `Var f ≥ \|A\|\|B\| δ² / \|s\|²` |
+| `jsp87Var_Xp_ge_twoClass` | the lattice form for the cube sum: `q² \|A\|\|B\| 2^{−2(H+K)} / \|s\|² ≤ Var (q X_p)` (the separation is automatic once the values differ, by §3) |
+| `jsp87Var_Xp_ge_one` | **one** prime with a balanced split supplies `(5.21)`, with a closed-form threshold `q² \|A\|\|B\| 2^{−2(H+K)} ≥ \|s\|²` |
+| `jsp87_varSum_ge` | the variance sum over the `S₁` primes |
+| `jsp87_endgame_twoClass` | **THE ENDGAME, `(5.21)` DISCHARGED**: under (5.15), (5.16)–(5.17), (5.19) and a balanced two-class split, the five error terms `κ_1 … κ_5` cannot all be `< 1/30` |
+
+### Consequence for the gate
+
+`jsp_000087_main` is **still not declared** and the gate stays
+`partial_ok=true, prize_ready=false`.  The entire remaining burden is now a
+**single discrete hypothesis** about the distribution of `ω`:
+
+> for some prime `p` and some sample `s` of integers, the hit values of `X_p`
+> split `s` into two non-empty parts `A, B` that never agree, with
+> `q² \|A\|\|B\| 2^{−2(H+K)} ≥ \|s\|²`.
+
+This is the content of Tao–Teräväinen §3 (their `Theorem 3.1`, from Pilatte):
+Mathlib has no Chowla-type or Elliott-type statement for multiplicative
+functions, so the input cannot be supplied here.
+
+### The Mathlib corrections of this round (do not repeat these)
+
+* `∑ x ∈ s, f x` is a **single** sum over `s`; `∑ x in s, f x` is **not** valid
+  syntax in this Mathlib version (the `in` binder was removed).
+* `Finset.sum_product s t f : ∑ p ∈ s ×ˢ t, f p = ∑ x ∈ s, ∑ y ∈ t, f (x, y)` —
+  **both** finsets are explicit arguments.
+* `Finset.sum_fiberwise_of_maps_to (H : ∀ i ∈ s, g i ∈ t) (w) :
+  ∑ j ∈ t, ∑ i ∈ s with g i = j, w i = ∑ i ∈ s, w i` — `Fintype` is *not*
+  needed for the finite version.
+* `Finset.mem_erase : x ∈ s.erase a ↔ x ≠ a ∧ x ∈ s` (the `≠` comes **first**);
+  `Finset.mem_singleton : x ∈ {a} ↔ x = a`.
+* `Finset.sum_subset (h : s₁ ⊆ s₂) (g : ∀ x ∈ s₂, x ∉ s₁ → f x = 0) :
+  ∑ s₁ = ∑ s₂` — the hypothesis ranges over **`s₂`**.
+* `Finset.sum_const : ∑ x ∈ s, b = s.card • b`; convert with `nsmul_eq_mul`.
+* `Finset.not_mem_empty_iff` and `Finset.not_mem_empty` **do not exist**; use
+  `by simp` or `Finset.mem_empty`.
+* `abs_of_neg`/`abs_of_pos`, `sq_abs`, `abs_sub_comm`, `sq_le_sq₀` are the
+  right tools; `sq_sub` and `sq_neg` **do not exist** in this Mathlib version.
+* `div_le_iff₀ hc2` (not `le_div_iff₀`) for the goal `k / c ≤ L`; `c ^ 2 > 0`
+  follows from `positivity`.
+* `rw` cannot apply `← Finset.mul_sum` (its pattern `∑ a * f` needs a
+  *hidden* constant); use `refine (Finset.sum_congr rfl fun _ _ => ?_)` and
+  `ring` on the summands, or state the step with explicit arguments.
+* `by_contra`/`absurd` need the negation on the *right*: to derive `False`
+  from `hneg : ¬ P` and `hne : ¬ P` use `hneg hne`; to get `P` from `¬ P` use
+  `by_contra` and then `hcon hne`.
