@@ -58,3 +58,4 @@ import JSPProblem.MomentLadder
 import JSPProblem.CumSqLadder
 import JSPProblem.RoughJoin
 import JSPProblem.Squarefree
+import JSPProblem.PrimePowerExcess
