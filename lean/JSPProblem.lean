@@ -50,3 +50,5 @@ import JSPProblem.StrideCarry
 import JSPProblem.StrideCarry
 import JSPProblem.ProgressionOmega
 import JSPProblem.OrbitRange
+import JSPProblem.LevelSets
+import JSPProblem.LevelSeries

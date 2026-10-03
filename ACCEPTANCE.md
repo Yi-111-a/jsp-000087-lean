@@ -3672,3 +3672,80 @@ period routes stay closed.  Untouched families for a future round: the `Ω`
 (multiplicity) function and the prime-power excess series, the Farey /
 three-distance structure of the orbit points, and a base-`b` (`b > 2`) version of
 the range criterion.
+
+---
+
+## Round 103 — the layer-cake decomposition, and the JOIN with the level-set series
+
+New module `lean/JSPProblem/LevelSeries.lean` (310 lines, **13 new theorems and
+defs** plus 2 private helpers, 0 `sorry`, 0 `admit`, **0 new linter warnings**;
+**1599 proved theorems and lemmas** in the tree at the `^(theorem|lemma)` level —
+1587 before — `lake build` clean).
+
+Round 83 (`LevelSets.lean`) decomposed `ω` into its level sets and proved the
+complete classification of the two carry-free families
+(`jsp87LevelSeries k` irrational ⟺ `1 ≤ k`, `jsp87AtLeastSeries k` irrational ⟺
+`2 ≤ k`, with `jsp87LevelSeries 0 = 3/4`, `jsp87AtLeastSeries 0 = 1`,
+`jsp87AtLeastSeries 1 = 1/4` computed exactly).  Rounds 37–102 built the Erdős
+series itself, its Lambert reduction, its carry dynamics, its digit string and
+its aperiodicity endgame.  **The two halves had never been joined.**  This round
+is that join, via the layer-cake identity `ω n = #{k : k ≤ ω n}`.
+
+### 1. The layer-cake identity
+
+| Theorem | Statement |
+| --- | --- |
+| `omega_eq_sum_cumulBit` | `∑_{k < ω n} [k ≤ ω n] = ω n` — `ω n` **is** the number of layers at `n` |
+| `jsp87LayerTerm`, `jsp87LayerTerm_nonneg` | the real summand `[k ≤ ω n] · 2^-(n+1)` |
+| `jsp87LayerTerm_sum_eq` | `∑_{k < ω n} jsp87LayerTerm k n = jsp87Term n` — the real layer-cake identity |
+| `omega_lt_of_lt` | `n < k → ω n < k` (needed to make the truncation an identity) |
+
+### 2. The finite join
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_levelSum_range` | at a cut point `M > n`, `∑_{k<M} jsp87LayerTerm k n = jsp87Term n + 2^-(n+1)`; the extra term is exactly the layer `k = ω n` (it is `1`, since `ω n ≥ ω n`) |
+| `jsp87_partial_eq_sum_level` | **THE FINITE JOIN**: `∑_{n<M} ω n 2^-(n+1) + ∑_{n<M} 2^-(n+1) = ∑_{k<M} ∑_{n<M} [k ≤ ω n] 2^-(n+1)` |
+
+### 3. The infinite join, in column form — the round's headline
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87LayerColumn` | the new object `(ω n + 1) · 2^-(n+1)`: the **number of layers at `n`**, weighted |
+| `jsp87LayerColumn_eq` | `jsp87LayerColumn n = jsp87Term n + 2^-(n+1)` |
+| `summable_jsp87LayerColumn`, `hasSum_jsp87LayerColumn` | the column series converges, with sum `jsp87Series + 1` |
+| **`jsp87Series_add_one_eq_tsum_columns`** | **`jsp87Series + 1 = ∑' n, (ω n + 1) · 2^-(n+1)`** |
+| `jsp87Series_add_one_eq_tsum` | the same, with the column written out |
+
+So the Erdős series is a **countable integer-weighted combination of the level
+series of round 83**, and the `+ 1` is the layer `k = 0` — whose total weight is
+the geometric series `∑' n, 2^-(n+1) = 1`.  This is proved without any Fubini
+argument: both sides are single `tsum`s indexed by `n`.
+
+### 4. The row form, and the exact reason it is not yet proved
+
+The row form `jsp87Series + 1 = ∑' k, jsp87AtLeastSeries k` requires
+interchanging a **countable** double sum.  This Mathlib version has **no** Fubini
+lemma for `ℝ`: `tsum_comm` exists only for `ℝ≥0∞` (`ENNReal.tsum_comm`),
+`Summable.tsum_finset_sum` and `summable_of_nonneg_of_le` do not exist (the latter
+is `Summable.of_nonneg_of_le`), and there is no
+`Filter.Tendsto.le_of_tendsto_of_tendsto_of_le_of_le'` to pass an inequality
+through a limit.  A complete three-step plan (summability of the row series via
+`ω n ≥ k → n ≥ 2^k`, the two one-sided finite bounds, and
+`M · 2^-M → 0` from `exists_pow_lt_of_lt_one`) is recorded at the end of
+`lean/JSPProblem/LevelSeries.lean` for the next round.
+
+### 5. Why the join does not close the gate
+
+Every `jsp87AtLeastSeries k` with `k ≥ 2` and every `jsp87LevelSeries k` with
+`k ≥ 1` is **irrational** (round 83), and the join shows the Erdős series is built
+from them by a countable integer-weighted combination.  A countable combination
+of irrational numbers need not be irrational, and the two rational members of the
+family are precisely the trivial ones.  So the join sharpens the *shape* of the
+problem without touching the blocker, which remains round 41's
+**`jsp87_digit_not_eventuallyPeriodic`** (equivalently round 64's aperiodicity of
+the doubling orbit `Int.fract (θ N)`).
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
