@@ -4466,3 +4466,126 @@ of the truncated carry, i.e. `∑_{N<L} T(N,H)² = ∑_{k,k'<H} 2^{-(k+1)-(k'+1)
 jsp87CorrAt L k k'`.  The statement and the exact remaining step are recorded
 verbatim in `lean/JSPProblem/Chowla.lean` (section *The second moment of the
 truncated carry*).
+
+---
+
+## Round 117 — SECTION 6 EXECUTED: the cube-alternating variable `X_p`, and the DISCHARGE of hypothesis (5.19)
+
+New module `lean/JSPProblem/Xp.lean` (640 lines, **34 new theorems and lemmas**
+plus 4 private helpers and 9 new definitions, 0 `sorry`, 0 `admit`, 0 warnings;
+**2363 theorem/lemma declarations** in the tree, `lake build` clean).
+
+Round 116 proved the endgame of Tao–Teräväinen §5 (`jsp87_endgame_impossible`:
+their `Theorem 5.1` is incompatible with their own `(5.18)`) and **explicitly
+abandoned** the very object the remaining hypotheses are about, recording
+*"NEXT ROUND: re-derive §6 from the definitions above"*.  **This round is that
+§6.**  The random variable of (5.13) is
+
+```
+X_p = q ∑_{1≤h≤H} ∑_{ε∈{0,1}^K} (−1)^{|ε|} 2^{−(h+K)} [ p ∣ n + r_{ε,h+K} ]
+```
+
+an alternating sum over the vertices of a Hilbert cube.
+
+### 1. The objects of (5.13)
+
+| Declaration | Statement |
+| --- | --- |
+| `jsp87Off`, `jsp87R` | the vertex offset and **the cube shift** `r_{ε,h} = h + Σ_{k∈ε} v_k` |
+| `jsp87R_mem_le` | `r_{ε,h} ≤ h + Σ_k v_k` |
+| `jsp87HitVerts` | **the hitting vertices** `{ε : p ∣ n + r_{ε,h}}` — the set `T` of §6 |
+| `jsp87W` | **the level weight** `2^{−(h+K)}`, with `jsp87W_eq_half`, `jsp87W_pos`, `jsp87W_le_one`, `jsp87W_anti` |
+| `jsp87XpLevel` | the inner `2^K`-term alternating sum of (5.13) |
+| `jsp87Xp0`, `jsp87Xp` | **the variable `X_p` of (5.13)**, with and without the leading `q` |
+| `jsp87XpLevel_eq_filter`, `jsp87Xp0_eq_filter` | the literal double sum equals weight × sign-sum over the hit vertices |
+
+### 2. (A) THE ONE-VERTEX COLLAPSE — and the size bound (5.36)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Sep` | **the separation hypothesis**: at level `h` the prime `p` exceeds every cube shift and the shifts are pairwise distinct |
+| **`jsp87OneVertex_of_sep`** | the separation hypothesis implies **at most one vertex is hit**, from scratch (`Nat.dvd_sub`, `Nat.dvd_iff_mod_eq_zero`, `Nat.mod_eq_of_lt`) |
+| **`jsp87XpLevel_eq_of_hit`** | **THE COLLAPSE**: `∑_ε (−1)^{|ε|} 2^{−(h+K)} [p ∣ n + r_{ε,h}] = (−1)^{|ε*|} · 2^{−(h+K)}` |
+| `jsp87XpLevel_eq_zero_or_sign` | the level sum is `0` or a single signed weight |
+| `jsp87XpLevel_abs_le` | `|level sum| ≤ 2^{−(h+K)}` |
+| `jsp87Xp0_abs_le_weight` | `|X_p| ≤ ∑_{h≤H} 2^{−(h+K)}` |
+| **`jsp87Xp_abs_le`** | **(5.36)**: `|X_p| ≤ |q| · H · 2^{−K}`, uniformly in the sample point |
+
+### 3. (B) **HYPOTHESIS (5.19) IS DISCHARGED**
+
+| Theorem | Statement |
+| --- | --- |
+| **`exists_K_abs_le`** | for every `q > 0` and `H` there is `K ≥ 1` with `q · H · 2^{−K} ≤ 1/20` (from `exists_pow_lt_real`, r. 46) |
+| `jsp87Xp_abs_le_twenty`, `jsp87Xp0_abs_le_twenty` | `|q X_p| ≤ 1/20` at every sample point, for such `K` |
+| **`jsp87_endgame_cube`** | **with `T p i = X_p(i) = jsp87Xp0 (v p) p i H`, the separation hypothesis and `|q| H 2^{−K} ≤ 1/20`, the round-116 endgame applies verbatim: `κ₁+⋯+κ₅ ≥ 1/2`, so the five error terms cannot all be `< 1/30`.** Of the five hypotheses of their `Theorem 5.1`, (5.19) is now discharged; (5.15), (5.16)–(5.17) are their own analytic reduction |
+
+### 4. (C) THE `S₀` MECHANISM — why (5.21) sums only over `S₁`
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87sign_sum_zero`, `jsp87sign_sum_mul` | `∑_ε (−1)^{|ε|} = 0` for `K ≥ 1` (from `jsp87_cube_cancelR`, r. 88) |
+| **`jsp87XpLevel_eq_zero_of_allHit`** | **the all-hit collapse**: if *every* vertex is hit, the level sum vanishes — the `2^K` signs cancel |
+| **`jsp87Xp0_eq_zero_of_dvd_all`** | **the zero-prime mechanism**: if `p` divides every cube shift and `p ∣ n`, then `X_p = 0` |
+| **`jsp87Var_zero_of_zeroPrime`** | hence `Var (q X_p) = 0` on every sample set contained in the progression `p ℕ` |
+
+### 5. (D) THE VARIANCE TOOLBOX
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87FAvg_const` | the average of a constant is that constant |
+| **`jsp87Var_le_avg_sq`** | `Var f = 𝔼 f² − (𝔼 f)² ≤ 𝔼 f²`, from scratch |
+| **`jsp87Var_le_sq`** | `|f| ≤ B` pointwise ⟹ `Var f ≤ B²` |
+| **`jsp87Var_Xp_le`** | **`Var (q X_p) ≤ (|q| H 2^{−K})²`** — the variance of the cube-alternating variable decays like `4^{−K}` |
+| `jsp87Var_zero_of_zero`, `jsp87Var_Xp_zero_of_noHit` | the variance vanishes when the cube is never hit |
+
+### 6. (E) DETERMINISM — the mechanism behind (5.16)–(5.17)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87XpLevel_eq_of_pattern` | at one level: if the hit patterns of two sample points match (a hit, carrying the same sign) then the level sums agree |
+| **`jsp87Xp0_eq_of_pattern`** | **`X_p` depends on the sample point only through the signs of the hit vertices at each level** |
+| `jsp87Xp0_eq_of_hitSet` | the same hit set gives the same `X_p`, with no one-vertex hypothesis |
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  What this round adds
+is the *object* of the published proof and the discharge of one of its five
+hypotheses; the missing input remains a *quantitative two-point correlation
+estimate for `ω`* (Tao–Teräväinen `Theorem 3.1`, from Pilatte), for which
+Mathlib has no analogue whatsoever.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports
+`build_ok=true, sorry=0, admit=0, placeholder_total=0, partial_ok=true,
+prize_ready=false, missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 117, stated exactly
+
+> **`(5.21)` `1 ≤ ∑_{p∈S₁} Var (q X_p)`** — a *lower* bound on the variance of
+> the cube-alternating variables `X_p` of (5.13), for the primes of `S₁`.
+
+This round proved everything *around* it: the size bound (5.36), the discharge
+of (5.19), the `S₀` zero-variance theorem that makes the restriction to `S₁`
+meaningful, and the matching upper bound `Var (q X_p) ≤ (|q| H 2^{−K})²`.  What
+is missing is the lower bound, i.e. that the cube is genuinely non-degenerate at
+the `S₁` primes for a positive proportion of the sample — exactly their
+`Theorem 3.1`.
+
+### The Mathlib correction of this round (do not repeat these)
+
+* `Finset.mem_univ` is **not usable for `Finset ℕ`** (no `Fintype ℕ`): sample-set
+  membership must always be carried as an explicit hypothesis, never produced
+  by `Finset.mem_univ`.
+* `Finset.nonempty_iff_ne_empty : s.Nonempty ↔ s ≠ ∅` — use `.mpr` on a `≠ ∅`
+  hypothesis (and `.mp` on a `Nonempty` hypothesis); `Finset.card_le_one`,
+  `Finset.card_eq_one`, `Finset.card_eq_zero` are **iffs**, not implications.
+* `Nat.exists_eq_add_of_le : m ≤ n → ∃ k, n = m + k` (implicit `m`, `n`);
+  `Nat.eq_zero_of_not_pos` (not `omega`) for `¬ 0 < n → n = 0`.
+* `zpow_natCast` (not `zpow_ofNat`, whose printed signature is useless) converts
+  `a ^ (n : ℤ)` to `a ^ n`; `pow_le_pow_right₀` (base ≥ 1) is the convenient
+  ℕ-power monotonicity lemma; `inv_le_inv₀` is an **iff**.
+* An identifier may **not** mix a subscript digit with a following letter
+  (`ε₁b` is not an identifier; `ε₂` is), and `ε*` is not an identifier at all.
+* `Finset.sum_congr` does **not** apply to a goal of the form
+  `c * ∑ x ∈ s, f x = c * ∑ x ∈ s, g x`: use `rw [Finset.mul_sum]` first.
+* `ring` cannot close a goal whose summand is only *syntactically* constant:
+  rewrite with `Finset.sum_congr` + `jsp87Sign_abs` first.

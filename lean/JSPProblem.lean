@@ -64,3 +64,4 @@ import JSPProblem.LambertMaster
 import JSPProblem.PlusDilate
 import JSPProblem.Chowla
 import JSPProblem.Variance
+import JSPProblem.Xp
