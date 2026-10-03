@@ -3554,3 +3554,121 @@ round repeats the mistake: rationality of `S` pins the **binary digit string**
 unreachable *from rationality*, however strong it is proved; and the aperiodicity
 of the digits of the carried series remains the content of the uniform
 prime-`k`-tuples hypothesis of Pratt's result (arXiv:2409.15185).
+
+---
+
+## Round 102 — the RANGE of the doubling orbit of the carries
+
+New module `lean/JSPProblem/OrbitRange.lean` (534 lines, **30 new theorems and
+lemmas** + 1 private helper + 4 new definitions, 0 `sorry`, 0 `admit`, 0 new
+linter warnings; **1587** proved declarations at the `^(theorem|lemma)` level —
+1557 before this round — `lake build` clean).
+
+This is a **new attack family**.  Rounds 41 (binary digits), 46 (`t`-digit
+blocks), 48 (the doubling map on the carries), 57 (the period–denominator
+correspondence) and 64 (the minimal period `ord_{jsp87OddPart b}(2)`, the start
+point `v_2(b)`) all worked with the **periods** and **collisions** of the orbit
+`N ↦ Int.fract (θ N)`.  **Not one of them looked at the orbit as a set of
+points.**  This round does, i.e. the classical "limit set" formulation of the
+same obstruction.  Round 101 (`omega` along arithmetic progressions) is
+*abandoned*: its content (unboundedness and aperiodicity of `ω` on every
+progression) is negative knowledge that closes routes rather than supplies the
+missing input.
+
+### 1.  The four new objects
+
+| Name | Statement |
+| --- | --- |
+| `jsp87Dbl` | `x ↦ Int.fract (2 * x)`, the doubling map on `[0,1)` |
+| `jsp87OrbitRange` | **the image of the orbit**: `{Int.fract (θ N) : N ∈ ℕ}` |
+| `jsp87OrbitWindow N` | the distinct orbit points among the first `N + 1` indices |
+| `jsp87OrbitCount N` | `#(jsp87OrbitWindow N)`, the counting function of the range |
+
+### 2.  The orbit is a dynamical system
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_dbl_apply` | the successor of an orbit point **is the doubling map applied to it**: `fract θ (N+1) = jsp87Dbl (fract θ N)` |
+| `jsp87_orbit_iter` | **`k` iterates of the doubling map are the orbit point at `N + k`** |
+| `jsp87_orbitRange_closed` | the range is closed under `jsp87Dbl` |
+| `jsp87_orbitRange_nonempty`, `jsp87_orbitRange_subset_unit` | the range is nonempty and contained in `[0,1)` |
+
+### 3.  Periodicity makes the range finite
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_orbit_period_iter` | `q` periods take the point at `N` to the point at `N + q·t` |
+| **`jsp87_orbit_period_reduce`** | **the window reduction**: `fract θ N = fract θ (M + (N − M) % t)` — under an eventual period the whole orbit is determined by its first `t` points after `M` |
+| `jsp87_orbitRange_subset_window` | every range value is `fract θ k` for some `k < M + t` |
+| **`jsp87_orbitRange_eq_of_periodic`** | the orbit range **is** the image of the first `M + t` points (as `Set ℝ`) |
+| `jsp87_orbitRange_finite_of_periodic`, `jsp87_orbitRange_card_le_of_periodic` | the range is a `Finset ℝ` of cardinality `≤ M + t` |
+
+### 4.  A finite range forces a period
+
+`jsp87_orbit_periodic_of_finiteRange` — if `∀ N, fract θ N ∈ s` for a
+`Finset ℝ` `s`, then the orbit is eventually periodic.  Proof: pigeonhole
+(`Finset.exists_ne_map_eq_of_card_lt_of_maps_to`) gives a **collision**
+`fract θ (W+1+i) = fract θ (W+1+j)`; determinism (`jsp87_orbit_iter`) propagates
+it forward with period `|j − i|` from `W + 1 + min i j`.  Mathlib has no
+theorem of this shape for the base-`2` expansion of any real number.
+
+### 5.  THE MAIN THEOREM
+
+> **`jsp87Series_irrational_iff_orbitRange_infinite`** —
+> `Irrational jsp87Series` **iff** the set `{Int.fract (θ N) : N}` is not
+> contained in any `Finset ℝ`, i.e. **iff the doubling orbit of the carries has
+> an infinite image**.
+
+Both directions are proved from §3 and §4.  This is the "limit-set" form of
+round 64's period criterion, and it mentions **neither a period, nor a modulus,
+nor a denominator** — only the finiteness of one set.  Consequences:
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Series_irrational_of_orbit_injective` | an injective orbit forces irrationality |
+| `jsp87Series_irrational_of_orbitCount_unbounded` | **unboundedly many distinct orbit points ⇒ irrationality** |
+| `jsp87Series_rational_imp_orbitRange_finite` | a rational value of the series forces a finite image |
+| `jsp87Series_rational_imp_orbitCount_bounded` | a rational value forces a bounded counting function |
+
+### 6.  The counting function, and a second finite bound on the rational side
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_orbitCount_mono`, `_pos`, `_le`, `_eq_of_injOn` | monotone, `> 0`, `≤ N + 1`, `= N + 1` on an injective window |
+| `jsp87_orbitCount_le_of_periodic` | an eventual period `t` from `M` bounds the count by `M + t` |
+| `jsp87_orbitCount_eq_of_periodic` | the count is **constant along the period** |
+| `jsp87_orbitWindow_succ`, `jsp87_orbitCount_succ_of_new`, `jsp87_orbitCount_succ_le` | one new point per index; a genuinely new point adds exactly one |
+| **`jsp87_orbitCarry_grid`** | **the orbit lies on `(1/b)ℤ` at *every* index** — round 41 proved this for `1 ≤ N`; `N = 0` needs `θ 0 = S` |
+| **`jsp87_orbitCount_le_denominator`** | **`S = a/b` caps the number of distinct orbit points at `b`** |
+| `jsp87_orbitRange_eq_window_of_periodic` | after an eventual period the range *is* a finite window |
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is a *published* theorem (conditionally Pratt, arXiv:2409.15185,
+under a uniform prime-`k`-tuples hypothesis; unconditionally Tao–Teräväinen,
+arXiv:2512.01739), but its analytic core — a Pilatte-type quantitative two-point
+correlation estimate for multiplicative functions — has no Mathlib counterpart
+and cannot honestly be assumed.  This round reduces the headline to a statement
+about a **set** (the image of the doubling orbit), which is the same reduction
+as round 64's, in different language.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 102, stated exactly
+
+> **`jsp87_orbitRange_infinite`** — for every `Finset ℝ`, some `N` has
+> `Int.fract (θ N)` outside it, i.e. the doubling orbit of the carries is an
+> infinite set.
+
+Equivalently (round 102's theorem): `jsp87Series` is irrational.  The range
+formulation and round 64's period formulation are **equivalent in both
+directions**, so this reformulation buys clarity, not leverage; and the two
+finite bounds that rationality now yields (period `≤ ord_{b'}(2)`, image size
+`≤ b`) are consistent with everything proved so far, so the denominator and
+period routes stay closed.  Untouched families for a future round: the `Ω`
+(multiplicity) function and the prime-power excess series, the Farey /
+three-distance structure of the orbit points, and a base-`b` (`b > 2`) version of
+the range criterion.
