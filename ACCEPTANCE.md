@@ -631,6 +631,136 @@ governed by the *same* arithmetic period.
 
 ---
 
+## Round 114 — the `+1` Lambert series as a SUMMED alternating series of dilations
+
+New module `lean/JSPProblem/PlusDilate.lean` (644 lines, **30 new public theorems**
+plus 5 private helpers and 1 new public definition, 0 `sorry`, 0 `admit`;
+**2003 proved theorems and lemmas** at the `^(theorem|lemma)` level — 1971 before
+this round — `lake build` clean).
+
+This closes the item that **round 113 explicitly abandoned**. Rounds 112–113 built
+the two series objects of §5.2 of Tao–Teräväinen (arXiv:2512.01739) — the `+1`
+Lambert series `jsp87PlusLambert = ∑' n, ω(n)/(2^n+1)` and the **dilations**
+`jsp87ScaleLambert k = ∑' n, ω(n) 2^{-kn}` — together with the **per-place**
+alternating-geometric identity of round 113, but could not exchange the `k`-sum
+with the `n`-sum, and recorded the reason:
+
+> "this Mathlib (v4.34.0) has NO `tsum_finset_sum` / `Summable.tsum_sum` for
+> `Finsets` in this version (only for the `Sum` type), so the interchange must be
+> proved by induction on `J` with an explicit majorant".
+
+**That premise was wrong, and this round corrects it.** The Mathlib lemma exists
+under a different name: `Summable.tsum_finsetSum`, with signature
+
+```
+(∀ i ∈ s, Summable (f i)) → ∑' b, ∑ i ∈ s, f i b = ∑ i ∈ s, ∑' b, f i b
+```
+
+— it needs *no* hypothesis about the column sums being summable, which is exactly
+what the hand proof was being contorted into providing. With it, the whole of
+§5.2 closes.
+
+### 1. The remainder term of the truncated expansion
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87PlusTerm` | **the new object**: `ω(n) 2^{-n} (-2^{-n})^J / (1 + 2^{-n})`, the `n`-th summand of `jsp87PlusRem J` |
+| `jsp87PlusTerm_abs` | its absolute value computed exactly: `= ω(n) 2^{-(J+1)n} / (1 + 2^{-n})` |
+| `jsp87PlusTerm_abs_le` | **the dominating estimate** `|ω(n) 2^{-n}(-2^{-n})^J/(1+2^{-n})| ≤ ω(n) 2^{-nJ}` |
+| `jsp87PlusTerm_eq_sign_abs` | the term is `(-1)^J` times its own absolute value |
+| `summable_omega_dilate'`, `summable_omega_dilate` | the `J`-fold dilation of the Erdős summand is summable for `1 ≤ J` |
+| `summable_jsp87PlusTermAbs`, `summable_jsp87PlusTermR`, `hasSum_jsp87PlusTerm` | the remainder series is summable for `1 ≤ J`, and `∑' n, jsp87PlusTerm n J = jsp87PlusRem J` |
+
+### 2. **THE SIGN OF THE REMAINDER** — the alternating-series structure of §5.2
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87PlusRem_eq_sign` | `jsp87PlusRem J = (-1)^J · (∑' n, \|jsp87PlusTerm n J\|)`: the truncation remainder is a **signed sum of positive numbers** |
+| `jsp87_absTermSum_pos` | the sum of absolute values is **strictly** positive (the place `n = 2` contributes, `ω 2 = 1`) |
+| `jsp87_plusRem_nonneg_of_even` / `_nonpos_of_odd` | `0 ≤ jsp87PlusRem J` for even `J`, `jsp87PlusRem J ≤ 0` for odd `J` |
+| `jsp87_plusRem_pos_of_even` / `_neg_of_odd` | **strictly**: `0 < jsp87PlusRem J` for even `J`, `jsp87PlusRem J < 0` for odd `J`. The remainder carries the sign of `(-1)^J`, exactly as in the Leibniz criterion |
+
+### 3. The dilations decay geometrically
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87ScaleLambert_nonneg` | every dilation is nonnegative |
+| `summable_jsp87ScaleLambert` | the `J`-fold dilation summand is summable for `1 ≤ J` |
+| `jsp87ScaleLambert_gt` | `2^{-2J} < jsp87ScaleLambert J` — the `n = 2` place alone bounds the dilation from below |
+| `jsp87ScaleLambert_succ_le_half` | **the dilations shrink by half**: `jsp87ScaleLambert (J+1) ≤ jsp87ScaleLambert J / 2` |
+| `tendsto_two_inv_pow_zero` | `(2⁻¹)^k → 0`, proved from `Metric.tendsto_atTop` (Mathlib has no `tendsto_pow_atTop_nhds_0_of_lt_1`) |
+| `jsp87ScaleLambert_le` | **the geometric decay**: `jsp87ScaleLambert J ≤ 4 (2⁻¹)^J S` for `1 ≤ J` |
+| `jsp87_plusRem_abs_le` | **the Leibniz bound**: `|jsp87PlusRem J| ≤ 4 (2⁻¹)^J S` |
+| `jsp87PlusRem_tendsto_zero` | **the remainder tends to `0`** — the identity below is a genuine limit |
+
+### 4. THE MAIN THEOREM — the summed alternating-dilation expansion of §5.2
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87PlusLambert_eq_altDilate` | **for every `J`:** `jsp87PlusLambert = ∑_{k<J} (-1)^k jsp87ScaleLambert (k+1) + jsp87PlusRem J` |
+| `jsp87PlusLambert_tendsto_altDilate` | **the alternating partial sums of the dilations converge to the `+1` Lambert series** |
+| `jsp87_altDilate_bracket` | **THE CLASSICAL LEIBNIZ BRACKET**: for even `J ≥ 2`, `∑_{k<J} (-1)^k A_{k+1} < jsp87PlusLambert < ∑_{k<J+1} (-1)^k A_{k+1}` |
+
+The `+1` Lambert series is thus the alternating sum, over the **dilations of the
+Erdős series itself**, of its own alternating partial sums — the exact object
+§5.2 of arXiv:2512.01739 is built to produce. Mathlib has no statement of this
+shape: it has no `+1` Lambert series, no notion of a dilation of a generating
+series, and nothing about `1/(2^n+1) = ∑_k (-1)^k 2^{-(k+1)n}`.
+
+### 5. Two *new* consequences for the `+1` series
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87PlusLambert_lt_two_mul_series`** | **`jsp87PlusLambert < 2 · jsp87Series`** — round 112 could prove only `≤`; the strict remainder sign makes it strict |
+| `jsp87PlusLambert_ge_one_fifth` | **`1/5 ≤ jsp87PlusLambert`** — the single place `n = 2` contributes `ω 2/(2²+1) = 1/5`, so the `+1` series is bounded away from `0` by an explicit rational |
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**. The headline
+irrationality is a theorem in the literature (Tao–Teräväinen, arXiv:2512.01739,
+Thm 1.3 = Erdős problem #69), and what is missing is the *proof*, whose analytic
+input is their quantitative two-point correlation estimate for `ω` at shifted
+integers (their Thm 3.1, from Pilatte's quantitative Elliott-type work). Mathlib
+has no Chowla-type or two-point-correlation statement for multiplicative
+functions, so that input cannot be supplied here. Emitting a weakened statement
+under the name `jsp_000087_main` would misrepresent the catalog headline, so the
+name stays withheld.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports
+`build_ok=true, sorry=0, admit=0, placeholder_total=0, partial_ok=true,
+prize_ready=false, missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 114, stated exactly
+
+> **`jsp87TruncCarryEscapes`** (round 112) / **`jsp87_digit_not_eventuallyPeriodic`**
+> (round 46) — unchanged and unchanged in substance. Rounds 41/46/64 make the
+> headline *equivalent* to the aperiodicity of the binary digits of `S`, i.e. of
+> the doubling orbit of its carries; rounds 112–114 make it *equivalent* to the
+> statement that the truncated carry `jsp87TruncCarry N H` stays away from the
+> lattice `q^{-1}ℤ` uniformly in `N, H`. Both are quantitative statements about
+> `ω(n+1), …, ω(n+H)` that Mathlib cannot supply.
+
+### The Mathlib correction of this round (do not repeat the round-113 mistake)
+
+* `Summable.tsum_finsetSum` **exists** and exchanges a `Finset`-indexed sum with
+  a `tsum`; round 113's "no `tsum_finset_sum` in this version" was a
+  **name miss**, not a Mathlib gap. Its hypothesis is only `∀ i ∈ s, Summable (f i)` —
+  in particular it needs *no* summability of `fun b => ∑ i ∈ s, f i b`, which is
+  what makes the hand induction impossible to set up cleanly.
+* Other lemma-name changes in this Mathlib (v4.34.0) that cost time this round:
+  `abs_le_abs : a ≤ b → -a ≤ b → |a| ≤ |b|` (**two** hypotheses, no longer in a
+  linear-order section), `pow_mul : a^(m*n) = (a^m)^n` (so `mul_pow` is the
+  "other" direction), `Finset.sum_range_succ` puts the new element **last**,
+  `Σ`-binders need parentheses as soon as the body has a top-level `+`
+  (`∑' n : ℕ, f n + g n` mis-parses; write `∑' (n : ℕ), (f n + g n)`),
+  `inv_mul` / `tsum_le_add` / `tsum_ge_sum` / `abs_tsum_le_tsum` /
+  `tendsto_pow_atTop_nhds_0_of_lt_1` do **not** exist (use `Metric.tendsto_atTop`
+  plus `exists_pow_lt_real`, `Summable.sum_le_tsum`, `squeeze_zero'`),
+  `HasSum.congr` does not exist (use `Summable.hasSum_iff`), and `div_le_one` is an
+  `iff`.
+
+---
+
 ## Round 47 — the primary (carry-free) binary expansion, and TWO complete irrationality theorems
 
 New module `lean/JSPProblem/Primary.lean` (1334 lines, **80 new theorems and

@@ -61,3 +61,4 @@ import JSPProblem.Squarefree
 import JSPProblem.PrimePowerExcess
 import JSPProblem.TTRoute
 import JSPProblem.LambertMaster
+import JSPProblem.PlusDilate
