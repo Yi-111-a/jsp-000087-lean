@@ -52,3 +52,4 @@ import JSPProblem.ProgressionOmega
 import JSPProblem.OrbitRange
 import JSPProblem.LevelSets
 import JSPProblem.LevelSeries
+import JSPProblem.RowJoin

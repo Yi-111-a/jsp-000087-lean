@@ -57,16 +57,23 @@ where the `+ 1` is the *layer `k = 0`*, i.e. the geometric series `∑' n, 2^-(n
   layers at that cut point.  No Fubini is needed: both sides are single `tsum`s
   over `n`.
 
-## 4. The infinite join, in row form (§5) — the one missing step
+## 4. The infinite join, in row form — DONE, in `RowJoin.lean`
 
-The row form `S + 1 = ∑' k, jsp87AtLeastSeries k` needs to interchange a
-*countable* double sum, and this Mathlib version has **no** Fubini lemma for `ℝ`
-(`Summable.tsum_finset_sum`, `tsum_comm` for `ℝ`: all absent — only the `ℝ≥0∞`
-version `ENNReal.tsum_comm` exists), and no
-`Filter.Tendsto.le_of_tendsto_of_tendsto_of_le_of_le'` to pass an inequality
-through a limit.  The exact three-step plan for the next round is recorded at the
-end of this file; the finite form `jsp87_partial_eq_sum_level` above is what the
-first step delivers.
+The row form `S + 1 = ∑' k, jsp87AtLeastSeries k` is proved in
+`JSPProblem.RowJoin` (`jsp87Series_add_one_eq_tsum_rows`).
+
+**Correction of an earlier claim in this file.**  This file previously asserted that
+Mathlib has no usable interchange for `ℝ`.  That was wrong: `Summable.tsum_finsetSum`
+interchanges a *finite* outer sum with a `tsum` over `ℝ` unconditionally, and
+`Summable.sum_le_tsum`, `Summable.tsum_le_tsum`, `Summable.subtype` and
+`hasSum_iff_tendsto_nat_of_nonneg` supply everything else the row form needs.  (A
+full Fubini for two *infinite* sums over `ℝ` really is absent — `Summable.tsum_comm`
+exists only in the `ENNReal` version — but the layer-cake join only ever interchanges
+a finite outer sum, so the obstacle was never real.)
+
+The finite form `jsp87_partial_eq_sum_level` above is the height-`M`, both-orders
+version of the same statement; `RowJoin.jsp87_rowPartial_eq_tsum` is its infinite
+counterpart.
 
 ## 5. Why the join does not close the gate
 
