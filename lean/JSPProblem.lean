@@ -57,3 +57,4 @@ import JSPProblem.WeightJoin
 import JSPProblem.MomentLadder
 import JSPProblem.CumSqLadder
 import JSPProblem.RoughJoin
+import JSPProblem.Squarefree

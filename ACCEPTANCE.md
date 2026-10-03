@@ -3989,3 +3989,128 @@ missing_theorems=["jsp_000087_main"]`.
    proved; the *finite* form (`jsp87_tailLevel_sum`) and the exact complement
    (`jsp87_levelPartial_add_atLeast`) were proved instead and carry the same
    content.
+
+
+---
+
+## Round 110 — SQUAREFREE NUMBERS: the power-set divisor identity and a new irrationality theorem
+
+New module `lean/JSPProblem/Squarefree.lean` (459 lines, **41 new theorems/defs**,
+0 `sorry`, 0 `admit`; **1897 proved theorems and lemmas** at the `^(theorem|lemma)`
+level in the tree — 1856 before this round — `lake build` clean, 0 new linter
+warnings).
+
+This is a **new attack family**.  All 60+ earlier modules see `ω` only through
+its *counting* form (`omega n = (n.primeFactors).card`) or through the
+prime-restricted Lambert series of rounds 37/39/40.  `rg squarefree` over
+`JSPProblem/` returned **nothing** before this round: the **power-set geometry**
+of `ω` — the identity between `ω n` and the number of *squarefree divisors* of
+`n` — had never been touched, in 109 rounds.  Mathlib, by contrast, has the
+whole `Nat.Squarefree` API in `Mathlib/Data/Nat/Squarefree.lean`
+(`DecidablePred`, `squarefree_iff_prime_squarefree`, `primeFactors_prod`,
+`prod_primeFactors_of_squarefree`), which this round exploits.
+
+### 1. The power-set identity
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_prod_prime_sqf` | a product of distinct primes is squarefree |
+| `jsp87_mem_prod_prime` | for a prime `x`: `x ∣ ∏ p ∈ s, p ↔ x ∈ s` |
+| `jsp87_sqfDiv_eq_prod` | every squarefree divisor of `n` is the product of a **subset of `n.primeFactors`** |
+| `jsp87_prod_sqfDiv` | conversely, every such product is a squarefree divisor of `n` |
+| `jsp87SqfDivs_eq_powerset_prod` | `jsp87SqfDivs n = (n.primeFactors.powerset).image (∏ x ∈ s, x)` |
+| **`jsp87SqfDivs_card`** | **THE POWER-SET IDENTITY: `# {squarefree divisors of n} = 2 ^ ω n`** |
+| `jsp87_sqf_of_dvd`, `jsp87_sqf_iff_of_dvd`, `jsp87_not_sqf_of_sq_dvd`, `jsp87_not_sqf_sq`, `jsp87_not_sqf_of_four_dvd` | the elementary squarefree facts, all from `Nat.squarefree_iff_prime_squarefree` |
+| `jsp87SqfDivs_12 / _30 / _210 / _1` | the machine-checked instances `4`, `8`, `16`, `1` (`native_decide`) |
+
+This is the multiplicative content of `ω`: `ω n` counts a *power set*, and
+`2 ^ ω n` is its size.  Rounds 37/107/108 built the Lambert ladder over the
+first, second and cubic *moments* of `ω`; this is the first rung of the
+**power-set** ladder.
+
+### 2. THE SQUAREFREE INDICATOR IS APERIODIC — a two-line proof
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_sqf_not_eventuallyPeriodic` | the squarefree predicate is **not eventually periodic** |
+
+If an eventual period `t` existed, squarefreeness would propagate along
+`p + k t` from any prime `p` past the threshold; at `k = p · j` this says
+`Squarefree (p (1 + j t))`, hence `Squarefree (1 + j t)` for every `j ≥ 0`
+(divisors of squarefree numbers are squarefree).  Taking `j = t + 2` exhibits
+`1 + (t + 2) t = (t + 1) ^ 2`, a perfect square.  No prime `k`-tuples
+hypothesis, no correlation estimate — only Euclid.
+
+### 3. A COMPLETE, UNCONDITIONAL IRRATIONALITY THEOREM
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87SqfreeBit` | the squarefree indicator as a `{0,1}`-valued sequence |
+| `jsp87SqfreeSeries` | `∑' n, [n squarefree] 2 ^ -(n+1)` |
+| **`jsp87SqfreeSeries_irrational`** | **THE SQUAREFREE BINARY SERIES IS IRRATIONAL** |
+
+By round 47's criterion (`jsp87Binary_irrational_iff`, proved from scratch in
+`Primary.lean` — Mathlib has no statement at all about the base-`2` expansion
+of a real).  The tail hypothesis `jsp87BinaryTail < 1` is discharged by the
+explicit zero digit at `4 · (N + 2)` (`jsp87_not_sqf_of_four_dvd`).  This is
+the second complete instance of the criterion after round 47's prime constant
+and parity series, and the first one whose digits are the **divisor geometry**
+of `ω`.
+
+### 4. The exponential moment of `ω`, and its bracket
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87PowOmegaSeries` | `P = ∑' n, 2 ^ ω n 2 ^ -(n+1)` — the *exponential* moment |
+| `jsp87_two_pow_omega_le_add_one` | `2 ^ ω n ≤ n + 1` (at `n = 0` the left side is `1`) |
+| `summable_jsp87PowOmegaTerm`, `jsp87_tsum_powOmega_majorant`, `jsp87_tsum_two_pow_neg_succ`, `jsp87_two_pow_neg_succ_eq` | the summability and the two closed forms `∑' n, 2^-(n+1) = 1`, `∑' n, (n+1) 2^-(n+1) = 2` |
+| **`jsp87_powOmegaSeries_ge_series_add_one`** | **`1 + S ≤ P`** — the power-set moment dominates the Erdős series by at least `1` |
+| **`jsp87_powOmegaSeries_le_two`** | **`P ≤ 2`** |
+
+### 5. NEGATIVE KNOWLEDGE (machine-checked, do not retry)
+
+`jsp87_sqf_mer_not_coprime : ¬ Coprime (2 ^ 2 - 1) (2 ^ 6 - 1)` — the
+squarefree-indexed Lambert denominators are **not** pairwise coprime (`3`
+divides both `3` and `63`, and `2`, `6` are both squarefree).  Round 39's
+mutual coprimality of `2 ^ p - 1` for distinct **primes** `p` therefore does
+*not* transfer to the power-set ladder: the exponential moment comes with no
+exact clearing denominator, and the `D_N` machinery of rounds 39/40 cannot be
+reused for it.  The positive companion `jsp87_sqf_mer_coprime_two_three`
+(`Coprime (2^2-1) (2^3-1)`) shows the obstruction is genuinely about common
+factors of the *indices*, as round 39's `gcd_two_pow_sub_one` predicts.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  Round 110 does not
+touch the binary digits of the Erdős series itself: the Erdős series carries
+(round 47: `jsp87_digit_one`), so the squarefree-digit theorem applies to a
+*different* series, and the remaining input is still the aperiodicity of the
+digits of `S` (round 64's
+`jsp87Series_irrational_iff_fracCarry_notPeriodic`).
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 110, stated exactly — unchanged
+
+> **`jsp87_digit_not_eventuallyPeriodic`** — the binary digits
+> `d N = ⌊2^{N+1} S⌋ − 2⌊2^N S⌋` of the Erdős series are not eventually
+> periodic in `N`.
+
+### The concrete next step this round opened
+
+`jsp87SqfDivs_card` gives the **finite** Lambert regrouping for free (the
+squarefree divisors of `n` are a subset of `range (n+1)`), so the missing piece
+of the power-set Lambert identity
+
+> `jsp87_powOmegaSeries_eq_sqfLambert` : `∑' n, 2 ^ ω n 2 ^ -(n+1) =
+> ∑' d, [d squarefree] / (2 ^ d - 1)`
+
+is *purely* an interchange of the two infinite sums, i.e. exactly the
+`Summable.tsum_comm'` + `hasSum_lamF_fst` machinery of
+`LambertIdentity.lean:347` with the prime guard replaced by the squarefree guard.
+The obstacle is that `hasSum_lamF_fst` is stated only for **primes**, and its
+proof needs a reindex lemma `sum_multiples_reindex` that also requires
+`p.Prime` (only for `0 < p`).  Porting that lemma to arbitrary `d ≥ 1` is a
+mechanical copy and is the first item of the next round.
