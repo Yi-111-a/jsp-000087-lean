@@ -3422,3 +3422,135 @@ of the carries, **never `ω` itself** — round 47 machine-checked
   ω 8 = 1`), so every summability majorant must go through
   `summable_of_sum_range_le` with an *index subset*, never through
   `Summable.of_nonneg_of_le`.
+
+---
+
+## Round 101 — **`ω` ALONG ARITHMETIC PROGRESSIONS** (round 100's abandoned Section 6, completed)
+
+New module `lean/JSPProblem/ProgressionOmega.lean` (549 lines, **31 public theorems
+and 7 private helpers**, 0 `sorry`, 0 `admit`, no new linter warnings beyond the
+tree-wide `if_pos`/`if_neg` deprecations; **1735 proved theorems and lemmas** in the
+tree at the `^(private )?(theorem|lemma)` level — 1697 before this round —
+`lake build` clean at **3144 jobs**).
+
+This round executes, in full, the item round 100 declared in mathematics and left
+in Lean.  It is a **new attack family**: no round of the 100 that preceded it had
+ever examined `ω` on an *arithmetic progression*, only on the natural numbers
+itself (round 40), on the ray `n ↦ n (1 + t n)` (round 83), on the dilated
+windows `W_p` (rounds 88–93) or on the stride subsums (rounds 98, 100).
+
+### 1. The construction — and how the predicted Lean obstacle was bypassed
+
+Round 100 wrote the Euclidean recursion as `A (i+1) = 1 + p · ∏_{v ≤ i} A v` and
+correctly predicted a failure: *"the recursive call sits under `Finset.range`, so
+Lean's structural recursion cannot see it as smaller."*  **The obstacle is
+bypassed, not fixed.**  Recursing on the *product* rather than on the terms,
+
+```
+M 0 = a + m,        M (j+1) = M j · (1 + m · M j),        A j = 1 + m · M j
+```
+
+gives a recursion whose recursive call is on the *structural* argument `j`, so
+plain structural recursion accepts it and **no `termination_by` is needed**.  The
+divisibility `A i ∣ M j` for `i < j` then falls out of the same induction.
+
+Three invariants carry the whole module:
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87ApProd_mod` | **the whole sequence stays in the residue class `a (mod m)`**: `M j % m = a % m` |
+| `jsp87ApProd_ge_two_pow` | `2 ^ j ≤ M j` — geometric growth |
+| **`omega_jsp87ApProd_ge`** | **`j ≤ ω (M j)`** — each factor `A j = 1 + m · M j` is `≡ 1 (mod M j)`, hence coprime to everything before it (`Nat.coprime_add_mul_right_right` + `omega_mul_of_coprime`), and `≥ 2`, so it contributes one new prime factor |
+
+with the Euclid-side facts `jsp87ApFac_dvd_apProd` (`A i ∣ M j` for `i < j`),
+`jsp87ApFac_sub_one_dvd` (`A i ∣ A j − 1`) and **`jsp87ApFac_coprime`** (the
+factors are pairwise coprime).
+
+### 2. THE FLAGSHIPS
+
+| Theorem | Statement |
+| --- | --- |
+| **`omega_arith_unbounded`** | **`ω` is unbounded on EVERY residue class**: for `m ≥ 1`, `a, C, N` there is `n` with `max a N ≤ n`, `n % m = a % m`, `ω n > C` |
+| **`omega_arith_unbounded_progression`** | hence for `m ≥ 1` arbitrarily large `m n + a` have `ω (m n + a) > C` |
+| **`omega_ap_unbounded`** | the case `a = 1`: for `p ≥ 1`, `C, N` there is `n ≥ N` with `ω (p n + 1) > C` — *exactly round 100's `omega_ap_unbounded`* |
+| **`omega_arith_periodic_bound`** | **an eventual period makes `ω` bounded on the progression**: `ω (m n + a) ≤ m (N + t) + a` for every `n ≥ N` — *exactly round 100's `omega_ap_periodic_bound`* |
+| **`omega_arith_not_eventuallyPeriodic`** | **`n ↦ ω (m n + a)` is not eventually periodic**, for every `m ≥ 1` and every `a` |
+| **`omega_ap_not_eventuallyPeriodic`** | the same for `n ↦ ω (p n + 1)` — *exactly round 100's third predicted statement* |
+| **`omega_arith_not_eventuallyMonotone`** | **STRICTLY STRONGER: not even eventually monotone along a period.**  There are no `t > 0, N` with `ω (m (n+t) + a) ≤ ω (m n + a)` for all `n ≥ N` |
+| `omega_arith_not_eventually_bounded`, `omega_ap_not_eventually_bounded` | the negation forms: no constant bounds `ω` on a progression |
+
+**The mechanism of the aperiodicity** is worth recording because it is the one
+move no earlier round had tried.  If `ω (m · + a)` is periodic with period `t`
+from `N` then it is *constant along the indices* `N + t u`, so the values
+
+```
+ω (m (N + t u) + a) = ω (m N + a + m t u)
+```
+
+are constant.  But those values live in the **single residue class `m N + a`
+modulo `m t`**, and round 101 proves that `ω` is unbounded on *every* residue
+class.  The second use of the modulus — `m t`, not `t` — is the whole trick.
+
+### 3. An independent second proof, and consequences for the carries
+
+* **`omega_not_eventuallyPeriodic_via_progression`** — a second, *independent*
+  proof that `ω` is not eventually periodic, obtained at `m = 1` from the
+  progression result rather than from round 83's `n ↦ n (1 + t n)` move.  The two
+  proofs share no lemma.
+* **`jsp87Carry_ge_omega_half`** — `ω N / 2 ≤ jsp87Carry N`, from
+  `jsp87Carry_split` at `L = 1`.
+* **`jsp87Carry_unbounded_on_progression`**, **`jsp87Carry_unbounded_at_one_mod`**,
+  **`jsp87Carry_unbounded`** — the carries are unbounded **on every residue class
+  of the cut point**.  Together with round 44 (`θ N > 1` at every cut point) and
+  round 100 (`jsp87StrideCarry_gt`: the excess survives at every modulus), the
+  *"dilate until the object drops below `1`"* strategy is now closed **on every
+  progression of cut points**, not merely globally.
+
+### 4. Negative knowledge recorded this round
+
+* **`omega_arith_not_eventuallyMonotone` is a second, general refutation of the
+  dilation route.**  Round 91's `hsmall` criterion and round 100's stride
+  decomposition were both attempts to make an object *drop* under dilation;
+  this round shows in full generality that `ω` cannot even be non-increasing
+  along any fixed step `t > 0` on any progression.
+* **`omega_arith_periodic_bound` needs the hypothesis `N ≤ n` (the index), not
+  `N ≤ m n + a`.**  Freezing acts on the index; `m (n+t) + a` is *not* a
+  translate of `m n + a` by a multiple of the period, and the version with
+  hypothesis `N ≤ m n + a` and bound `m (N+t) + a` is **false**.
+* **The level-indicator aperiodicity on a progression is NOT attempted**: freezing
+  `[ω (p n + 1) = k]` and using unboundedness gives no contradiction, because
+  unboundedness does not pin the *value*.  For `k = 1` the missing input
+  ("some `n` with `ω (p n + 1) = 1` in a prescribed class") is available today via
+  `Nat.Coprime.pow_right`; for `k ≥ 2` it is Dirichlet.  Do not attempt.
+* **Lean obstacles, all solved, all recorded in `policy.json` and `tree.jsonl`**:
+  `obtain ⟨q, hq⟩ := Nat.div_add_mod …` destructures an `Eq` and fails;
+  `Nat.mul_le_mul_left/right` are **not** Iffs in this Mathlib; `set X := … with hX`
+  substitutes into the goal so a later `rw [hX]` fails; `rw` can rewrite inside
+  shadowed variable occurrences (`a` occurs in `jsp87ApProd m a j`);
+  `Nat.ModEq.dvd` is stated over the integers and is useless for a `Nat` goal;
+  `Nat.mod_eq_of_lt` rather than `simp` for `1 % m`; and `Finset.sum_range_succ` +
+  `sum_range_zero` + `add_zero` + `zero_add` in place of a nonexistent
+  `Finset.sum_range_one`.
+
+### 5. Gate status
+
+`lake build`: **Build completed successfully (3144 jobs)**.
+`harness/score.py problems/JSP-000087 --strict-prize`: `build_ok=true, sorry=0,
+admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is a published *unconditional* theorem (Tao–Teräväinen,
+arXiv:2512.01739, Thm 1.3), but its analytic core — a Pilatte-type quantitative
+two-point correlation estimate for multiplicative functions — has no Mathlib
+counterpart and cannot honestly be assumed here.  Attaching the catalog name to
+any weaker statement would misrepresent the headline.
+
+**Why round 101 does not move the blocker**, stated explicitly so that no later
+round repeats the mistake: rationality of `S` pins the **binary digit string**
+(rounds 41/46/48/64) and the **fractional parts of the carries**, and *never*
+`ω` itself — round 47 machine-checked `jsp87_digit_ne_omega_one`, the digits of
+`S` are not even the parities of `ω`.  The aperiodicity of `ω` is therefore
+unreachable *from rationality*, however strong it is proved; and the aperiodicity
+of the digits of the carried series remains the content of the uniform
+prime-`k`-tuples hypothesis of Pratt's result (arXiv:2409.15185).

@@ -47,3 +47,5 @@ import JSPProblem.DeltaMass
 import JSPProblem.LambertTail
 import JSPProblem.StrideSplit
 import JSPProblem.StrideCarry
+import JSPProblem.StrideCarry
+import JSPProblem.ProgressionOmega
