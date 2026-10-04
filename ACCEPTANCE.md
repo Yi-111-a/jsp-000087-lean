@@ -5597,3 +5597,118 @@ shift parametrisation, the magnitude by `|Cov| ≤ σσ'` plus the total weight 
   the union of two finite sets does not inject into their product when one of
   them is a singleton.  Only the *common-prime* bound `ω (gcd a b) ≤ ω a · ω b`
   holds.
+
+---
+
+## Round 132 — THE CRT COUNTING LAYER AND THE QUADRATIC SIEVE BOUND
+
+New module `lean/JSPProblem/CrtSieve.lean` (568 lines, **20 new public theorems
+and lemmas** plus 2 new definitions, 0 `sorry`, 0 `admit`, **0 new linter
+warnings**; **2897** theorem/lemma declarations tree-wide — 2877 before this
+round — `lake build` clean, 3319 jobs).
+
+This is a **new attack family**, and it executes three exact lemmas that
+`policy.json` (`round_131_blockers`) had named as this round's work — the
+*counting layer* needed by any sieve argument on the correlations — together
+with the **quadratic lower bound** that `policy.json`
+`next_round_attack[1..2]` of round 130 had asked for and which had gone
+unexecuted for two rounds.
+
+### 1. The counting layer (`jsp87CrtSet`, `jsp87CrtCount`)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_crt_dvd` | for coprime `p, q`, two solutions `m₁ ≤ m₂` of `p ∣ m`, `q ∣ m + d` satisfy `p·q ∣ m₂ − m₁` |
+| `jsp87_crt_modEq` | the same, in `Nat.ModEq` form: `m₁ ≡ m₂ [MOD p*q]` |
+| `jsp87_crt_cong` | **they lie on ONE arithmetic progression of common difference `p·q`** |
+| `jsp87_crt_spacing` | **distinct solutions are at least `p·q` apart** |
+| `jsp87_crt_exists` | **a solution exists in `[1, p·q]`** (Mathlib's `Nat.chineseRemainder` with the residue `−d (mod q)`) |
+| `jsp87CrtCount_ge_div` | `⌊L/(p·q)⌋ ≤ jsp87CrtCount p q d L` |
+| `jsp87CrtCount_le_div` | `jsp87CrtCount p q d L ≤ L/(p·q) + 1` |
+| **`jsp87CrtCount_window`** | **THE CROWN: `⌊L/(p·q)⌋ ≤ jsp87CrtCount p q d L ≤ ⌊L/(p·q)⌋ + 1`, for every shift `d`** |
+
+The count of the CRT class is `⌊L/(p·q)⌋` **up to one point, uniformly in the
+shift**, with no analytic input whatsoever.  The lower bound is an explicit
+arithmetic progression built from `Nat.chineseRemainder`; the upper bound is the
+spacing.
+
+### 2. The quadratic sieve bound for the correlations
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87_sieveCorr`** | for prime sets `A, B` with positive coprime products `P = ∏ A`, `Q = ∏ B`, **`\|A\|·\|B\|·⌊L/(P·Q)⌋ ≤ jsp87CorrShift d (L+1)`** |
+| **`jsp87CorrShift_sieve_four`** | **`4·⌊L/210⌋ ≤ jsp87CorrShift d (L+1)` for every shift `d`** (`A = {2,3}`, `B = {5,7}`), with **no hypothesis on `d` at all** |
+
+This is the **first statement in the tree whose left-hand side is quadratic in
+the number of sieve primes** — the quadratic sieve lower bound that §5.4 of
+arXiv:2512.01739 needs, obtained from the counting layer alone.  Every member of
+the CRT class carries at least `|A|` distinct prime factors in `m` and at least
+`|B|` in `m + d`.
+
+### 3. The closure: the sieve lower bound is **dominated**
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87CorrShift_ge_trivial` | `L − 2 ≤ jsp87CorrShift d L` for **every** `L` — every `m ≥ 2` has `ω m ≥ 1` and `ω (m+d) ≥ 1` |
+| `jsp87_crtSieve_dominated` | for `p, q ≥ 2` and `3 ≤ L`: `⌊L/(p·q)⌋ ≤ L − 2` |
+| **`jsp87_crtSieve_summary`** | **the round in one theorem**: `⌊L/(p·q)⌋ ≤ jsp87CrtCount p q d L ≤ ⌊L/(p·q)⌋+1 ∧ ⌊L/(p·q)⌋ ≤ L−2 ≤ jsp87CorrShift d L` |
+
+**Consequence (negative knowledge that closes a whole strategy).**  The
+correlations are *already* at least `L − 2`, and the sieve constant
+`⌊L/(p·q)⌋` is *always* smaller than `L − 2` for `p, q ≥ 2`.  Hence **no lower
+bound of any kind on the correlations can help** with round 130's blocker
+`jsp87Mcov_small`: making the covariances small requires an **upper** estimate of
+the correlation *against its mean field* `L·μ_k·μ_k'` — precisely the
+Chowla/Elliott input of arXiv:2512.01739 Theorem 3.1 — and a counting argument
+for a single residue class can never deliver it.
+
+### 4. Machine-checked instances
+
+`jsp87CrtCount 2 3 1 210 = 35`, `jsp87CrtCount 2 3 0 210 = 35`,
+`jsp87CrtCount 2 3 1 1000 = 167`, `166 ≤ jsp87CrtCount 2 3 1 1000`
+(`⌊1000/6⌋ = 166 ≤ 167`).
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is a theorem of the literature (Tao–Teräväinen, arXiv:2512.01739,
+Thm 1.3 = Erdős #69, **unconditional** — the round-112 status correction), but
+its proof is missing, and round 132 localises the last missing ingredient even
+more sharply: **not** a correlation count, but the mean-field *upper* estimate
+`jsp87CorrAt L k k' ≤ L·μ_k·μ_k' + L·ε` together with the bound
+`μ_k = O(log log L)` on the mean of `ω` over a window.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* `Nat.chineseRemainder (co : n.Coprime m) (a b) : { k // k ≡ a [MOD n] ∧ k ≡ b [MOD m] }`
+  with `Nat.chineseRemainder_lt_mul : ↑(chineseRemainder co a b) < n*m` — but
+  `obtain ⟨k, h1, h2⟩ := chineseRemainder …` does **not** make `k`
+  definitionally equal to `(chineseRemainder … : ℕ)`; use
+  `set k : ℕ := (Nat.chineseRemainder hc 0 b : ℕ)` and then
+  `Nat.chineseRemainder_lt_mul` applies directly;
+* `Nat.mod_le d q : d % q ≤ d` — **not** `≤ q`; for the real bound use
+  `Nat.mod_lt d (0 < q) : d % q < q`;
+* `Nat.dvd` for `ℕ` is `∃ c, dividend = divisor * c`, so `obtain ⟨c, hc⟩ := h`
+  gives `hc : dividend = divisor * c`; `Nat.dvd` is not an `Inductive`, so
+  `.congr_of_eq` is unavailable — destruct it and use `⟨c, ?_⟩`;
+* `Nat.dvd_add_iff_right (h : k ∣ m) : k ∣ n ↔ k ∣ m + n`: to **prove**
+  `k ∣ m + n` use `.mp`; `rw` with the iff goes the **wrong way** (it unifies the
+  iff's *left* side with the goal);
+* `Nat.mul_lt_mul_right : n < m ↔ n * k < m * k` is an **iff**, while
+  `Nat.mul_le_mul_right : n ≤ m → ∀ k, n * k ≤ m * k` is a function;
+* `Finset.sum_filter : ∑ a ∈ s with p a, f a = ∑ a ∈ s, if p a then f a else 0`,
+  `Finset.sum_subset : s₁ ⊆ s₂ → (∀ x ∈ s₂, x ∉ s₁ → f x = 0) → ∑ x ∈ s₁, f = ∑ x ∈ s₂, f`,
+  `Finset.mem_of_mem_filter` takes **two** arguments `(x, h)`;
+* in a `calc`, `∑ i ∈ s, (fun i => g i)` does **not** fold to `s.sum g` (the
+  lambda stays inside the summand) — write `s.sum (fun i => g i)`;
+* a bare `i ∈ t` with `t` a let-bound `Finset` sometimes elaborates the
+  `Membership` instance to `List.Mem`; avoid it by first typing the hypothesis
+  (`have hm : i ∈ (Finset.range L).filter _ := hi`) and then using
+  `Finset.mem_filter.mp`;
+* `Finset.sum_filter_add_sum_filter_neg` does not exist in the guessed form; the
+  indicator trick (`f m := if m ∈ S then … else 0`) with `Finset.sum_filter`,
+  `Finset.sum_congr` and `Finset.sum_le_sum` works uniformly.
