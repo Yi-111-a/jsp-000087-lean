@@ -5458,3 +5458,142 @@ missing_theorems=["jsp_000087_main"]`.
 * instances: unfold the variance object, then
   `norm_num [jsp87TruncCarry, jsp87Tw, Finset.sum_range_succ, Finset.sum_filter, …]`
   evaluates the whole finite object.
+
+---
+
+## Round 131 — THE SHIFT-PARAMETRISED CORRELATIONS AND THE SIGN-FREE VARIANCE SANDWICH
+
+New module `lean/JSPProblem/CorrShift.lean` (624 lines, **31 new theorems**
+plus 4 new definitions and 5 private helpers, 0 `sorry`, 0 `admit`, 0 new
+linter warnings; **2880** theorem/lemma declarations tree-wide by the
+`^(private )?(theorem|lemma)` count — 2847 before this round — `lake build`
+clean).
+
+This is a **new attack family**: round 130 produced the *diagonal/off-diagonal*
+decomposition of the second moment of the Tao–Teräväinen truncated carry and
+localised the missing analytic input to the covariances `jsp87Mcov L k k'`; this
+round attacks **(i) the shift structure of those covariances and (ii) their
+sign**, and in (ii) it closes the hypothesis round 130 could not discharge.
+
+### §1 — the shift parametrisation (`policy.json` `next_round_attack[0]` of round 130, executed)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87CorrShift` | **the new object** `∑_{m<L} ω m · ω (m+d)`, the correlation at the *shift* `d` |
+| **`jsp87CorrAt_shiftEq`** | **THE SHIFT PARAMETRISATION, AN IDENTITY**: `jsp87CorrAt L k (k+d) + jsp87CorrCut k d = jsp87CorrShift d (L+k)`, with `jsp87CorrCut k d` the shift-`d` correlation over `[0,k)` |
+| `jsp87CorrAt_le_shift` | every one of the `H (H−1)/2` correlation inputs of §5.4 is bounded by one of the `H` **shift** correlations |
+| `jsp87CorrShift_mono_window`, `jsp87CorrCut_le_log` | the boundary term is monotone and is `O(k (log L)²)` |
+| `omega_le_log2_all` | `ω n ≤ log₂ n` at **every** `n` (including `n = 0`), the missing `0`-case of round 44's bound |
+| `jsp87CorrShift_one_eq_chowla`, `jsp87CorrShift_thousand_one`, `jsp87CorrShift_hundred_one` | `jsp87CorrShift 1 (N+1) = jsp87Chowla N`; instances `= 4319` (N = 1000), `= 284` (N = 100) |
+
+So the analytic input of §5.4 is a **list of `H` numbers** (the shift
+correlations), not a triangular array — this is exactly what round 130's
+`policy.json` asked for.
+
+### §2 — the common-prime (gcd) content of a correlation
+
+| Theorem | Statement |
+| --- | --- |
+| `omega_mul_ge_gcd` | `ω a · ω b ≥ ω (gcd a b)`: the ordered prime pairs contain the diagonal `p = q` |
+| `omega_gcd_le`, `jsp87CorrGcd_le_mul` | the shift-dependent part of a correlation is at most `L · ω d` |
+| `jsp87CorrShift_eq_Icc`, **`jsp87CorrShift_ge_gcd`** | `jsp87CorrShift d L + ω d ≥ jsp87CorrGcd d L`: the correlation dominates the count of the *common* prime divisors of `m` and `m+d` |
+
+### §3 — **CAUCHY–SCHWARZ FOR THE COVARIANCES: THE SIGN OF THE COVARIANCES IS FREE**
+
+Round 130's `jsp87TcVar_ge_diag` requires `0 ≤ jsp87Mcov` at every pair — a
+hypothesis that cannot be proved with anything in the tree. This round shows it
+is **not needed**.
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Mcov_eq_FAvg`, `jsp87_sq_centred` | `Cov = 𝔼` of the centred product; `∑ (ω−μ)² = L · Var` |
+| **`jsp87Mcov_sq_le_var`** | **`Cov (ω(N+k), ω(N+k'))² ≤ Var (ω(N+k)) · Var (ω(N+k'))`** — Cauchy–Schwarz on the two centred functions, from round 130's own discriminant argument `jsp87CS`. **No analytic input.** |
+| `jsp87Mcov_abs_le_std`, `jsp87Mcov_ge_negStd`, `jsp87TcStd`, `jsp87TcStd_sq`, `jsp87TcVarAt_nonneg` | `|Cov| ≤ σ_k σ_k'`, hence `Cov ≥ −σ_k σ'`: **the covariance can be negative, but never more negative than the geometric mean of the two marginal standard deviations** |
+| `jsp87Mcov_eq_zero_of_var` | a degenerate marginal variance forces a degenerate covariance |
+
+### §4 — **THE SIGN-FREE VARIANCE SANDWICH: §5.4 COMPLETE UP TO TWO SCALAR BOUNDS**
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87TcVar_ge_diag_sub`** | **the mirror of round 130's `jsp87TcVar_le_diag_add`, with NO sign hypothesis**: if `Var (ω(N+k)) ≤ M` for every `k < H` then `Σ_k 4^{-(k+1)} Var (ω(N+k)) − M ≤ Var (N ↦ T(N,H))`, using `Cov ≥ −σ_kσ_k' ≥ −M` and the total covariance weight `≤ 1` (`jsp87Tw_pair_le_one`) |
+| **`jsp87TcVar_sandwich`** | **THE CROWN**: for **any** `M, ε ≥ 0`, `Σ_k 4^{-(k+1)} Var (ω(N+k)) − M ≤ Var (N ↦ T(N,H)) ≤ Σ_k 4^{-(k+1)} Var (ω(N+k)) + ε` |
+| `jsp87_corrShift_summary` | the round in one theorem |
+
+Round 130 needed `0 ≤ jsp87Mcov` for its *lower* bound; §3–§4 of this round show
+the lower bound holds under **no** sign assumption, so §5.4 of arXiv:2512.01739
+is reduced to the two **scalar** bounds it really needs — an upper bound `ε` on
+the covariances, and the **arithmetic** content of the diagonal. The first is
+`jsp87Mcov_small` (Thm 3.1, absent from Mathlib); the second is the diagonal,
+i.e. a lower bound on `Var (ω(N+k))`, i.e. the Erdős–Kac scale.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**. The headline is a
+theorem of the literature (Tao–Teräväinen, arXiv:2512.01739 Thm 1.3, Erdős'
+#69) but its analytic input is a Chowla/Elliott-type estimate on the two-point
+correlations of `ω` which Mathlib does not contain, and attaching the name to a
+weakened statement would misrepresent it.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 131, stated exactly
+
+> **`jsp87Mcov_small`** — a uniform bound `jsp87Mcov L k k' ≤ ε` at every pair
+> `k < k' < H`.
+
+Unchanged in content, but now **provably the only** remaining hypothesis of the
+§5.4 machinery: the sign is handled by Cauchy–Schwarz, the window shape by the
+shift parametrisation, the magnitude by `|Cov| ≤ σσ'` plus the total weight `≤ 1`.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* `Finset.sum_congr`'s finset parameter is **`s₁`** (not `s`), and its `f`/`g`
+  arguments must often be given explicitly or the `AddCommMonoid` instance gets
+  stuck; `simp_rw [h]` with `h : ∀ N, …` is the robust way to rewrite summands;
+* **CRITICAL PARSER TRAP (second instance):** `∑ N ∈ s, X - Y` parses as
+  `(∑ N ∈ s, X) - Y` — the binder body does **not** extend past the difference.
+  Always parenthesise: `∑ N ∈ s, (X - Y)`;
+* `Finset.sum_sub_distrib : ∑ (f - g) = ∑ f - ∑ g` only fires when the summand
+  *already* is a difference; to get there use `simp_rw` with a `∀`-lemma;
+* `Finset.mul_sum (s := s) (fun i => g i) a : a * ∑ f = ∑ a * f` and
+  `Finset.sum_mul (s := s) (fun i => f i) a : (∑ f) * a = ∑ f * a` — use
+  `← Finset.mul_sum` / `Finset.sum_mul` in *opposite* directions on the two
+  sides of a sum identity;
+* `Finset.sum_const : ∑ _x ∈ s, b = s.card • b`, so `nsmul_eq_mul` is needed in
+  ℝ and `Nat.nsmul_eq_mul` in ℕ;
+* `Finset.sum_le_sum_of_subset_of_nonneg : s ⊆ t → (∀ i ∈ t, i ∉ s, 0 ≤ f i) →
+  ∑ s f ≤ ∑ t f` (the function is shared between the two sums);
+* `Finset.sum_congr rfl h` hovers a beta-redex goal; `dsimp only []` or
+  `unfold` first;
+* `Finset.sum_Ico_consecutive (f) (m :=) (n :=) (k :=) (hmn) (hnk)` and
+  `Finset.sum_Ico_succ_top (a :=) (b :=) (h) f` need **explicit** implicit
+  arguments when the bounds are sums;
+* `Nat.log_mono_right : n ≤ m → Nat.log b n ≤ Nat.log b m`, `Nat.log_le_self (b)
+  (x) : Nat.log b x ≤ x` (no hypothesis on `b` needed in this version),
+  `Nat.log 2 0 = 0` by `simp`;
+* `Nat.gcd_pos_of_pos_left (n) (h : 0 < m) : 0 < m.gcd n` (two explicit args);
+  `Nat.primeFactors_gcd (a ≠ 0) (b ≠ 0)`; `Nat.gcd_dvd_left a b : gcd a b ∣ a`;
+  `Nat.gcd_dvd_right a b : gcd a b ∣ b`; `Nat.gcd_zero_right : n.gcd 0 = n`
+  (there is **no** `gcd 0 n = n`; use `Nat.gcd_comm`);
+  `Nat.dvd_gcd : (m ∣ a) → (m ∣ b) → m ∣ gcd a b`;
+* `Nat.primeFactors_gcd` + `Finset.card_le_card (fun x hx => (Finset.mem_inter
+  .mp hx).1)` gives `ω (gcd a b) ≤ ω a` — `Finset.inter_subset_left` is **not**
+  applicable in the guessed form;
+* `Real.sq_sqrt (h : 0 ≤ x) : sqrt x ^ 2 = x` (note `^ 2`, not `*`);
+  `Real.mul_self_sqrt`; `Real.sqrt_le_sqrt (h : a ≤ b) : sqrt a ≤ sqrt b`;
+  `sq_le_sq₀ (h : 0 ≤ b) : |a| ≤ |b| ↔ a² ≤ b²` — `.2` is the direction
+  "from the squares to the absolute values";
+* `abs_le.mp h : -b ≤ a ∧ a ≤ b` is the convenient way to split `|a| ≤ b` into
+  two one-sided bounds (useful because `linarith` cannot treat `|a|` as an atom);
+* **`omega` fails on the statement `Nat.log 2 (k+d+1) + 1 ≤ (k+d+1)^2`** (it
+  cannot square variables): prove such bounds from `Nat.log_le_self` and
+  `Nat.le_mul_of_pos_left` instead;
+* `Nat.dvd_gcd m (m+d)` does **not** exist (it takes two divisibility
+  hypotheses); `Finset.card_eq_zero.mp`, `Nat.pos_of_ne_zero` are the right
+  tools to obtain `s.card ≠ 0`;
+* **`omega_mul_ge_union` is FALSE** (a = 6, b = 5: `2·1 + 0 = 2 < 3 = ω a + ω b`);
+  the union of two finite sets does not inject into their product when one of
+  them is a singleton.  Only the *common-prime* bound `ω (gcd a b) ≤ ω a · ω b`
+  holds.

@@ -77,3 +77,4 @@ import JSPProblem.CntVariance
 import JSPProblem.CharFun
 import JSPProblem.SampleMean
 import JSPProblem.TcVariance
+import JSPProblem.CorrShift
