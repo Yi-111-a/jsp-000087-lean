@@ -5334,3 +5334,127 @@ missing_theorems=["jsp_000087_main"]`.
 * `simp only [jsp87PrimeSet, Finset.mem_filter, Finset.mem_Icc, …]` unfolds
   `Icc` into `Nat`-subtraction noise: use the `rw [jsp87PrimeSet_mem, …]`
   chain, or `interval_cases` on the bounded variable.
+
+---
+
+## Round 130 — THE EXACT SECOND MOMENT OF THE TRUNCATED CARRY: THE DIAGONAL IS
+ARITHMETIC, THE OFF-DIAGONAL IS THE MISSING CORRELATION INPUT
+
+New module `lean/JSPProblem/TcVariance.lean` (1268 lines, **49 new public
+theorems** + 6 private helpers, 8 new definitions, 0 `sorry`, 0 `admit`,
+0 new linter warnings; **2848** theorem/lemma declarations tree-wide,
+`lake build` clean). Round 115 opened the blocker **`jsp87_truncSq_diag`** — the
+double-sum identity of the second moment of the truncated carry of
+arXiv:2512.01739 — and recorded that it "is NOT proved here … do NOT re-attempt
+it by hand". **This round closes it** and then does what round 115 could not.
+
+### 0. The objects
+
+| Object | Statement |
+| --- | --- |
+| `jsp87Tw k` | the weight `2^{-(k+1)}`, with `∑_{k<H} w_k = 1 − 2^{-H}` |
+| `jsp87TcMean`, `jsp87TcCorr` | `𝔼 ω(N+k)`, `𝔼 ω(N+k)ω(N+k')` over the window `N < L` |
+| `jsp87Mcov L k k'` | **THE NEW OBJECT**: `𝔼 ω(N+k)ω(N+k') − 𝔼 ω(N+k)·𝔼 ω(N+k')` |
+| `jsp87TcVarAt L k` | `Var (N ↦ ω(N+k))`, the diagonal of the decomposition |
+| `jsp87TcVar L H` | **`Var (N ↦ T(N,H))`**, the object of §5.4 of the paper |
+| `jsp87TcDiag`, `jsp87TcOff` | the diagonal and off-diagonal parts of the second moment |
+
+### 1. `jsp87TruncSqSum_eq_dblCorr` — the closed blocker
+
+```
+∑_{N<L} T(N,H)²  =  ∑_{k<H} ∑_{k'<H} 2^{-(k+1)-(k'+1)} · ( ∑_{N<L} ω(N+k)ω(N+k') ) ,
+```
+
+the inner sums being exactly Chowla.lean's `jsp87CorrAt L k k'`, with diagonal
+`jsp87SqWindow k L`. The generic tool is
+`jsp87_sum_dbl_eq_diag_add_two_tri`: for symmetric `f`,
+`∑_{k,k'} f k k' = ∑_k f k k + 2 ∑_{k<k'} f k k'`.
+
+### 2. `jsp87TruncSqSum_eq_diag_add_off` — the diagonal is arithmetic
+
+`∑ T² = jsp87TcDiag + jsp87TcOff`, where
+
+* `jsp87TcDiag L H = ∑_{k<H} 4^{-(k+1)} · ∑_{N<L} ω(N+k)²` — **no analytic input**;
+* `jsp87TcOff L H = ∑_{k<k'<H} 2·2^{-(k+1)-(k'+1)} · ∑_{N<L} ω(N+k)ω(N+k')` —
+  **one two-point correlation per unordered pair of places of the window**,
+  i.e. exactly the analytic object of §5.4.
+
+### 3. `jsp87TcVar_eq_diag_add_cov` — the crown jewel
+
+```
+Var (N ↦ T(N,H))  =  ∑_{k<H} 4^{-(k+1)} · Var (N ↦ ω(N+k))
+                    +  ∑_{k<k'<H} 2·2^{-(k+1)-(k'+1)} · Cov (ω(N+k), ω(N+k')) .
+```
+
+with `jsp87Var_eq_FAvg_sq_sub : Var f = 𝔼 f² − (𝔼 f)²` (absent from Mathlib for
+`jsp87Var`) and `jsp87TcVarAt_eq_cov : Var (ω(·+k)) = jsp87Mcov L k k`.
+
+**Transfer lemmas** (`jsp87Tw_pair_le_one`: the total covariance weight
+`2 ∑_{k<k'} w_k w_k' ≤ 1`):
+
+* `jsp87TcVar_ge_diag` — nonneg covariances ⟹ the variance is at least the
+  arithmetic diagonal, whatever the correlations are;
+* `jsp87TcVar_le_diag_add` — a uniform covariance bound `ε` ⟹ the variance is at
+  most diagonal `+ ε`. **This is the deterministic half of §5.4, complete.**
+
+### 4. The price of the elementary CRT bound (round 115)
+
+* `jsp87ChowlaErr_eq`: the boundary error is exactly `π(N)·(π(N+1) − 1)`;
+* `jsp87TcOff_ge_pair01`, `jsp87TcOff_ge_chowla`: the shift-`1` Chowla sum is an
+  off-diagonal term of weight `1/4`, so *any* bound on the off-diagonal term is a
+  bound on the Chowla sum (`jsp87TcOff_ge_boundary`);
+* `jsp87Chowla_ge_card : N − 1 ≤ jsp87Chowla N` and
+  **`jsp87Chowla_le_of_corr_bound : (N−1)/4 ≤ M`** — a uniform correlation bound
+  `M` at the window `N+1` must be at least `(N−1)/4`: **the correlations of `ω`
+  are sums of at least `N−1` units, so the counting argument cannot make the
+  off-diagonal term small.**
+
+### 5. Machine-checked instances
+
+`jsp87TcVar_three_one = 1/18`, `jsp87TcVar_four_one = 1/16`,
+`jsp87TruncSqSum_three_two = 5/8 = 3/8 + 1/4`,
+`jsp87TcDiag_three_two = 3/8`, `jsp87TcOff_three_two = 1/4`,
+`jsp87TcVar_three_two = 7/72`, `jsp87Mcov_three_zero_one = 1/9` (the shift-`1`
+covariance is **not** zero).
+
+### Gate status
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 130, stated exactly
+
+> **`jsp87Mcov_small`.**  A uniform bound `ε` on the two-point covariances
+> `jsp87Mcov L k k'` (`k < k' < H`) small enough for the endgame of §5.3–5.14.
+> By `jsp87TcVar_le_diag_add` this is *exactly* the missing analytic input, and
+> `jsp87Chowla_le_of_corr_bound` computes its price: `ε ≥ (N−1)/4`. Mathlib has
+> no Chowla-type, Elliott-type or two-point-correlation statement for
+> multiplicative functions; the input is Theorem 3.1 of arXiv:2512.01739.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* `Finset.sum_congr`'s binder names are `s₁ s₂`; with `rfl` for the summand
+  functions the `AddCommMonoid` instance can stay stuck — pass explicit lambdas;
+* `Finset.sum_congr rfl` does **not** match a summand that is itself a
+  `Finset.sum` (higher-order unification fails); state the per-`k` identity as
+  `(Finset.sum_sub_distrib f g).symm` with explicit lambdas — the resulting
+  beta-redex form then matches the `calc` step syntactically (and `calc` *does*
+  accept a beta-redex first step against a beta-normal goal);
+* `Finset.sum_sub_distrib : ∑ x ∈ s, (f x − g x) = ∑ f − ∑ g`; the reverse
+  direction needs the explicit-lambda trick;
+* `Finset.filter_eq' (s) (b) : {a ∈ s | a = b} = if b ∈ s then {b} else ∅`
+  (an `ite`, not a `dite`), `Finset.card_erase_of_mem`, and
+  `Finset.mem_erase` = `a ≠ b ∧ a ∈ s`;
+* `Nat.card_Icc : (Icc a b).card = b + 1 − a`; `Nat`-subtraction arithmetic needs
+  `by_cases` for `omega`;
+* `1 / 4` is a **division** and is invisible to `linarith`: multiply by `4`
+  first with `mul_le_mul_of_nonneg_left`; `div_le_iff₀ (h : 0 < b)` takes **one**
+  argument and reads `a / b ≤ c ↔ a ≤ c * b`;
+* `Finset.sum_le_sum_of_subset_of_nonneg` takes `(s := ) (t := )`;
+  `Finset.single_le_sum` takes the nonnegativity proof *first*; `Finset.sum_mul`
+  has the sum on the **left** and `Finset.mul_sum` on the right, and
+  `Finset.sum_mul s.filter …` mis-parses (projection binds tighter);
+* instances: unfold the variance object, then
+  `norm_num [jsp87TruncCarry, jsp87Tw, Finset.sum_range_succ, Finset.sum_filter, …]`
+  evaluates the whole finite object.
