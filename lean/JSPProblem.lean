@@ -73,3 +73,4 @@ import JSPProblem.ProgSample
 import JSPProblem.HarmonicMass
 import JSPProblem.EulerDivergence
 import JSPProblem.SingleScale
+import JSPProblem.CntVariance

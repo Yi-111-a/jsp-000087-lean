@@ -5201,3 +5201,136 @@ side-free; no Chowla-type or Elliott-type estimate is needed for it.
   *function*; use `intro` + `And.intro` (or `simp only [X_ne_zero_iff]`) instead;
 * `unfold`/`rw` do not descend into `fun i => …` reliably for `noncomputable def`s:
   prove a pointwise `jsp87Phase_eq`-style equation first.
+
+---
+
+## Round 127 — THE EXACT SECOND MOMENT OF THE PRIME-DIVISOR COUNT: (5.21) **IS** THE VARIANCE
+
+New module `lean/JSPProblem/CntVariance.lean` (951 lines, **38 new public
+theorems** plus 9 private helpers, 2 new definitions, 0 `sorry`, 0 `admit`;
+**2386** theorem/lemma declarations tree-wide at the `^(theorem|lemma)` level
+(2348 before this round), `lake build` clean, 7 linter warnings).
+
+`policy.json` `next_round_attack[3]` of round 126 asked for **the price of
+(5.15) at the ground-truth scale**: combine the variance bound
+`jsp87_515_imp_var_le` with the mean-field identity `jsp87FAvg_cnt_primeSet`
+and read off an explicit lower bound for `κ₁ + κ₂ + κ₃`.  Round 126 promised
+that computation in a docstring (`jsp87_515_zero_var_le`,
+`jsp87_515_zero_sqmoment_le`, `jsp87_515_zero_recipSum_le`,
+`jsp87_515_zero_refuted`) but **did not prove it** — the second moment of
+`jsp87Cnt` over the canonical sample had never been computed.  **This round
+computes it exactly**, and the answer is a closed form.
+
+### 0. The key observation: the canonical sample is a whole period
+
+The endgame sample is
+
+```
+s = jsp87ProgFull 0 1 P = { i : i < ∏_{p ∈ P} p }      (jsp87ProgFull_eq_Icc)
+```
+
+a **whole period** modulo every prime of `P` at once.  Hence the divisibility
+events `p ∣ i + 1` are independent by the Chinese remainder theorem, and the
+variance of the prime-divisor count has a closed form.  Mathlib has no
+statement of this shape for a prime-divisor count.
+
+### 1. The counting step (CRT)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87ProgFull_eq_Icc` | the canonical sample is `{ i : i < ∏ P }` |
+| `jsp87card_div_pair` | **the two-prime count**: `# { i ∈ s : p ∣ i+1 ∧ q ∣ i+1 } = ∏ P / (p q)` for distinct primes `p, q ∈ P` (from `Nat.Ioc_filter_dvd_card_eq_div` + `p q ∣ ∏ P`) |
+| `jsp87sum_divInd_pair` | the mixed second moment `∑_i x_p(i) x_q(i) = ∏ P / (p q)` |
+| `jsp87FAvg_divInd_progFull` | **the mean of `x_p` is `1/p`** — round 126's mean-field identity, in full generality |
+| `jsp87FAvg_divInd_mul_progFull` | **INDEPENDENCE**: `𝔼 x_p x_q = 𝔼 x_p · 𝔼 x_q = 1/(pq)` |
+
+### 2. THE MAIN THEOREM — the exact variance
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87SqDefect` | **the new object** `∑_{p ∈ P} (1/p)(1 − 1/p)` — the `∑_p f_p(1−f_p)` of (5.21′) |
+| `jsp87FAvg_sq_cnt_progFull` | **the exact second moment**: `𝔼 cnt² = ∑_{p∈P} 1/p + ∑_{p≠q} 1/(pq)` |
+| `jsp87SqDefect_eq` | `SqDefect = ∑ 1/p − ∑ 1/p²` |
+| **`jsp87Var_cnt_eq_sqDefect`** | **`Var (i ↦ cnt P (i+1)) = ∑_{p ∈ P} (1/p)(1 − 1/p)`** — the Chinese remainder identity |
+| **`jsp87R521b_ground_iff_var`** | **hypothesis (5.21b) at `K = 0, H = 1` is *equivalent* to `4 ≤ q² Var`**: `jsp87R521b 0 P q 1 ↔ 4 ≤ q^2 * Var (i ↦ cnt P (i+1))` |
+
+`jsp87R521b_ground_iff_var` is the point of the round: **at the canonical
+sample the variance hypothesis (5.21) of arXiv:2512.01739 is not an
+estimate — it is an identity.**  The `∑_p f_p (1 − f_p)` of (5.21′) *is* the
+variance of the phase, with no loss and no correlation input, because
+divisibility is exactly uniform on a whole period.
+
+### 3. Consequences
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87SqDefect_nonneg`, `jsp87SqDefect_le_recipSum` | `0 ≤ SqDefect P ≤ ∑ 1/p` |
+| `jsp87SqDefect_ge_recipSum_half` | `∑_{2≤p≤Y} 1/p ≤ 2 · SqDefect (jsp87PrimeSet 2 Y)` |
+| `jsp87SqDefect_ge_one_fourth` | `1/4 ≤ SqDefect (jsp87PrimeSet 2 Y)` for `2 ≤ Y` |
+| **`jsp87SqDefect_tendsto`** | **`SqDefect (jsp87PrimeSet 2 Y) → +∞` with the height** (Euler): the variance hypothesis of the published proof is satisfied at every sufficiently large height, unconditionally |
+| `jsp87Phase0_zero_one` | the pointwise form of round 126's phase identity: `jsp87Phase0 0 1 Y i = (1/2) · cnt (i+1)` |
+| **`jsp87_515_ground_var_le`** | **(5.15) + the pointwise (5.19) force `2 q² Var (i ↦ cnt (i+1)) ≤ κ₁+κ₂+κ₃`** |
+| **`jsp87_515_ground_price`** | **THE PRICE: `q² ∑_{2 ≤ p ≤ Y} 1/p ≤ κ₁+κ₂+κ₃`** — the statement promised as `jsp87_515_zero_recipSum_le` in round 126 |
+| **`jsp87_521_imp_kappa_blunt`** | (5.21b) + (5.15) + (5.19) force `κ₁+κ₂+κ₃ ≥ 8` — the constants are blunt by a factor 240 |
+| `jsp87RecipSum_weighted_large` | for every `q ≠ 0`, `M` there is a height with `q² ∑_{2≤p≤Y} 1/p > M` |
+| **`jsp87_515_ground_fails_above`** | **at every height whose weighted harmonic mass exceeds the constants, (5.15) + (5.19) FAIL** |
+| **`jsp87_515_ground_refuted`** | **for every fixed triple `κ₁,κ₂,κ₃` there is a height at which (5.15)+(5.19) fail and its own price is violated** — the quantitative refutation of (5.15) at the ground-truth scale |
+
+### 4. Machine-checked instances
+
+`jsp87SqDefect_two : SqDefect {2} = 1/4`, `jsp87Var_cnt_two : Var (cnt over
+{2}) = 1/4`, `jsp87SqDefect_two_three : SqDefect {2,3} = 17/36`,
+`jsp87R521b_ground_two : jsp87R521b 0 (jsp87PrimeSet 2 2) 20 1` (the variance
+hypothesis holds at `q = 20`, three times the `1/20` of (5.19)), and the round
+summary `jsp87_cntVariance_summary`.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  `harness/score.py
+problems/JSP-000087 --strict-prize` reports `build_ok=true, sorry=0, admit=0,
+placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 127, stated exactly
+
+> **The non-ground-truth sample.**  Everything above is proved *at the ground
+> truth*, i.e. for the canonical whole-period sample, where the variance
+> hypothesis (5.21) becomes an identity.  Two things remain:
+>
+> 1. **the derivation from the escape hypothesis `jsp87ErrBoundsFromEscape`**
+>    (round 126's blocker) — the error bounds (5.15)/(5.16)–(5.17) are then
+>    forced to be *blunt*, which is the shape of the published proof; and
+> 2. **the general sample.**  The identity `Var = ∑ f_p(1−f_p)` holds for the
+>    canonical sample because of CRT; for a *general* finite sample the
+>    variance is `∑ f_p(1−f_p) + 2 ∑_{p≠q} (f_{pq} − f_p f_q)`, and the
+>    covariances `f_{pq} − f_p f_q` are exactly the two-point correlation
+>    estimate of arXiv:2512.01739 Thm 3.1 (Pilatte) — the one analytic input
+>    Mathlib does not contain.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* `Finset.card_nbij' (i) (j) (hi) (hj) (left_inv) (right_inv)` for a
+  `Set.MapsTo`/`Set.LeftInvOn`/`Set.RightInvOn` triple; for
+  `Set.LeftInvOn j i s` the goal is `j (i x) = x`, and `n ↦ (n+1).pred` inverts
+  `n ↦ n+1` **without** any hypothesis, whereas the converse needs `0 < n`;
+* `Nat.Ioc_filter_dvd_card_eq_div (n p) : #{x ∈ Ioc 0 n | p ∣ x} = n / p` is
+  the counting lemma to use (`Finset.Icc 1 L = Finset.Ioc 0 L`);
+* `Nat.cast_div` in this Mathlib takes **two** hypotheses, `n ∣ m` and `↑n ≠ 0`;
+* `Nat.le_of_dvd : 0 < n → m ∣ n → m ≤ n` (the *dividend* must be shown
+  positive — it cannot be used to bootstrap positivity of the dividend);
+  `Nat.pos_of_ne_zero : n ≠ 0 → 0 < n`;
+* `Nat.mul_le_mul`, `Nat.mul_le_mul_left/right` are 2-argument;
+  `mul_le_mul_of_nonneg_left : b ≤ c → 0 ≤ a → a*b ≤ a*c` needs `b ≤ c` in that
+  order; `one_div_le_one_div_of_le : 0 < a → a ≤ b → 1/b ≤ 1/a`;
+* `div_le_one : 0 < b → (a/b ≤ 1 ↔ a ≤ b)` is an **iff**, and the `.mpr`
+  direction wants `a ≤ b`;
+* `Finset.sum_congr rfl (fun i _ => proof)` only applies when **both sides are
+  sums over the same finset** — `jsp87FAvg` hides the division *outside* the
+  sum, so `unfold jsp87FAvg` first and then `rw [← jsp87FAvg]` to go back;
+* `obtain ⟨c, hc⟩ := h` **deletes** `h` from the context — order the proof so
+  `h` is not used afterwards;
+* `Finset.filter_congr (H : ∀ x ∈ s, p x ↔ q x) : filter p s = filter q s`
+  works, but `Finset.ext`-based proofs of filter equalities do not;
+* `simp only [jsp87PrimeSet, Finset.mem_filter, Finset.mem_Icc, …]` unfolds
+  `Icc` into `Nat`-subtraction noise: use the `rw [jsp87PrimeSet_mem, …]`
+  chain, or `interval_cases` on the bounded variable.
