@@ -647,6 +647,81 @@ governed by the *same* arithmetic period.
 
 ---
 
+## Round 122 — THE CORRELATED-SAMPLE OBJECT: (5.21) IS A CONDITION ON THE SAMPLE, AND IT IS IMPOSSIBLE FOR PROGRESSIONS
+
+New module `lean/JSPProblem/CorrelSample.lean` (914 lines, **36 new public theorems
+and lemmas** plus 8 private helpers and 5 new definitions, 0 `sorry`, 0 `admit`;
+**2502** theorem/lemma declarations tree-wide by the `^(theorem|lemma)` count with
+private helpers (2458 before this round), `lake build` clean).
+
+This is a **new attack family** and the execution of `policy.json`
+`next_round_attack[0]`, unexecuted for 120 rounds: *make explicit the ONE quantity
+that hypothesis (5.21) needs, namely a sample whose active-class fraction is large
+— and show what it costs.*  The quantity is **not** the level-1 active fraction of
+round 120 but the **nonzero-class fraction**
+
+```
+f_p  =  jsp87NzFrac K p H s  =  #{ n ∈ s : X_p n ≠ 0 } / #{ n ∈ s }
+```
+
+of the cube-alternating variable `X_p` of (5.13), because that is exactly what
+enters the two-class variance criterion.
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Var_Xp_ge_nzFrac` | **THE MAIN CRITERION IN FRACTION FORM**: `Var (q X_p) ≥ q² · f (1 − f) · 2^{−2(H+K)}` |
+| `jsp87Var_sum_ge_nzFrac` | the same over the whole `S₁`, with the cube square outside the sum |
+| **`jsp87_endgame_frac_of_5_21`** | **THE ENDGAME WITH (5.21) IN SAMPLE GEOMETRY**: everything of arXiv:2512.01739 §5.3–§5.14 except the `S₁`-variance hypothesis is discharged, and that hypothesis is replaced by the purely geometric (5.21′) `1 ≤ q² 2^{−2(H+K)} ∑_{p∈P} f_p (1 − f_p)` |
+| `jsp87_5_21_singleRes_impossible` | **no sample lying in one residue class modulo a prime of `S₁` can satisfy (5.21′)** |
+| `jsp87_5_21_prog_impossible`, `jsp87_5_21_prog_of_frac` | **no arithmetic progression whose step is divisible by every `p ∈ S₁` can satisfy (5.21′)** |
+| `jsp87_5_21_singleResP_impossible` | the prime-wise form (the residue may depend on `p`) |
+| `jsp87_5_21_needs_four`, `jsp87_5_21_needs_card` | (5.21′) forces `4 ≤ q² 2^{−2(H+K)} |S₁|`, hence `4^{H+K+1} ≤ q² |S₁|` |
+| **`jsp87_5_21_needs_manyPrimes`** | **THE COUNTING NECESSITY**: with (5.19) (which forces `4^K ≥ 400 q² H²`) the `q²` cancels and (5.21′) forces `1600 · 4^H · H² ≤ |S₁|` — `6400` primes at `H = 1`, `2 048 000` at `H = 5`, independent of `q` and `K` |
+| `jsp87Active_add`, `jsp87Active_of_res`, `jsp87Active_iff_of_mod` | the residue transfer of the **hit** predicate, from scratch |
+| `jsp87res_cover_iff`, `jsp87Active_mem_res`, `jsp87Active_of_res_cover` | activity is *decided* by the active residue classes of round 120 |
+| **`jsp87Xp0_eq_of_res`** | **the residue transfer of the cube sum itself** — `X_p` is constant on a residue class, which is what makes the single-residue obstruction work |
+| `jsp87ActFrac_trans`, `jsp87ActFrac_union` | the active fraction is a residue statistic: it is invariant under shifts by multiples of `p`, and the fraction of a disjoint union is the size-weighted average |
+| `jsp87ActFrac_eq_one_of_res_cover`, `jsp87ActFrac_eq_zero_of_res_avoid` | … and it is exactly determined by the residue profile of the sample |
+| `jsp87NzFrac_ge_actFrac` | the active-class fraction is at most the nonzero-class fraction |
+| `jsp87NzFrac_eq_zero_or_one_of_singleRes` | on one residue class the nonzero fraction is `0` or `1` |
+| `jsp87correl_summary` | the round in one theorem: (5.21′) forces `|S₁| ≥ 1600 · 4^H · H²` |
+
+### Why this matters for the gate
+
+Round 120 proved (5.21) **impossible** for a uniform residue system.  Round 122
+proves it **impossible** for any sample confined to a single residue class modulo a
+prime of `S₁`, and therefore for any arithmetic progression whose step is divisible
+by all of `S₁`, and it quantifies the price of admission: `|S₁| ≥ 1600·4^H·H²`.
+The remaining input is thus *provably a correlation statement* — one must exhibit a
+sample of integers **correlated with the cube vertices**.  That is the content of
+arXiv:2512.01739 `Theorem 3.1` (the Pilatte-derived quantitative two-point
+correlation estimate for `ω`); Mathlib has no Chowla-type or Elliott-type statement
+for multiplicative functions, so it is not supplied here and `jsp_000087_main`
+remains deliberately withheld.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* **no `Nat.add_mod'`** — only the two-modulo `Nat.add_mod`; the one-modulo form
+  `((a+c) % n = (a % n + c) % n)` must be built by hand from `← Nat.mod_mod`;
+* **`Nat.dvd` is `∃ c, dividend = p * c`** — the *dividend is on the left*; three
+  proofs were silently wrong because of this;
+* **`inv_le_inv₀ ha hb : a⁻¹ ≤ b⁻¹ ↔ b ≤ a`** (conclusion order reversed);
+* `div_eq_iff` takes a **nonzero** hypothesis, `le_div_iff₀`/`div_le_iff₀` take
+  positivity; `abs_of_pos` takes `0 < a`; `mul_pos hq hq` mis-elaborates to
+  `npowRec` unless the expected type is already fixed;
+* no `Finset.filter_congr` / `filter_image` / `filter_subset` /
+  `eq_empty_iff_forall_not_mem` / `not_mem_empty` / `mem_zero` in the guessed form;
+  `Finset.disjoint_left.2` needs an explicit binder (`a` is implicit); a plain `def`
+  used as a `Finset.filter` predicate needs `attribute [reducible]`;
+* `Finset.mem_image` is `∃ a ∈ s, f a = b` and `Finset.mem_inter` is an **iff**;
+  `Finset.card_image_iff.mpr : InjectiveOn f s → s.card = (s.image f).card`.
+
+---
+
 ---
 
 ## Round 114 — the `+1` Lambert series as a SUMMED alternating series of dilations
