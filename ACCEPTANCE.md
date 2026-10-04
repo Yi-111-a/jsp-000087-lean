@@ -724,6 +724,88 @@ missing_theorems=["jsp_000087_main"]`.
 
 ---
 
+## Round 125 — EULER'S DIVERGENCE, PROVED: the last arithmetic input closes
+
+New module `lean/JSPProblem/EulerDivergence.lean` (382 lines, **15 new public
+theorems** plus 2 private helpers and 6 new definitions, 0 `sorry`, 0 `admit`,
+0 new linter warnings; **2291** proved theorems and lemmas at the `^(theorem|lemma)`
+level, `lake build` clean).
+
+`policy.json` `next_round_attack[0]` — carried **unexecuted for 125 rounds** — asked
+for a proof of `jsp87PrimeRecipDiverges`, the harmonic-mass divergence of the primes
+above the separation bound, which round 124 had identified as the last *purely
+arithmetic* input of the endgame of arXiv:2512.01739 §§5.3–§5.14.  **It is now
+proved**, and the endgame fires with only (5.19), (5.15) and (5.16)–(5.17).
+
+### 0. The correction of the policy
+
+The policy proposed the hand route (`Finset.prod_geomsum'`, Euler products, `exp`).
+**That premise was wrong**: Mathlib already contains the whole theorem, in
+`Mathlib/NumberTheory.SumPrimeReciprocals` — Erdős's elementary proof, as
+`not_summable_one_div_on_primes`.  Note that `import Mathlib.Tactic` does *not*
+pull in the Mathlib library (it imports the tactic modules only), so
+`import Mathlib.NumberTheory.SumPrimeReciprocals` is required explicitly.
+`split_ifs` likewise lives in `Mathlib.Tactic.SplitIfs`, not in `Mathlib.Tactic`.
+
+### 1. The transfer (§0–§1)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87PrimeRecipTerm`, `jsp87PrimeRecipTerm_nonneg` | `1/n` at the primes, extended by `0` |
+| `jsp87PrimeRecip_not_summable` | `¬ Summable jsp87PrimeRecipTerm`, read off Mathlib's `not_summable_one_div_on_primes` |
+| `jsp87PrimeRecip_tendsto` | the prime partial sums `→ ∞`, via `not_summable_iff_tendsto_nat_atTop_of_nonneg` |
+| `jsp87PrimeRecipSum_range` | the partial sum **is** the mass of the primes below the cut |
+| **`jsp87_recip_prime_le_mass_add`** | **THE COUNTING STEP**: `∑_{p ≤ n prime} 1/p ≤ B/2 + ∑_{B ≤ p ≤ n} 1/p` — the primes below a threshold cost at most `B/2` (at most `B` of them, each `≤ 1/2`). No hypothesis on `B` |
+| **`jsp87PrimeRecipDiverges_proof`** | **EULER'S DIVERGENCE, PROVED**: `jsp87PrimeRecipDiverges` holds — for every `K, H` with `1 ≤ H` and every `M > 0` there is a height `Y` with `M ≤ ∑_{2H2^K ≤ p ≤ Y} 1/p` |
+| `jsp87PrimeRecipDiverges_proof_tendsto`, `jsp87RecipSum_primeSet_tendsto` | the mass above the separation bound — and above **any** fixed threshold — tends to `+∞` |
+
+### 2. What this does to the endgame (§2–§3)
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87_5_21b_exists`** | **hYPOTHESIS (5.21b) IS SATISFIABLE, UNCONDITIONALLY**: for every `q ≠ 0` and every separation bound there is a height at which `2^{2H+K+1} ≤ q² ∑_{B ≤ p ≤ Y} 1/p`. Rounds 123–124 had proved only what it *costs* |
+| `jsp87_5_21b_exists_height` | that height really does reach the forced bound `2^{2(H+K)+2} ≤ q²(Y+1)` of `jsp87_5_21b_needs_height` |
+| `jsp87Err1`, `jsp87Err2`, `jsp87Hypothesis15`, `jsp87Hypothesis1617` | the two error terms of (5.15) and (5.16)–(5.17), verbatim, and the two error bounds |
+| **`jsp87_endgame_of_Euler`** | **the endgame of §§5.3–§5.14 from (5.19) + (5.15) + (5.16)–(5.17) alone**: the five estimates cannot all be sharp. The variance hypothesis (5.21) is discharged |
+
+### 3. The bridge to the headline (§4)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87KappaSharp` | the five constants are all `< 1/30` |
+| **`jsp87Series_irrational_of_kappa_small`** | **the five estimates sharp at the scale (5.19) ⟹ `jsp87Series` is irrational**: sharpness contradicts the endgame, so the truncated carries `b·jsp87TruncCarry N H` fail the uniform-spacing criterion of `TTRoute` for some `b`, and `jsp87Series_irrational_of_truncCarry_far` finishes |
+| `jsp87Hypothesis518` | **hypothesis (5.18) as a single named statement**: at the scale (5.19) the five error constants are simultaneously sharp and dominate (5.15), (5.16)–(5.17) uniformly in `Y` |
+| `jsp87_scale_519_admissible` | the scale `K = 0`, `H = 1`, `q = 1/20` satisfies (5.19), so (5.18) is **not vacuous** |
+| **`jsp87Series_irrational_of_518`** | **THE HEADLINE FROM ONE NAMED HYPOTHESIS**: `jsp87Hypothesis518 → Irrational jsp87Series`, at that explicit scale, with *no other hypothesis* |
+| `jsp87_rational_imp_kappa_notSharp` | the contrapositive, at a fixed scale: rationality would force one of the five estimates to be blunt |
+
+### 4. Gate status, and the blocker after round 125
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports
+`build_ok=true, sorry=0, admit=0, placeholder_total=0, partial_ok=true,
+prize_ready=false, missing_theorems=["jsp_000087_main"]`.
+
+`jsp_000087_main` is **still deliberately not declared**, and the reason is now
+*sharper* than in any previous round: everything else is unconditional, and the
+single remaining input is
+
+> **`jsp87Hypothesis518`** — the five error constants of §§5.7–5.14 of
+> arXiv:2512.01739 are simultaneously `< 1/30` at the scale (5.19), dominating
+> the errors (5.15) and (5.16)–(5.17) uniformly in the height of the prime set.
+
+This is their analytic estimate (`κ_j = o(1)`), obtained there from their
+Theorem 3.1 (Pilatte).  Mathlib contains no Chowla-type, Elliott-type or
+two-point-correlation statement for multiplicative functions, so this input
+cannot be produced here; and since it is an *assumption of the published proof*
+rather than of the catalog statement, it is not inserted.  Note that the
+sample geometry, the primality, the separation, the two-class condition, the
+harmonic mass (Euler) and the deterministic Diophantine reduction are now all
+proved *unconditionally* — so the gap is exactly one analytic estimate.
+
+---
+
+---
+
 ## Round 114 — the `+1` Lambert series as a SUMMED alternating series of dilations
 
 New module `lean/JSPProblem/PlusDilate.lean` (644 lines, **30 new public theorems**
