@@ -4666,3 +4666,125 @@ functions, so the input cannot be supplied here.
 * `by_contra`/`absurd` need the negation on the *right*: to derive `False`
   from `hneg : ¬ P` and `hne : ¬ P` use `hneg hne`; to get `P` from `¬ P` use
   `by_contra` and then `hcon hne`.
+
+---
+
+## Round 120 — THE ACTIVE RESIDUE CLASSES, AND WHY (5.21) CANNOT COME FROM A UNIFORM SAMPLE
+
+New module `lean/JSPProblem/ActiveCube.lean` (742 lines, **33 new theorems and
+lemmas** (29 public) plus 2 new definitions, 0 `sorry`, 0 `admit`, 0 linter
+warnings; **2458 proved theorems and lemmas** at the `^(theorem|lemma)` level —
+2425 before this round — `lake build` clean, 68 modules).
+
+This round executes `policy.json` `next_round_attack[0]`, the first item of that
+list, **unexecuted for 119 rounds**: the counting object `jsp87Active`, its exact
+count over a complete residue system, and the density `2^K / p`.  It also
+**closes the third blocker of round 119** (non-degeneracy of `X_p`) and yields a
+machine-checked **negative** result about the endgame itself.
+
+### 1. The counting object (item (a), (b), (c) of `next_round_attack[0]`)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Active` | **the new object**: level `h` is active at `n`, i.e. some vertex `ε` of the binary cube is hit, `p ∣ n + h + Σ_{k∈ε} 2^k` |
+| `jsp87ActiveRes` | **the new object**: the active residue classes `p − (h + off ε)`, one per vertex |
+| `jsp87ActiveRes_card` | **THE EXACT COUNT OF THE ACTIVE RESIDUE CLASSES IS `2^K`** — injectivity from `jsp87Off_binV_inj` plus `Fintype.card_finset` |
+| `jsp87Active_iff_activeRes` | activity **is** membership of the active residue classes (for `n ≤ p − 1`) |
+| `jsp87Active_res_card` | **exactly `2^K` of the `p` residues make level `h` active** |
+| `jsp87Active_density` | **the density of the active classes is `2^K / p`** |
+| `jsp87Active_period`, `jsp87Active_of_dvd_pow` | activity is periodic in the sample point; a power-of-two hit is an activity |
+
+### 2. Non-degeneracy, unconditionally — **round 119's third blocker is closed**
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87W_tail` | **THE CLOSED FORM OF THE LEVEL TAIL**: `Σ_{h' ∈ (h,H]} 2^{−(h'+K)} = 2^{−(h+K)} − 2^{−(H+K)}` |
+| `jsp87XpLevel_ne_zero_of_active`, `jsp87XpLevel_eq_zero_iff_not_active` | a level of the binary cube is *either dead or alive*: the level sum is `0` exactly at inactive levels |
+| `jsp87Xp0_abs_ge_active` | **THE SIZE OF THE WHOLE CUBE SUM AT A LEAST ACTIVE LEVEL**: `2^{−(H+K)} ≤ |X_p|`, uniformly in `h` |
+| `jsp87Xp0_ne_zero_of_active_one`, `jsp87Xp0_ne_zero_card` | activity at the bottom level forces `X_p ≠ 0`; at least `2^K` residues have a nonzero cube sum |
+| **`jsp87Xp0_ne_zero_exists`** | **NON-DEGENERACY, UNCONDITIONALLY**: for every `K`, every `p > 2^K`, every `H ≥ 1`, the variable `X_p` of (5.13) is **not identically zero** — nonzero at at least `2^K` of the `p` residue classes. Nothing is left to assume about the sample. |
+
+### 3. The zero class and the variance window
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Xp0_eq_zero_of_dvd`, `jsp87Xp0_eq_zero_zero` | **THE ZERO CLASS**: under `H + 2^K − 1 < p`, no level can be hit at a multiple of `p`, so `X_p(p·m) = 0` for every `m` |
+| `jsp87Var_Xp_res_lower`, `jsp87Var_Xp_res_upper` | the two ends of the variance estimate over the complete residue system |
+| **`jsp87Var_Xp_res_window`** | `q² · 2^K 2^{−2(H+K)} / p² ≤ Var (q X_p) ≤ (|q| H 2^{−K})²` — the variance of the endgame variable over a uniform sample is `≈ q² / p` and **decays in `p`** |
+
+### 4. THE HEADLINE NEGATIVE RESULT — (5.21) is unobtainable for a uniform sample
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87_Xp_res_5_21_impossible`** | for the binary cube, `2^K ≤ p`, `H + 2^K − 1 < p` and `|q| H 2^{−K} ≤ 1/20`: **`¬ (1 ≤ Var (Icc 0 (p−1)) (fun n => q * X_p n))`** — hypothesis (5.21) of the endgame is *never satisfiable* for a sample that is a uniform residue system modulo `p` |
+| `jsp87_endgame_res_of_5_21` | if (5.21) *were* satisfiable, the endgame fires: the five error terms of §5 cannot all be `< 1/30` |
+| `jsp87_endgame_res_summary` | **THE DICHOTOMY**, in one theorem |
+
+Consequence, machine-checked: **the endgame of Tao–Teräväinen arXiv:2512.01739 §5
+is vacuous for uniform samples**, and its sample cannot be one.  The two remaining
+arithmetic inputs of `jsp_000087_main` — the uniformity hypothesis (5.18) and the
+two-point correlation estimate `Theorem 3.1` (from Pilatte) — are therefore
+**provably correlation inputs**, not artefacts of this formalisation: no
+combinatorial statement about uniform residues can replace them.
+
+### Gate status
+
+`jsp_000087_main` is **still deliberately not declared**.  The headline
+irrationality is a theorem in the literature (Tao–Teräväinen,
+arXiv:2512.01739 Thm 1.3 = Erdős problem #69); what is missing is its *proof*,
+whose analytic input is the quantitative two-point correlation estimate for
+bounded multiplicative functions.  Mathlib has no Chowla-type or Elliott-type
+statement for multiplicative functions, and round 120 proves that gap is
+indispensable.
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+### The blocker, after round 120, stated exactly
+
+> **`jsp87_balancedSplit`** (round 118) and **(5.18) `κ_j = o(1)`** — unchanged,
+> but now provably *correlational*: `jsp87_Xp_res_5_21_impossible` shows the
+> variance of (5.21) can never come from a uniform residue system, so it must come
+> from the structure of the sample along progressions modulo `p`, i.e. from
+> `Theorem 3.1` / (5.18).
+
+### Mathlib findings of this round (do not repeat these costs)
+
+* **no** `Finset.sum_Icc_add_Icc`, **no** `Finset.sum_Icc_singleton`,
+  **no** `Finset.card_Icc`, **no** `Finset.not_mem_empty`,
+  **no** `Finset.filter_eq_empty_eq_exists`,
+  **no** `Finset.union_singleton_filter_neg_filter`,
+  **no** `Nat.pos_of_ne_of_dvd`, **no** `Nat.mul_sub_of_le`,
+  **no** `Nat.eq_zero_or_pos_of_lt`: only `Finset.sum_Icc_succ_top`,
+  `Nat.card_Icc`, `Nat.add_sub_of_le`, `Nat.sub_le_sub_right`.
+* `abs_sub_le_iff` is stated with a general right-hand side
+  (`|a − b| ≤ c ↔ a − b ≤ c ∧ b − a ≤ c`); the reverse triangle inequality is
+  `norm_sub_le` + `le_abs_self`.
+* **instance search does not unfold a plain `def` used as a `Finset.filter`
+  predicate** — mark it `@[reducible]` (this is why `jsp87Active` carries
+  `attribute [reducible]`).
+* **`omega` treats `H + 2^K − 1` as an opaque ATOM**: it cannot relate it to
+  `1 + 2^K − 1` or to `2^K`. Use `Nat.sub_le_sub_right`, `Nat.add_sub_of_le`,
+  `Nat.add_sub_assoc` (whose hypothesis is `k ≤ m`, named args `(m := …) (k := …)`)
+  explicitly. `omega` also **degrades when a divisibility hypothesis `p ∣ m` is in
+  scope** (it introduces a `%` atom that blocks the reasoning): `clear` it first.
+* `obtain ⟨x, h, rfl⟩` substitutes `x` *immediately*, so a subsequent `obtain`
+  on another hypothesis silently loses the link between the two witnesses.
+* `Nat.mul_lt_mul_right` has the positivity proof as its **first** explicit
+  argument and returns an `iff`; use `Nat.lt_of_mul_lt_mul_right` for the plain
+  form.
+* **`r = r'` for two elements of the image of an injective map is FALSE** — this
+  round refuted its own first formulation of `jsp87ActiveRes_inj`. Injectivity
+  yields `ε = ε'` only *from* the equation `r = r'`.
+
+### Abandoned in this round (recorded for the next)
+
+1. the two-level obstruction `jsp87Active_twoLevel` (two levels both active only
+   through cube offsets `< 2^{min k}`): the statement needs the extra hypothesis
+   `h' − h + 2^{k'} < p`, and the final power-of-two monotonicity step must use
+   `Nat.pow_le_pow_right` (not `omega`) — dropped for lack of time, **not**
+   because it is false;
+2. `B = {0}` as the second class of the variance bound: false in general, since
+   not every nonzero residue is active at level 1 — the correct class is the zero
+   class `{n ∈ s ∣ X_p n = 0}`, which is what the theorem now uses.

@@ -67,3 +67,4 @@ import JSPProblem.Variance
 import JSPProblem.Xp
 import JSPProblem.VarLocal
 import JSPProblem.CubeBits
+import JSPProblem.ActiveCube
