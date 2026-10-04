@@ -5712,3 +5712,127 @@ missing_theorems=["jsp_000087_main"]`.
 * `Finset.sum_filter_add_sum_filter_neg` does not exist in the guessed form; the
   indicator trick (`f m := if m ∈ S then … else 0`) with `Finset.sum_filter`,
   `Finset.sum_congr` and `Finset.sum_le_sum` works uniformly.
+
+---
+
+## Round 134 — THE EXACT SECOND MOMENT AS A PRIME-PAIR SUM, AND **THE
+REFUTATION OF THE ARITHMETIC ROUTE TO HYPOTHESIS (5.21)**
+
+New module `lean/JSPProblem/SqPair.lean` (838 lines, **38 new public theorems**
+plus 2 private helpers and 5 new definitions, 0 `sorry`, 0 `admit`; **2946**
+proved theorems and lemmas tree-wide at the `^(private )?(theorem|lemma)` level —
+2910 before this round — `lake build` clean, 3321 jobs).
+
+This round executes `policy.json` `next_round_attack[0..3]` of round 133: items 0
+and 1 are **closed**, item 2 is **moot**, item 3 is **isolated as the only
+analytic input left**.
+
+### 1. §1 — the exact second moment (closes round 133's named blocker)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_row_eq` | for fixed prime `p`, the number of *other* primes `q ≤ X` dividing `n` is `(if p ∣ n then 1 else 0) · (ω n − 1)` |
+| **`jsp87_fact_ind`** | **`ω n (ω n − 1) = Σ_{p ∈ P} Σ_{q ∈ P, q ≠ p} [p ∣ n ∧ q ∣ n]`** — the factorial moment as an ordered-pairs-of-distinct-primes sum |
+| **`jsp87_factPair_eq_offPair`** | `Σ_{n ≤ X} ω n (ω n − 1) = Σ_{p ≠ q primes ≤ X} ⌊X/(p q)⌋`: the second **factorial** moment of `ω` is a closed form over the primes, every term an *exact* count (`jsp87_card_pair`), with **no** boundary error |
+| **`jsp87SqMoment_eq_primeDiv_add_pairs`** | **THE CROWN**: for `1 ≤ X`, `jsp87SqMoment X = jsp87OmegaCount X + jsp87OffPair X` — the second moment of `ω` is the mean-field prime-divisor count **plus** the exact prime-pair content |
+| `jsp87_sumIcc_eq_omegaCount`, `jsp87_factPair_eq'` | the finset plumbing (`{0,…,X−1}+1 = {1,…,X}`) |
+
+### 2. §2 — the prime-pair content, its symmetry, and its lower bound
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_filter_ne_lt`, `jsp87_row_split_lt` | the row split at `p`: `{q ≠ p} = {q < p} ∪ {p < q}`, disjoint |
+| `jsp87_lower_eq_upper` | the two triangles of `Σ_{p,q ≤ X} ⌊X/(p q)⌋` are **equal** (via the indicator form and `Finset.sum_comm`) |
+| `jsp87_offPair_eq_two_mul_upPair` | `jsp87OffPair X = 2 · jsp87UpPair X` |
+| `jsp87UpPair_ge_pairCount` | every reachable pair contributes at least one integer `≤ X` |
+| **`jsp87_factMoment_ge_pairCount`** | **round 132's named blocker `jsp87_sumOmegaSq_ge_pairs`, CLOSED**: `2 · #{(p,q) : p < q primes ≤ X, p q ≤ X} ≤ Σ_{n ≤ X} ω n (ω n − 1)` |
+| **`jsp87SqMoment_ge_primeDiv_pairCount`** | **policy `next_round_attack[1]` of round 133, EXECUTED**: `jsp87OmegaCount X + 2 · jsp87PairCount X ≤ jsp87SqMoment X` |
+| **`jsp87_pairCount_le_omegaCount`** | **THE PRICE OF THE PRICE**: `jsp87PairCount X ≤ jsp87OmegaCount X` |
+| `jsp87_pairCount_ge`, `jsp87_pairCount_unbounded` | the prime-pair content is **unbounded** (`∀ k, ∃ X, k ≤ jsp87PairCount X`), by Euclid |
+
+### 3. §3 — the Tao–Teräväinen payoff: the exact price of (5.21)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_sum_range_zero_eq`, `jsp87SqWindow_zero_eq` | `Σ_{N<L} ω N = jsp87OmegaCount (L−1)`, `jsp87SqWindow 0 L = jsp87SqMoment (L−1)` |
+| `jsp87_tcVarAt_zero_eq` | `(1/4)·Var ω over [0,X+1) = jsp87SqMoment X/(4(X+1)) − (jsp87OmegaCount X/(2(X+1)))²` |
+| **`jsp87_diag_var_exact`** | **THE PRICE OF (5.21)**: `Σ_{k<H} 4^{−(k+1)} Var ω(N+k) = jsp87TcDiag L H / L − Σ_{k<H} 4^{−(k+1)} (𝔼 ω(N+k))²` |
+| **`jsp87_521_needs_diag`** | **THE TRANSFER**: `1 ≤ Σ_k 4^{−(k+1)} Var` ⟺ `jsp87TcDiag L H ≥ L + L · Σ_k 4^{−(k+1)} μ_k²` |
+| `jsp87Arith521`, `jsp87_arith521_le_var` | the **arithmetic supply** of (5.21): `((Ω(X) + 2·PC(X))/4 − (Ω(X)/2)²)/(X+1)`, a lower bound for the weighted diagonal variance |
+| **`jsp87_arith521_le`** | **THE NEGATIVE RESULT**: `jsp87Arith521 X ≤ 9/16` for **every** `X` — the quadratic `(3/2)t − t²` is maximal at `t = 3/4` |
+| **`jsp87_521_arith_impossible`** | **`jsp87Arith521 X < 1` for every `X`: hypothesis (5.21) CANNOT be met by arithmetic alone, at any height** |
+| `jsp87_diag_var_three_one`, `jsp87_521_fails_three` | the weighted diagonal variance is `1/18` at `(L,H) = (3,1)`, so (5.21) fails there |
+
+### 4. Machine-checked instances
+
+`jsp87SqMoment 6 = 8`, `jsp87OffPair 6 = 2`, `jsp87FactPair 6 = 2`,
+`jsp87PairCount 6 = 1`, `jsp87SqMoment 30 = 73`, `jsp87OffPair 30 = 30`,
+`jsp87PairCount 30 = 7`, `jsp87OmegaCount 30 = 43`, and
+`jsp87SqMoment_eq_pairs_thirty` (all `native_decide`).
+
+### 5. Gate status and the blocker, after round 134
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+**The "variance is large" direction of (5.21) is dead as an arithmetic
+statement.** Rounds 130/131 reduced the diagonal of §5.4 to arithmetic; this
+round computes the diagonal exactly and shows that *no* lower bound of that
+shape can reach `1`: the mean field `(log log X)²` that is subtracted dominates
+the prime-pair content that is added (`jsp87_521_arith_impossible`). Both of the
+last two purely-arithmetic named blockers (`jsp87_sumOmegaSq_ge_pairs`,
+`jsp87SqMoment_eq_pairs`) are now closed. What is left is exactly:
+
+1. **`jsp87_tcMean_le_loglog`** (NEW, essential) — a Mertens/Chebyshev upper
+   bound `𝔼 ω(N+k) ≤ log log L + C`, the second term of `jsp87_521_needs_diag`,
+   i.e. of the exact content of (5.21). Absent from Mathlib but reachable from
+   `jsp87_omegaCount_eq_primeDiv` + `Mathlib.NumberTheory.SumPrimeReciprocals`;
+2. **`jsp87Mcov_small`** (unchanged) — the two-point correlation estimate of
+   arXiv:2512.01739 Thm 3.1 (Pilatte). Round 132 killed the lower-bound
+   direction and round 134 killed the arithmetic lower-bound direction, so this
+   single estimate is now the whole analytic content of the problem.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* **there is no `Finset.insert`** in this Mathlib: `insert` exists only through
+  the `Insert` instance, so `s.insert p` *and* `Finset.insert p s` both fail —
+  use `Finset.cons a s ha` with `Finset.card_cons ha` / `Finset.mem_cons`;
+* `Finset.erase a s` is **not** definitionally `s.filter (· ≠ a)`, so
+  `show s.filter (fun q => q ≠ 2) = s` fails; build `s ⊆ s.erase 2` with
+  `Finset.mem_erase` + `Finset.card_le_card`;
+* `Finset.card_le_card` wants a *function* `fun a ha => …`, not the `Finset.Subset`
+  proof value (passing the latter leaves a Set-coercion goal);
+* `Finset.single_le_sum (f := …) (s := …) (fun i _ => 0 ≤ f i) ha` **already has**
+  the conclusion as its type — there is no trailing goal;
+* `Finset.sum_le_sum (N := ℕ) (s := …)`: with `attribute [bound]` the monoid
+  type is not inferred from goals whose summands are divisions or indicators,
+  and the two finsets must coincide; for a filtered source use
+  `Finset.sum_le_sum_of_subset_of_nonneg` (it shares the summand function), and
+  do the `q ≠ p` split **after** the `p q ≤ X` restriction, otherwise the
+  summand bound `1 ≤ X/(p q)` is false;
+* `Finset.sum_congr` cannot be applied when one side is a *difference* of two
+  sums: split into a single-sum `sum_congr`, then `Finset.sum_sub_distrib` and
+  `← Finset.sum_div`;
+* `ite_eq_left`/`ite_eq_right` take **one** argument in Lean 4.34
+  (`if_pos`/`if_neg` are deprecated aliases);
+* `Nat.cast_le` is an **iff** and elaborates to `Nat.instPartialOrder.toLE`,
+  which need not be `instLENat` — use `exact_mod_cast` to lift ℕ inequalities;
+* `Nat.le_div_iff_mul_le (hk : 0 < k) : x ≤ y / k ↔ x * k ≤ y` puts the factor
+  on the **left**, and `omega` cannot see `q * p = p * q`;
+* `Nat.add_sub_cancel_left (n m : ℕ) : n + m - m = n` (that argument order);
+  `Nat.sub_le (a b) : a - b ≤ a`; bound `Finset.Icc 2 m` by `Finset.Icc 1 m`
+  (whose card is `m`) rather than subtracting;
+* `Nat.exists_infinite_primes (n) : ∃ p, n ≤ p ∧ Prime p` is Euclid; to build
+  `k` distinct primes the bound must be **existential**
+  (`∃ s M, 3 ≤ M ∧ s.card = k ∧ …`), because the final bound is only known after
+  the construction;
+* `Nat.Prime.two_le : p.Prime → 2 ≤ p`; for a prime `q ≠ 2` use
+  `Nat.exists_eq_add_of_le` (plain `omega` often fails on `¬ q = 2`);
+* `Finset.mem_filter`/`mem_erase` goals sometimes display through the
+  `List`/`Quot` coercion, where `hq.2` and `simp only [Finset.mem_erase]` fail —
+  use `Finset.mem_filter.mpr` / `Finset.mem_erase` explicitly;
+* `jsp87_card_pair` has **all** its arguments implicit, although `hX` is
+  discarded: `jsp87_card_pair (X := X) (p := p) (q := q) hX hp hq hne`;
+* `rw [← ht]` with `ht : t = e` searches for `e`; to unfold a local `set`
+  variable `t` use `rw [ht]`.
