@@ -72,3 +72,4 @@ import JSPProblem.CorrelSample
 import JSPProblem.ProgSample
 import JSPProblem.HarmonicMass
 import JSPProblem.EulerDivergence
+import JSPProblem.SingleScale

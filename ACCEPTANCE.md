@@ -5053,3 +5053,151 @@ both statements about the prime set `S₁`:
 3. the step `D = prod P` of candidate (a) stays impossible (round 122); the
    surviving sample needs `¬ p ∣ D` for every prime of `S₁`, which this round
    makes explicit.
+
+---
+
+## Round 126 — THE SINGLE-SCALE FORM OF (5.18), ITS REAL DECOMPOSITION, THE GROUND TRUTH AT `K = 0`, AND **THE REFUTATION OF (5.18)**
+
+New module `lean/JSPProblem/SingleScale.lean` (1041 lines, **59 new public
+theorems** plus 4 private helpers and 17 new definitions, 0 `sorry`, 0 `admit`;
+**2350** proved theorems and lemmas at the `^(theorem|lemma)` level — 2291 before
+this round — `lake build` clean).
+
+`policy.json` `next_round_attack[0…2]`, carried unexecuted for 126 rounds, is
+executed in full; item 3 (`K = 0` ground truth) is done as asked, and the
+remaining items produce a **decisive negative result**: the single hypothesis
+`jsp87Hypothesis518` that round 125 named as the last input is **false**.
+
+### 0. §0–§1 the ground truth at `K = 0` (policy item 3)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87univ_Finset_Fin_zero`, `jsp87R_binV_zero`, `jsp87XpLevel_binV_zero` | at `K = 0` the cube has a single vertex `∅`, its shift is `h`, and the level sum is `2^{-h}·[p ∣ n+h]` |
+| **`jsp87Xp0_binV_zero`** | **the closed form of (5.13) at `K = 0`**: `jsp87Xp0 (jsp87BinV 0) p n H = ∑_{h≤H} 2^{-h}·[p ∣ n+h]` |
+| `jsp87Xp0_binV_zero_one` | the `H = 1` instance: `(1/2)·[p ∣ n+1]` |
+| `jsp87sum_inv_two_Icc`, `jsp87Xp0_binV_zero_le`, `jsp87Xp0_binV_zero_lt_one` | `∑_{h≤H} 2^{-h} = 1 − 2^{-H}`, so `0 ≤ X_p < 1` |
+| `jsp87Cnt` | **the new object**: `jsp87Cnt P m = #{p ∈ P : p ∣ m}`, the prime-divisor count |
+| `jsp87Cnt_eq_sum`, `jsp87Cnt_le_omega`, `jsp87Cnt_eq_zero_of_lt`, `jsp87Cnt_eq_omega` | the count as a real sum of indicators, and `jsp87Cnt P m ≤ ω m` (the Chowla-type bound, from scratch) |
+| **`jsp87Xp0_binV_zero_sum`** | **the double sum collapses**: `∑_{p∈P} jsp87Xp0 (binV 0) p i H = ∑_{h≤H} 2^{-h}·jsp87Cnt P (i+h)` |
+| **`jsp87Phase_zero_one`** | **the phase at the ground-truth scale**: `q·∑_{p∈P} jsp87Xp0 (binV 0) p i 1 = (q/2)·jsp87Cnt P (i+1)` |
+| `jsp87Phase_zero_one_primeSet`, `jsp87Phase_zero_one_abs_le` | the same for the canonical prime set, and the bound by `(q/2)·ω (i+1)` |
+
+So at `K = 0, H = 1` the entire phase `qT` of arXiv:2512.01739 (5.13) is, up to
+the factor `q/2`, a **prime-divisor count of a single integer** — no cube, no
+alternating signs.
+
+### 1. §2 the real/imaginary decomposition (policy item 2)
+
+`jsp87Err1`, `jsp87Err2` are complex norms.  Proved here, from scratch:
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87norm_sq_re_im`, `jsp87CAvg_re`, `jsp87CAvg_im` | `‖z‖² = Re² + Im²`, and the complex average's two coordinates are *real* averages (Mathlib has neither) |
+| `jsp87Err1_sq_iff_re_im`, `jsp87Err2_sq_iff_re_im`, `jsp87Err1_le_iff_re_im`, `jsp87Err2_le_iff_re_im` | **the exact real form of (5.15) and (5.16)–(5.17)**: `Err ≤ κ ↔ Re² + Im² ≤ κ²` |
+| `jsp87re_le_of_norm_le`, `jsp87im_le_of_norm_le` | each coordinate is at most the complex norm |
+| `jsp87Err1_le_of_re_im`, `jsp87Err2_le_of_re_im` | two real component bounds give the error bound up to the `√2` of the norm |
+| **`jsp87Err1re_eq_avg_cos`**, **`jsp87Err1im_eq_avg_sin`** | **the error of (5.15) is a real average of `cos` and of `sin` over the finite sample** — the exact shape of §§5.7–5.14 |
+| `jsp87ErrBounds_real` | (5.15) and (5.16)–(5.17) *are* four explicit real inequalities |
+| **`jsp87Err1_zero`** | at the ground-truth scale the error is `‖𝔼 e((q/2)·jsp87Cnt P (i+1)) − 1‖` |
+
+### 2. §3 the single-scale form of (5.18) (policy item 1)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Scale519`, `jsp87_518_single` | the scale (5.19) and (5.18) required at **one** scale only |
+| `jsp87_518_single_ground_scale` | `K = 0, H = 1, q = 1/20` is admissible |
+| **`jsp87Series_irrational_of_518_single`** | **the headline from the single-scale form**: `jsp87_518_single 0 1 (1/20) → Irrational jsp87Series`, no quantifier over scales |
+| `jsp87Hypothesis518_imp_single` | (5.18) implies its single-scale form |
+
+### 3. §4 **THE REFUTATION** — (5.18) IS FALSE
+
+The endgame of §§5.3–5.14 (`jsp87_endgame_of_recipSum`, round 116) needs the two
+error bounds **only at one height** — the height supplied by Euler's divergence —
+and concludes that the dominating constants cannot all be `< 1/30`.  Hence:
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_518_at`, `jsp87_518_at_false` | **at any scale, any height and any `q` at which the harmonic mass (5.21b) holds, no five sharp constants dominate the two errors** |
+| `jsp87_518_atY_false` | the uniform-in-`Y` form is false at every admissible scale (Euler supplies the height) |
+| `jsp87_518_single_false`, `jsp87_518_single_ground_false` | the single-scale (5.18) is false at **every** admissible scale, in particular at `K = 0, H = 1, q = 1/20` |
+| **`jsp87Hypothesis518_false`** | **`¬ jsp87Hypothesis518`: round 125's blocker is REFUTED** |
+| `jsp87Series_irrational_of_518_route_closed` | there is no configuration with (5.18) and a rational series; the route of round 125 is closed |
+| `jsp87_endgame_blunt` | whatever constants dominate the two errors at the endgame's height, at least one is `≥ 1/30` |
+
+**Consequence.**  `jsp87Series_irrational_of_518` is a *vacuous* implication: its
+hypothesis is a contradiction.  There is no analytic estimate to be found on the
+fixed-scale route, because the estimate that route asks for is a contradiction.
+
+### 4. §5 the diagnosis
+
+In the published argument the constants `κ_j` of (5.15) and (5.16)–(5.17) are
+**not free parameters**: the two estimates are consequences of *rationality*, so
+their constants are forced, and the endgame says the forced constants are blunt.
+Rounds 116–125 use **one and the same** `κ` on both sides of the endgame, which
+makes the two statements contradictory — that is §4.  The genuine missing input is
+the *derivation*, named here as
+
+* **`jsp87ErrBoundsFromEscape`** — the escape hypothesis `jsp87TruncCarryEscapes b`
+  forces the two error bounds (with constants that need not be sharp);
+* `jsp87ErrBoundsFromEscape_blunt` — and then the endgame says one of the
+  *forced* constants is `≥ 1/30`.  Unlike (5.18), this pair is **compatible** with
+  `jsp_000087_main`.
+
+### 5. §6–§7 the mean field, and the failure of the pointwise (5.19)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Xp0_zero_one_ne_zero_iff`, `jsp87nzRes_zero_one`, `jsp87NzResCard_zero_one`, `jsp87NzRes_zero_one` | at `K = 0, H = 1` exactly one residue class of `p` is nonzero, so `jsp87NzResCard 0 p 1 = 1` |
+| **`jsp87sum_div_primeSet`**, **`jsp87FAvg_div_primeSet`** | **the mean-field identity**: the mean of `[p ∣ i+1]` over the canonical sample is exactly `1/p` (from the block count of round 123) |
+| **`jsp87sum_cnt_primeSet`**, **`jsp87FAvg_cnt_primeSet`** | **the mean of the prime-divisor count is the harmonic mass**: `𝔼 cnt P (i+1) = ∑_{2≤p≤Y} 1/p` |
+| `jsp87Phase_eq`, `jsp87Phase0` | the phase is `q` times the un-scaled phase `T` |
+| **`jsp87_phase_mean_primeSet`** | **the mean of the total phase is `(q/2)·∑_{p≤Y} 1/p`**, hence unbounded in the height |
+| `jsp87Hyp519Pointwise` | hypothesis (5.19) in the pointwise form used by `jsp87_charfun_le` |
+| `jsp87_phase_abs_mean_ge`, **`jsp87_519_pointwise_le`** | the pointwise (5.19) forces `∑_{2≤p≤Y} 1/p ≤ 40/|q|` |
+| **`jsp87_519_pointwise_fails`** | **the pointwise (5.19) is impossible at every fixed `q ≠ 0`, at all large heights** — the third independent reason the fixed-scale endgame cannot run: the variance bound (5.19)–(5.20), and hence (5.21), is not applicable there |
+| `jsp87_515_imp_var_le` | (5.15) together with the pointwise (5.19) forces `8·Var (q T) ≤ κ₁+κ₂+κ₃` — the object (5.21) is about |
+
+### 6. Gate status
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+`jsp_000087_main` is **still deliberately not declared**, but the reason has
+changed for the better: the burden is **no longer** "find the analytic estimate
+(5.18)" (that hypothesis is now *refuted*, `jsp87Hypothesis518_false`), and no
+longer "prove the sharpness" (the endgame forbids it).  The single remaining
+input is the **deterministic derivation of the two error bounds from the escape
+hypothesis / rationality with explicit constants**, `jsp87ErrBoundsFromEscape`,
+together with a formulation of the endgame in which the *forced* constants — not
+free ones — appear on the losing side.  That statement is deterministic and
+side-free; no Chowla-type or Elliott-type estimate is needed for it.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* `RCLike.re`/`RCLike.im` are `AddMonoidHom`s, so `map_sum (RCLike.re : ℂ →+ ℝ) _ _`
+  computes the coordinates of a sum; but `RCLike.re (x + y)` does **not** rewrite
+  `Complex.re (x + y)` — use `Complex.add_re`, `Complex.sub_re`, `Complex.mul_re`,
+  `Complex.add_im`, `Complex.sub_im`, `Complex.normSq_apply`, `RCLike.norm_sq_eq_def`;
+* `(z * w).re = z.re * w.re` is **FALSE** (the `− z.im w.im` term); the useful
+  companions are `Complex.re_ofReal_mul`, `Complex.im_ofReal_mul`,
+  `Complex.normSq_natCast`, `Complex.natCast_re`, `Complex.natCast_im`;
+* `Complex.div_ofReal_re` is `@[simp]` but only for a **real** denominator; for a
+  `Nat` cast denominator use `div_eq_mul_inv` + `Complex.mul_re` + `Complex.inv_re`
+  + `Complex.normSq_natCast`;
+* `div_le_iff₀` and `le_div_iff₀` take **one** argument (the positivity of the
+  *numerator bound* resp. of the denominator), and `rw [div_le_iff₀ …]` must be
+  followed by `.mpr`;
+* `Finset.sum_le_sum` needs both sides to be *sums*; to bound an average use
+  `rw [jsp87FAvg, div_le_iff₀ …]` first (one positivity argument, for the
+  denominator), and `jsp87FAvg_abs_le` already exists in `Variance.lean`;
+* `jsp87e_re`, `jsp87e_im` (the cos/sin identification) already exist in
+  `Variance.lean` — do not redeclare; `jsp87FAvg_abs_le`, `jsp87charfun_le`,
+  `jsp87ProgFull_nzFrac`, `jsp87_nzFrac_prog_blocks`, `jsp87FAvg`, `jsp87Var` too;
+* `rw [jsp87Cnt_eq_sum]` cannot see `↑(jsp87Cnt P m)` — use `simp_rw`;
+* `Finset.mul_sum`'s LHS is `a * ∑ i in s, f i`, so to use it on `∑ i in s, (a * f i)`
+  you must rewrite with `← Finset.mul_sum` or use `symm; exact Finset.mul_sum`;
+* `rcases`/`rintro` will happily destructure the `≠` inside `A ∧ X ≠ 0` into a
+  *function*; use `intro` + `And.intro` (or `simp only [X_ne_zero_iff]`) instead;
+* `unfold`/`rw` do not descend into `fun i => …` reliably for `noncomputable def`s:
+  prove a pointwise `jsp87Phase_eq`-style equation first.
