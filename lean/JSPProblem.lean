@@ -79,3 +79,4 @@ import JSPProblem.SampleMean
 import JSPProblem.TcVariance
 import JSPProblem.CorrShift
 import JSPProblem.CrtSieve
+import JSPProblem.SqMoment
