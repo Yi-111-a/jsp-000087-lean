@@ -69,3 +69,4 @@ import JSPProblem.VarLocal
 import JSPProblem.CubeBits
 import JSPProblem.ActiveCube
 import JSPProblem.CorrelSample
+import JSPProblem.ProgSample

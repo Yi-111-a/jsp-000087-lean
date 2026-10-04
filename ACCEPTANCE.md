@@ -4863,3 +4863,111 @@ missing_theorems=["jsp_000087_main"]`.
 2. `B = {0}` as the second class of the variance bound: false in general, since
    not every nonzero residue is active at level 1 — the correct class is the zero
    class `{n ∈ s ∣ X_p n = 0}`, which is what the theorem now uses.
+
+---
+
+## Round 123 — THE SAMPLE AS AN EXPLICIT OBJECT: the EXACT nonzero fraction along a progression
+
+New module `lean/JSPProblem/ProgSample.lean` (1209 lines, **34 new public theorems**
+plus 7 private helpers and 6 new definitions, 0 `sorry`, 0 `admit`;
+**2547 proved theorems and lemmas** at the `^(theorem|lemma)` level — 2502 before
+this round, 2241 of them public — `lake build` clean, 70 modules).
+`harness/score.py --strict-prize` reports `build_ok=true, sorry=0, admit=0,
+partial_ok=true, prize_ready=false, missing_theorems=["jsp_000087_main"]`.
+
+This round executes `policy.json` `next_round_attack[0]`, unexecuted for **122
+rounds** ("make `s` an explicit structured set … and **COMPUTE** `jsp87NzFrac K p H s`
+for it … either a (5.21′) witness or a machine-checked obstruction for the AP
+sample"), for **both** candidate samples:
+
+* candidate (a) the progression sample — **completed**, with the exact value of
+  `jsp87NzFrac` on it;
+* candidate (b) the sieve sample — **killed**, machine-checkably.
+
+### 1. The progression sample and the permutation of the residue system
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Prog` | **the new object**: `jsp87Prog n0 D N = image (fun j => n0 + D * j) (Icc 0 N)`, the progression with start point, step and length as data |
+| `jsp87Prog_card`, `jsp87Prog_nonempty`, `jsp87Prog_mem_iff` | its cardinality is `N + 1`, it is nonempty, and membership is an explicit index |
+| **`jsp87Prog_block_bij`** | **THE ARITHMETIC CORE**: for prime `p` and `¬ p ∣ D`, the map `j ↦ (n0 + D * j) mod p` is a **permutation of the residue system** — proved in `ZMod p`, which is a field exactly when `p` is prime |
+| `jsp87Prog_res_surj`, `jsp87Prog_shift_eq` | every residue is attained by the progression; shifting the start point by a multiple of `p` changes nothing |
+
+### 2. The exact residue count that (5.21) needs
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87Xp0_ne_zero_iff_active`** | **the NEW converse** of `jsp87XpLevel_eq_zero_iff_not_active`: a nonzero cube sum means *some* level is active (needed for the union bound below) |
+| `jsp87NzResCard`, `jsp87NzResCard_pos`, `jsp87NzResCard_le_p` | **the new object**: the number of residues at which `X_p` is nonzero; `1 ≤ c_p ≤ p − 1` |
+| **`jsp87NzResCard_bounds`** | `2^K ≤ c_p ≤ H * 2^K` — the active classes are `2^K`, and every further active level adds at most `2^K` of them |
+| `jsp87zeroRes_card_res` | the zero class has `p − c_p` residues |
+
+### 3. The exact fraction along a progression — **the statement round 122 lacked**
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Prog_zero_card_base` | the zero class of `X_p` is exactly `{n ∈ s ∣ p ∣ n}` on any progression |
+| **`jsp87Prog_zero_card_block`** | **DISCRETE EQUIDISTRIBUTION**: a *whole* `p`-block of the progression contains exactly `p − c_p` zeros, for **any** position of the block |
+| `jsp87Prog_zero_card_blocks` | `c` whole blocks contain `c * (p − c_p)` zeros |
+| **`jsp87_nzFrac_prog_blocks`** | **THE EXACT NONZERO FRACTION**: `jsp87NzFrac K p H (jsp87Prog n0 D (c * p − 1)) = c_p / p` for every `c ≥ 1`, every `n0` and every step `D` coprime to `p` — **independent of sample length, start point and step** |
+| `jsp87_nzFrac_prog_blocks_bounds`, `jsp87_nzFrac_prog_blocks_pos` | `2^K / p ≤ f_p ≤ H 2^K / p`, and `0 < f_p < 1` — the positive counterpart of round 122's `jsp87_5_21_prog_impossible` |
+| `jsp87ProgFull`, `jsp87ProgFull_card`, `jsp87ProgFull_nonempty`, **`jsp87ProgFull_nzFrac`** | **THE CANONICAL STRUCTURED SAMPLE** `jsp87ProgFull n0 D P = jsp87Prog n0 D (prod P − 1)`: a whole number of `p`-blocks for **every** prime of `S₁` at once, with `f_p` computed prime by prime |
+| **`jsp87ProgFull_hne`** | the two-class hypothesis `hne` — a divisible point and a level-1 active point — holds **unconditionally** on the canonical sample |
+
+### 4. Candidate (b) is dead — the sieve sample
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87SieveSample`, `jsp87_nzFrac_zero_of_dvdSample` | the sieve sample: every element is divisible by some prime of `S₁`, so `X_p = 0` **on the whole sample** |
+| **`jsp87_nzFrac_sieve_zero`**, **`jsp87Var_sieve_zero`** | its nonzero fraction is `0`, and **its variance contribution to (5.21) is literally `0`** |
+| **`jsp87_5_21_sieve_impossible`** | **no sieve-shaped sample can ever supply (5.21′)** — candidate (b) of `next_round_attack[0]` is machine-checkably impossible |
+| `jsp87_5_21_singleRes_any` | round 122's obstruction is subsumed: a single-residue (killing-ε) sample cannot work either |
+
+### 5. The endgame with an explicit arithmetic (5.21″)
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87R521b` | the explicit condition `1 ≤ q² 2^{−2(H+K)} Σ_{p ∈ P} (c_p / p) (1 − c_p / p)`, a statement about the **prime set alone** |
+| **`jsp87_5_21_progFull_iff`** | **EQUIVALENCE**: on the canonical sample, `jsp87_5_21_singleResP`-style variance hypothesis `hrec` holds **iff** (5.21″) holds |
+| **`jsp87_endgame_progFull`** | **THE ENDGAME OF arXiv:2512.01739 §§5.3–5.14 WITH A COMPUTED SAMPLE**: `jsp87R521b ∧ (exact fractions prime by prime) ∧ hne` gives (5.15), (5.16)–(5.17), the separation hypothesis, the hypotheses of (5.19) and the conclusion |
+| `jsp87NzFrac_mul_le`, `jsp87_5_21b_summand_le` | the summand bound used below |
+| **`jsp87_5_21_needs_recipSum`** | **NECESSITY — a statement about the set of primes alone**: (5.21″) forces `Σ_{p ∈ P} 1/p ≥ 2^{2H+K} / (H q²)`, for the `q`, `H` of (5.19) |
+| **`jsp87_5_21_prog_of_recipSum`** | **SUFFICIENCY**: under `p ≥ H 2^K` and `q² 2^{−2(H+K)} Σ (2^K / p) (1 − H 2^K / p) ≥ 1`, (5.21′) **holds** for the canonical progression sample |
+| `jsp87_prog_summary` | both directions in one statement |
+
+### 6. Why this matters for `jsp_000087_main`
+
+Round 123 **computes the sample geometry in full**: for an explicit structured
+sample, the fraction of nonzero cube sums is known exactly, prime by prime, and
+the variance hypothesis (5.21) is *equivalent to a pure arithmetic inequality over
+the reciprocals of `S₁`*. The sample hypothesis is therefore no longer a source of
+obstruction, and the remaining burden is localised to **two arithmetic inputs**,
+both statements about the prime set `S₁`:
+
+1. **(5.21″)/reciprocal sum** — some set of primes larger than `H + 2^K − 1`,
+   none dividing the step `D`, with harmonic mass `≥ 2^{2H+K} / (H q²)`;
+2. **(5.18)** — the five estimates `κ_j = o(1)` (`j = 1 … 5`).
+
+### Mathlib findings of this round (do not repeat these costs)
+
+* **no** `Finset.Icc_union_Icc`, **no**
+  `Finset.card_filter_add_card_filter_neg_eq_card` (only the `_not` variant),
+  **no** `Finset.card_filter_le`;
+* **`linarith`/`nlinarith` do not work on goals built with the `HSub` instance of
+  `ℝ`**: even `1 - x ≤ 1 - y` from `y ≤ x` fails. Three private lemmas replace
+  them: `jsp87sub_le_sub_one`, `jsp87zero_le_sub_one`, `jsp87sub_le_one`;
+* the reverse triangle/`abs_sub_le_iff` costs of round 83 still apply to
+  `|q|` bounds;
+* **`omega` cannot see through `2^(2 * H + K) = 4^(H+K) / 2^K`**; use
+  `calc … ≤ … := …  … ≤ … := (h.eq.le.trans h)` — i.e. an equality hypothesis
+  used as a bound needs `hid.le.trans`, not `le_trans hid _`.
+
+### Abandoned in this round (recorded for the next)
+
+1. **the "(5.21′) witness" branch of `next_round_attack[0]`** is unreachable:
+   (5.21′) is *now* an explicit reciprocal-sum inequality, so the sample half is
+   finished and only the prime-set half remains;
+2. candidate (b), the sieve sample, abandoned (machine-checked dead);
+3. the step `D = prod P` of candidate (a) stays impossible (round 122); the
+   surviving sample needs `¬ p ∣ D` for every prime of `S₁`, which this round
+   makes explicit.
