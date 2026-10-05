@@ -83,3 +83,4 @@ import JSPProblem.SqMoment
 import JSPProblem.SqPair
 import JSPProblem.VarDiverge
 import JSPProblem.CRTMean
+import JSPProblem.SingleFactor
