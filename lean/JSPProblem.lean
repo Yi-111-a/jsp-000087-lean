@@ -81,3 +81,4 @@ import JSPProblem.CorrShift
 import JSPProblem.CrtSieve
 import JSPProblem.SqMoment
 import JSPProblem.SqPair
+import JSPProblem.VarDiverge
