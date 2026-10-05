@@ -84,3 +84,6 @@ import JSPProblem.SqPair
 import JSPProblem.VarDiverge
 import JSPProblem.CRTMean
 import JSPProblem.SingleFactor
+import JSPProblem.PairLoss
+import JSPProblem.SharpVar
+import JSPProblem.ResidueBlock
