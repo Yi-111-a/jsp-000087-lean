@@ -5836,3 +5836,138 @@ last two purely-arithmetic named blockers (`jsp87_sumOmegaSq_ge_pairs`,
   discarded: `jsp87_card_pair (X := X) (p := p) (q := q) hX hp hq hne`;
 * `rw [← ht]` with `ht : t = e` searches for `e`; to unfold a local `set`
   variable `t` use `rw [ht]`.
+
+---
+
+## Round 137 — THE ENDPOINT `k = 0`, THE DOUBLED MAIN TERM, AND THE ISOLATION OF THE CHOWLA INPUT
+
+`lean/JSPProblem/VarDiverge.lean`, **§8 and §9** (1573 → 2221 lines, **14 new
+public theorems** + 1 private helper, 0 `sorry`, 0 `admit`, 0 new linter
+warnings; **3015** proved theorems and lemmas tree-wide — 2995 before this round
+— `lake build` clean, 3322 jobs).
+
+This is a **new attack family inside the variance line**: rounds 135–136 built
+the Turán–Erdős–Kac variance divergence of `ω` over shifted windows, but (i) only
+for shifts `k ≥ 1`, (ii) with the main term `λ/4`, and (iii) they left the
+endpoint `k = 0` as a written-then-deleted proof. This round closes the
+endpoint, **doubles the main term**, and then transfers everything to the
+endgame of arXiv:2512.01739.
+
+### 1. The shift `k = 1` is exact, so the main term doubles
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_cast_div_le` | `↑(a / b) ≤ a / b` for `b > 0` — Mathlib's `Nat.cast_div` needs `b ∣ a`, so the `ℕ`→`ℝ` quotient bridge must be built by hand; the **upper** bound is what removes the error term |
+| `jsp87CntMul_one` | **the exact count**: `jsp87CntMul d L 1 = ⌊L/d⌋`. The window `{1, …, L}` is the one shift at which `Nat.card_multiples` has no boundary error |
+| `jsp87_smallSum_one_le` | **THE KEY**: `Σ_{N<L} A (N+1) ≤ L·λ(y)` — **no error term**, against `L·λ + c` of §5.2 |
+| `jsp87_winVar_small_one` | `Var (N ↦ #{p ≤ y : p ∣ N+1}) ≥ λ(y)/2 − 3` for `y ≥ 2`, `y² ≤ 2L` — **twice** the main term of `jsp87_winVar_small_ge` (`λ/4 − 4`), because the variance subtracts the *square* of the first moment |
+| `jsp87_tcVarAt_one_ge` | `jsp87TcVarAt L 1 ≥ λ(y)/4 − 15/4` for `2 ≤ y`, `y² ≤ 2L`, `2L ≤ y³` (the improved form of `jsp87_tcVarAt_ge`) |
+
+No analytic input: only the counting layer, the two exact moments of §4, and
+`jsp87LamSq_le_half_lam`.
+
+### 2. **The endpoint `k = 0`** — round 136's named blocker, CLOSED
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87_tcVarAt_zero_ge`** | **for every `y ≥ 2`, every `L ≥ 2` with `y² ≤ 2(L−1)` and `2(L−1) ≤ y³`, `jsp87TcVarAt L 0 = Var (N ↦ ω N) ≥ λ(y)/8 − 5`** — exactly the form of `jsp87_tcVarAt_ge` |
+| **`jsp87_tcVarAt_all_ge`** | the same bound for **every** shift `k ≤ L`, `k = 0` included |
+| **`jsp87_var_omega_diverges_all`** | **for every `C > 0` there is `L ≥ 1` with `jsp87TcVarAt L k > C` for every `k ≤ L`** — the Turán–Erdős–Kac variance divergence over the *whole* window of cut points |
+
+The route is **not** the ratio `(L−1)/L ≥ 2/3` that round 136 recommended. The
+window `{0, …, L−1}` carries `ω 0 = 0`; deleting it gives the window
+`{1, …, L−1}` of length `A = L−1`, on which `jsp87_tcVarAt_one_ge` applies,
+while re-inserting it never decreases the spread (`jsp87_var_insert_ge`).
+That gives `A·X ≤ L·V` with `X = λ/4 − 15/4`; dividing by `A > 0` and using
+`L/A ≤ 2` gives `V ≥ X/2 = λ/8 − 15/8 ≥ λ/8 − 5`. The factor-2 cost of the
+endpoint is exactly paid for by the factor-2 gain of §1.
+
+### 3. Hypothesis (5.21) is **satisfiable**, with an arbitrary constant
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Tw_zero_sq` | `jsp87Tw 0 ^ 2 = 1/4` |
+| **`jsp87_diag_var_one`** | for every `C > 0` there is `L ≥ 1` with `C ≤ Σ_{k<1} 4^{−(k+1)}·jsp87TcVarAt L k = jsp87TcVarAt L 0/4` — depth `H = 1`, the single weight `1/4` |
+| `jsp87_diag_var_unbounded` | the same at arbitrary depth: `∀ C > 0, ∃ L H, 1 ≤ L ∧ C ≤ Σ_{k<H} 4^{−(k+1)}·jsp87TcVarAt L k` |
+| **`jsp87_521_var_satisfiable`**, `jsp87_521_var_satisfiable_one` | **hypothesis (5.21) of arXiv:2512.01739 §5.4 — the "variance is large" clause, in the notation of rounds 130–134 — IS SATISFIABLE** (and with `1` replaced by any constant) |
+
+This closes round 136's named blocker `jsp87_521_diag_satisfiable`, and it
+**supersedes round 134's negative result** `jsp87_521_arith_impossible`: that
+theorem refuted the *arithmetic supply* computed from the exact second moment,
+whereas the true variance is much larger, and the difference is now proved
+elementarily.
+
+### 4. The one remaining input, isolated
+
+| Theorem | Statement |
+| --- | --- |
+| **`jsp87_tcVar_sub_diag_abs_le`** | **TWO-SIDED covariance transfer**: if `\|jsp87Mcov L k k'\| ≤ ε` for every `k < k'` in the window, then `\|jsp87TcVar L H − Σ_{k<H} 4^{−(k+1)}·jsp87TcVarAt L k\| ≤ ε` (the total covariance weight is `≤ 1`, `jsp87Tw_pair_le_one`). This is the lower half of round 130's one-sided `jsp87TcVar_le_diag_add` |
+| **`jsp87_521_tcVar_of_chowla`** | **the variance hypothesis of §5.4 follows from the Chowla-type bound `jsp87Mcov_small` together with the variance divergence and nothing else**: for every `C > 0`, `ε ≥ 0` and `H ≥ 1`, if the two-point covariances of `ω` are `ε`-small at *every* window, then there is `L ≥ 1` with `C ≤ jsp87TcVar L H` and the diagonal within `ε` of it |
+
+### Gate status
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+`jsp_000087_main` is **still deliberately not declared**. The headline
+irrationality is a theorem of the literature (Tao–Teräväinen,
+arXiv:2512.01739 Thm 1.3 = Erdős #69, unconditional), but its proof is
+missing, and round 137 pins the last analytic input to a single estimate.
+
+### The blocker, after round 137, stated exactly
+
+> **`jsp87Mcov_small`** — there are `H ≥ 1` and `ε ≥ 0` such that for every
+> window `L ≥ 1` and every `0 ≤ k < k' < H`, `|jsp87Mcov L k k'| ≤ ε`.
+
+`jsp87_521_tcVar_of_chowla` shows that this single estimate, together with the
+(unconditional, Euler-only) variance divergence `jsp87_var_omega_diverges_all`,
+discharges the variance hypothesis of the endgame of §§5.3–5.14. Every
+*arithmetic* route to that hypothesis is closed: rounds 130–134 proved that the
+correlations are already `≥ L − 2` (`jsp87_crtSieve_dominated`) and that the
+diagonal of the second moment cannot reach `1` (`jsp87_521_arith_impossible`),
+so only a genuine Chowla/Elliott-type estimate against the mean field can help —
+the content of Theorem 3.1 of arXiv:2512.01739, from Pilatte. Mathlib has no
+such statement for multiplicative functions.
+
+Still untouched, and needed for the *full* proof: the two error bounds
+(5.15)/(5.16)–(5.17) of arXiv:2512.01739, and the join between the
+`TcVariance` objects (the truncated carry) and the deterministic Erdős–Pratt
+carries of round 112 (`TTRoute.lean`); plus `jsp87_tcMean_le_loglog` if one
+wants to use the raw-diagonal form `jsp87_521_needs_diag`.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* **`linarith` and `nlinarith` do NOT normalise commutative multiplication.**
+  `A·X ≤ A·V` and `A·V ≥ V·A` are two *different* atoms. Every product in a
+  linear argument must be written in the same order in the goal and in every
+  hypothesis. Consequently a chain `A·X ≤ A·W ≤ (A+1)·V` does **not** give
+  `A·X ≤ A·V`; one must divide by `A` and compare `V` with `X/2`.
+* `linarith` does **not** use hypotheses in context unless they are passed
+  (`linarith [h]`), and the `ℕ`/`ℝ` casts of `L` and `L−1` are different atoms:
+  the bridge must be supplied as `Nat.cast_sub` + `Nat.cast_one` (or
+  `exact_mod_cast`), and a `ℕ` hypothesis such as `hL : 2 ≤ L` must be lifted
+  before use.
+* a `set x := e with h` local definition is *displayed* unfolded, so `rw [hS2]`
+  fails with "Did not find an occurrence of the pattern `S2`"; and a `ℕ` sum
+  written with the double cast `((f : ℕ) : ℕ) : ℝ` is a different `nlinarith`
+  atom from the single-cast `((f : ℕ) : ℝ)` form the kernel stores — state finite
+  sums in the single-cast form.
+* `calc` inserts an `Eq.trans` obligation whenever consecutive endpoints are not
+  syntactically identical, and `ring` **cannot** close it when the two sides are
+  two groupings of the same `Finset.sum` (each sum is an opaque atom to
+  `ring`). Chain through a common syntactic form (`Finset.sum_mul` twice).
+* `mul_le_mul_of_nonpos_right : b ≤ a → c ≤ 0 → a·c ≤ b·c` is the lemma for
+  multiplying by a nonpositive factor, and it needs `c ≤ 0` in the form
+  `−ε ≤ 0`, not `0 ≤ ε`.
+* `Finset.range_subset_range` is an **iff** (use `.mpr`);
+  `Finset.insert_erase` takes `a ∈ s`; `Finset.mem_erase` is an iff to be used
+  with `rw` + `simp`, not `.mpr`; `le_or_lt` does not exist (use `le_total`).
+* `rw [Nat.add_sub_cancel_left L 1]` **fails** when the term sits under a
+  division (`(L+1−1)/d`): the higher-order pattern does not unify — introduce
+  the equation with `have hk := by omega; rw [hk]`.
+* `Finset.sum_congr` requires the finset implicits to be named
+  (`Finset.sum_congr (s₁ := s) (s₂ := s) rfl …`), and `jsp87Var s f` is not
+  syntactically congruent under `f = fun N => f (N + k)`: a small helper
+  (`jsp87Var_congr'`, built from `unfold jsp87Var jsp87FAvg; dsimp only;
+  Finset.sum_congr`) is needed for every such identification.

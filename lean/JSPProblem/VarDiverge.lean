@@ -1570,4 +1570,653 @@ theorem jsp87_var_omega_diverges {C : ℝ} (hC : 0 < C) {K : ℕ} :
   linarith
 
 
+
+/-! ## 8. The shift `1` is exact, and the endpoint `k = 0`
+
+Two facts that round 136 did not have, and that close its named blocker
+`jsp87_winVar_zero_ge`.
+
+**(i) The first moment at the shift `1` carries NO error.**  The count of the
+multiples of `d` in the window `{1, …, L}` is *exactly* `⌊L/d⌋`
+(`jsp87CntMul_one`), and a `ℕ` quotient never exceeds the real quotient
+(`jsp87_cast_div_le`), so
+
+```
+Σ_{N < L} A (N+1)  ≤  L·λ(y)          — no error term at all,
+```
+
+whereas §5.2 could only prove `≤ L·λ + c`.  Since the variance subtracts the
+*square* of the first moment, halving that error doubles the main term:
+`jsp87_winVar_small_one` below gives `λ/2 − 3` in place of `λ/4 − 4`.
+
+**(ii) The endpoint `k = 0` is the window `{0, …, L−1}`, and `ω 0 = 0`.**
+Deleting that one point and re-inserting it (which never decreases the spread,
+`jsp87_var_insert_ge`) transfers the `k = 1` estimate to `k = 0` at the price of
+the factor `(L−1)/L ≥ 1/2`; with (i) the constants still work out, and the
+result is `jsp87_tcVarAt_zero_ge : jsp87TcVarAt L 0 ≥ λ(y)/8 − 5`, exactly the
+form of `jsp87_tcVarAt_ge`.
+
+`jsp87_tcVarAt_all_ge` then makes the bound uniform in **every** shift
+`k ≤ L`, `jsp87_var_omega_diverges_all` re-establishes the Turán–Erdős–Kac
+variance divergence over the *whole* window of cut points, and
+`jsp87_521_var_satisfiable` records the consequence for hypothesis (5.21) of
+arXiv:2512.01739 §5.4. -/
+
+/-- **THE VARIANCE DOES NOT DEPEND ON THE REPRESENTATION OF THE FUNCTION.** -/
+private theorem jsp87Var_congr' {Ω : Type*} (s : Finset Ω) (f g : Ω → ℝ)
+    (h : ∀ i, f i = g i) : jsp87Var s f = jsp87Var s g := by
+  unfold jsp87Var jsp87FAvg
+  dsimp only
+  have hsum : (∑ i ∈ s, f i) = (∑ i ∈ s, g i) :=
+    Finset.sum_congr (s₁ := s) (s₂ := s) rfl fun i _ => h i
+  rw [hsum]
+  have heq : (∑ i ∈ s, (f i - (∑ i ∈ s, g i) / (s.card : ℝ)) ^ 2)
+      = ∑ i ∈ s, (g i - (∑ i ∈ s, g i) / (s.card : ℝ)) ^ 2 := by
+    refine Finset.sum_congr (s₁ := s) (s₂ := s) rfl fun i _ => ?_
+    rw [h i]
+  rw [heq]
+
+/-- **A `ℕ` QUOTIENT NEVER EXCEEDS THE REAL QUOTIENT.**  For `a, b : ℕ` with
+`b > 0`, `↑(a / b) = a/b − (a mod b)/b` with `a mod b < b`, so in particular
+`↑(a/b) ≤ a/b`.  Mathlib's `Nat.cast_div` only fires when `b ∣ a`, so this
+bridge has to be built by hand — and the *upper* bound is what removes the
+error term at the shift `1`. -/
+theorem jsp87_cast_div_le (a b : ℕ) (hb : 0 < b) :
+    ((a / b : ℕ) : ℝ) ≤ (a : ℝ) / (b : ℝ) := by
+  have hdecomp : b * (a / b) + a % b = a := Nat.div_add_mod a b
+  have hbR : (0 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hcast : (a : ℝ) = (b : ℝ) * ((a / b : ℕ) : ℝ) + ((a % b : ℕ) : ℝ) := by
+    exact_mod_cast hdecomp.symm
+  have hkey : (a : ℝ) / (b : ℝ)
+      = ((a / b : ℕ) : ℝ) + ((a % b : ℕ) : ℝ) / (b : ℝ) := by
+    rw [hcast]
+    field_simp
+  have hnn : (0 : ℝ) ≤ ((a % b : ℕ) : ℝ) / (b : ℝ) :=
+    div_nonneg (Nat.cast_nonneg _) (le_of_lt hbR)
+  linarith
+
+/-- **THE COUNT OF MULTIPLES OF `d` IN THE WINDOW `{1, …, L}` IS EXACTLY `⌊L/d⌋`.**
+The shift `k = 1` is the one at which the window is `{1, …, L}`, in which
+Mathlib's `Nat.card_multiples` counts with no boundary error at all. -/
+theorem jsp87CntMul_one (d L : ℕ) (hL : 1 ≤ L) : jsp87CntMul d L 1 = L / d := by
+  have h := cnt_shift (d := d) (L := L) (k := 1) hL (by omega)
+  calc jsp87CntMul d L 1 = (L + 1 - 1) / d - (1 - 1) / d := h
+    _ = L / d - 0 := by
+      have hk : L + 1 - 1 = L := by omega
+      rw [Nat.sub_self 1, Nat.zero_div, hk]
+    _ = L / d := by rw [Nat.sub_zero]
+
+/-- **THE FIRST MOMENT AT THE SHIFT `1`, WITH NO ERROR TERM.**  For every `y` and
+every `L ≥ 1`,
+
+```
+Σ_{N < L} A (N+1)  ≤  L · λ(y) ,
+```
+
+with **no** `+ c` term — the improvement over §5.2 that doubles the main term of
+the variance.  The proof is `jsp87CntMul_one` (the exact count) together with
+`jsp87_cast_div_le` (a `ℕ` quotient is at most the real quotient). -/
+theorem jsp87_smallSum_one_le (y L : ℕ) (hL : 1 ≤ L) :
+    (∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ))
+      ≤ (L : ℝ) * jsp87Lam y := by
+  rw [jsp87_smallSum_eq y L 1 (by omega)]
+  have hstep : ∀ p ∈ jsp87Primes y,
+      ((jsp87CntMul p L 1 : ℕ) : ℝ) ≤ (L : ℝ) * (1 / (p : ℝ)) := by
+    intro p hp
+    have hp2 : 0 < p := prime_pos hp
+    have hkey := jsp87_cast_div_le L p hp2
+    rw [jsp87CntMul_one p L hL]
+    have hq : (L : ℝ) * (1 / (p : ℝ)) = (L : ℝ) / (p : ℝ) := by ring
+    rw [hq]
+    exact hkey
+  have h1 : (∑ p ∈ jsp87Primes y, ((jsp87CntMul p L 1 : ℕ) : ℝ))
+      ≤ ∑ p ∈ jsp87Primes y, ((L : ℝ) * (1 / (p : ℝ))) :=
+    Finset.sum_le_sum (s := jsp87Primes y) (N := ℝ) fun p hp => hstep p hp
+  calc (∑ p ∈ jsp87Primes y, ((jsp87CntMul p L 1 : ℕ) : ℝ))
+      ≤ ∑ p ∈ jsp87Primes y, ((L : ℝ) * (1 / (p : ℝ))) := h1
+    _ = (L : ℝ) * jsp87Lam y := by
+        unfold jsp87Lam
+        exact (Finset.mul_sum (s := jsp87Primes y) (f := fun p => 1 / (p : ℝ))
+          (a := (L : ℝ))).symm
+
+/-- **THE VARIANCE OF THE SIEVE CONTENT AT THE SHIFT `1`: `λ/2 − 3`.**  For every
+`y ≥ 2` and every `L` with `y² ≤ 2L`,
+
+```
+Var (N ↦ #{p ≤ y : p ∣ N+1})  ≥  ½ · λ(y)  −  3 ,
+```
+
+**twice** the main term of §5.4 (`jsp87_winVar_small_ge`).  The gain is entirely
+arithmetic: the first moment is bounded above by `L·λ` with no error term
+(`jsp87_smallSum_one_le`) and the variance subtracts its *square*.  As in §5.4
+the only analytic input is Euler's divergence. -/
+theorem jsp87_winVar_small_one {y L : ℕ} (hy : 2 ≤ y) (hL : 1 ≤ L) (hyL : y * y ≤ 2 * L) :
+    jsp87WinVar L 1 (fun n => ((jsp87SieveCard n y : ℕ) : ℝ)) ≥ jsp87Lam y / 2 - 3 := by
+  have hLpos : (0 : ℝ) < (L : ℝ) := by exact_mod_cast (show (0 : ℕ) < L by omega)
+  have hLnn : (0 : ℝ) ≤ (L : ℝ) := le_of_lt hLpos
+  have hS1' : (∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ))
+      ≤ (L : ℝ) * jsp87Lam y := jsp87_smallSum_one_le y L hL
+  have hS2' : (L : ℝ) * (jsp87Lam y + jsp87Lam y ^ 2 - jsp87LamSq y)
+      - (((jsp87Primes y).card : ℝ) + ((jsp87Primes y).card : ℝ) ^ 2)
+      ≤ ∑ N ∈ Finset.range L, (((jsp87SieveCard (N + 1) y : ℕ) : ℝ) ^ 2) :=
+    jsp87_smallSqSum_ge (y := y) (L := L) (k := 1) (by omega) hL
+  have hpiR : ((jsp87Primes y).card : ℝ) ≤ (y : ℝ) := by
+    exact_mod_cast (jsp87Primes_card_le y)
+  have hcL : ((jsp87Primes y).card : ℝ) / (L : ℝ) ≤ 1 := by
+    have h1 : ((jsp87Primes y).card : ℝ) / (L : ℝ) ≤ (y : ℝ) / (L : ℝ) :=
+      div_le_div_of_nonneg_right hpiR hLnn
+    have h2 : (y : ℝ) / (L : ℝ) ≤ 2 / (y : ℝ) := by
+      have hypos : (0 : ℝ) < (y : ℝ) := by exact_mod_cast (show (0 : ℕ) < y by omega)
+      have hcast : (y * y : ℝ) ≤ 2 * (L : ℝ) := by exact_mod_cast hyL
+      have hkey : (y : ℝ) ≤ (2 / (y : ℝ)) * (L : ℝ) := by
+        have h1 := (le_div_iff₀ hypos).2
+          (show (y : ℝ) * (y : ℝ) ≤ 2 * (L : ℝ) by linarith [hcast])
+        have hexp : 2 * (L : ℝ) / (y : ℝ) = (2 / (y : ℝ)) * (L : ℝ) := by ring
+        rw [← hexp]
+        exact h1
+      exact (div_le_iff₀ hLpos).2 hkey
+    have h3 : (2 : ℝ) / (y : ℝ) ≤ 1 := by
+      have hypos : (0 : ℝ) < (y : ℝ) := by exact_mod_cast (show (0 : ℕ) < y by omega)
+      rw [div_le_iff₀ hypos]
+      linarith [show (2 : ℝ) ≤ (y : ℝ) by exact_mod_cast hy]
+    linarith
+  have hc2L : ((jsp87Primes y).card : ℝ) ^ 2 / (L : ℝ) ≤ 2 := by
+    calc ((jsp87Primes y).card : ℝ) ^ 2 / (L : ℝ) ≤ (y : ℝ) ^ 2 / (L : ℝ) :=
+        div_le_div_of_nonneg_right (by nlinarith [hpiR]) hLnn
+      _ ≤ 2 := by
+        apply (div_le_iff₀ hLpos).2
+        have hcast : (y * y : ℝ) ≤ 2 * (L : ℝ) := by exact_mod_cast hyL
+        linarith
+  have hvar := jsp87WinVar_eq_sum L 1
+    (fun n => ((jsp87SieveCard n y : ℕ) : ℝ)) hL
+  have hS1L : (∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ))
+      / (L : ℝ) ≤ jsp87Lam y := by
+    rw [div_le_iff₀ hLpos]
+    linarith [hS1']
+  have hSq : ((∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ))
+      / (L : ℝ)) ^ 2 ≤ jsp87Lam y ^ 2 := by
+    have h0 : (0 : ℝ) ≤ (∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ))
+        / (L : ℝ) :=
+      div_nonneg (Finset.sum_nonneg fun _ _ => Nat.cast_nonneg _) hLnn
+    nlinarith [mul_self_le_mul_self h0 hS1L]
+  rw [hvar]
+  have hXe : ((L : ℝ) * (jsp87Lam y + jsp87Lam y ^ 2 - jsp87LamSq y)
+      - (((jsp87Primes y).card : ℝ) + ((jsp87Primes y).card : ℝ) ^ 2)) / (L : ℝ)
+      = jsp87Lam y + jsp87Lam y ^ 2 - jsp87LamSq y
+        - ((jsp87Primes y).card : ℝ) / (L : ℝ)
+        - ((jsp87Primes y).card : ℝ) ^ 2 / (L : ℝ) := by
+    field_simp
+    ring
+  have h2 := div_le_div_of_nonneg_right hS2' hLnn
+  rw [hXe] at h2
+  have hSq' : (∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ)) ^ 2 / (L : ℝ) ^ 2
+      ≤ jsp87Lam y ^ 2 := by
+    calc (∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ)) ^ 2 / (L : ℝ) ^ 2
+        = ((∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ)) / (L : ℝ)) ^ 2 := by
+          rw [div_pow]
+      _ ≤ _ := hSq
+  have hsum : jsp87Lam y - jsp87LamSq y - ((jsp87Primes y).card : ℝ) / (L : ℝ)
+      - ((jsp87Primes y).card : ℝ) ^ 2 / (L : ℝ)
+      ≤ (∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ) ^ 2) / (L : ℝ)
+        - (∑ N ∈ Finset.range L, ((jsp87SieveCard (N + 1) y : ℕ) : ℝ)) ^ 2 / (L : ℝ) ^ 2 := by
+    linarith [h2, hSq']
+  linarith [hsum, jsp87LamSq_le_half_lam y, hcL, hc2L]
+
+/-- **THE SHIFT `1` FOR `ω` ITSELF: `λ/4 − 15/4`.**  Transferring
+`jsp87_winVar_small_one` through the sieve split, for every `y ≥ 2` and every `L`
+with `y² ≤ 2L` and `2L ≤ y³`,
+
+```
+jsp87TcVarAt L 1  =  Var (N ↦ ω (N+1))  ≥  ¼ · λ(y)  −  15/4 ,
+```
+
+the improved form of `jsp87_tcVarAt_ge` (there: `λ/8 − 5`). -/
+theorem jsp87_tcVarAt_one_ge {y L : ℕ} (hy : 2 ≤ y) (hL : 1 ≤ L)
+    (hyL : y * y ≤ 2 * L) (hy3 : 2 * L ≤ y ^ 3) :
+    jsp87TcVarAt L 1 ≥ jsp87Lam y / 4 - 15 / 4 := by
+  have hLpos : (0 : ℝ) < (L : ℝ) := by exact_mod_cast (show (0 : ℕ) < L by omega)
+  have hstep : ∀ N ∈ Finset.range L,
+      ((omega (N + 1) : ℕ) : ℝ) = ((jsp87SieveCard (N + 1) y : ℕ) : ℝ)
+        + ((jsp87UnsievedCard (N + 1) y : ℕ) : ℝ) := by
+    intro N _
+    rw [omega_eq_sieve_add_unsieved (N + 1) y, Nat.cast_add]
+  have hCS : jsp87WinCSq L 1 (fun n => ((omega n : ℕ) : ℝ))
+      = jsp87WinCSq L 1 (fun n => ((jsp87SieveCard n y : ℕ) : ℝ)
+        + ((jsp87UnsievedCard n y : ℕ) : ℝ)) := by
+    have hmean : jsp87WinMean L 1 (fun n => ((omega n : ℕ) : ℝ))
+        = jsp87WinMean L 1 (fun n => ((jsp87SieveCard n y : ℕ) : ℝ)
+          + ((jsp87UnsievedCard n y : ℕ) : ℝ)) := by
+      have hm1 := jsp87WinMean_eq L 1 (fun n => ((omega n : ℕ) : ℝ))
+      have hm2 := jsp87WinMean_eq L 1
+        (fun n => ((jsp87SieveCard n y : ℕ) : ℝ) + ((jsp87UnsievedCard n y : ℕ) : ℝ))
+      have hsum : (∑ N ∈ Finset.range L, ((omega (N + 1) : ℕ) : ℝ))
+          = ∑ N ∈ Finset.range L, (((jsp87SieveCard (N + 1) y : ℕ) : ℝ)
+            + ((jsp87UnsievedCard (N + 1) y : ℕ) : ℝ)) :=
+        Finset.sum_congr rfl fun N hN => hstep N hN
+      rw [hm1, hm2, hsum]
+    unfold jsp87WinCSq
+    rw [hmean]
+    dsimp only
+    refine Finset.sum_congr rfl fun N hN => ?_
+    rw [hstep N hN]
+  have hCS1 := jsp87WinCSq_add_ge L 1 (fun n => ((jsp87SieveCard n y : ℕ) : ℝ))
+    (fun n => ((jsp87UnsievedCard n y : ℕ) : ℝ))
+  have hCS2 := jsp87_winVar_small_one (y := y) (L := L) hy hL hyL
+  have hCS2' : jsp87WinCSq L 1 (fun n => ((jsp87SieveCard n y : ℕ) : ℝ))
+      ≥ (L : ℝ) * (jsp87Lam y / 2 - 3) := by
+    have hcv := jsp87WinCSq_eq_var L 1 (fun n => ((jsp87SieveCard n y : ℕ) : ℝ)) hL
+    rw [hcv]
+    have hLnn' : (0 : ℝ) ≤ (L : ℝ) := le_of_lt hLpos
+    nlinarith [mul_le_mul_of_nonneg_left hCS2 hLnn']
+  have hCS3 : jsp87WinCSq L 1 (fun n => ((jsp87UnsievedCard n y : ℕ) : ℝ))
+      ≤ 3 ^ 2 * (L : ℝ) / 4 := by
+    refine jsp87WinCSq_le_const' L 1 hL (c := (3 : ℝ)) (by norm_num) ?_
+    intro N hN
+    have hNL : N < L := Finset.mem_range.mp hN
+    have h4 : N + 1 < (y + 1) ^ 4 := by
+      have h5 : N + 2 ≤ L + 1 := by omega
+      have h6 : L + 1 ≤ y ^ 3 := by omega
+      have h7 : y ^ 3 ≤ (y + 1) ^ 4 := by
+        nlinarith [Nat.zero_le (y ^ 3), Nat.zero_le (y + 1)]
+      omega
+    have hle := jsp87UnsievedCard_le_three hy (by omega) h4
+    exact ⟨Nat.cast_nonneg _, (by exact_mod_cast hle)⟩
+  have hCS4 : jsp87WinCSq L 1 (fun n => ((omega n : ℕ) : ℝ))
+      ≥ (L : ℝ) * (jsp87Lam y / 4 - 15 / 4) := by
+    rw [← hCS] at hCS1
+    nlinarith [hCS1, hCS2', hCS3]
+  have hcv2 := jsp87WinCSq_eq_var L 1 (fun n => ((omega n : ℕ) : ℝ)) hL
+  have hcv3 : jsp87WinVar L 1 (fun n => ((omega n : ℕ) : ℝ))
+      = jsp87WinCSq L 1 (fun n => ((omega n : ℕ) : ℝ)) / (L : ℝ) := by
+    rw [hcv2]
+    field_simp
+  have hX : jsp87Lam y / 4 - 15 / 4
+      ≤ jsp87WinCSq L 1 (fun n => ((omega n : ℕ) : ℝ)) / (L : ℝ) := by
+    rw [le_div_iff₀ hLpos]
+    nlinarith [hCS4]
+  rw [← jsp87WinVar_omega L 1, hcv3]
+  exact hX
+
+/-- **THE ENDPOINT `k = 0`: `λ/8 − 5`.**  Round 136's named blocker
+`jsp87_winVar_zero_ge`, CLOSED.  For every `y ≥ 2`, every `L ≥ 2` with
+`y² ≤ 2(L−1)` and `2(L−1) ≤ y³`,
+
+```
+jsp87TcVarAt L 0  =  Var (N ↦ ω N)  ≥  ⅛ · λ(y)  −  5 ,
+```
+
+exactly the form of `jsp87_tcVarAt_ge`.  The window is `{0, …, L−1}`, whose
+first point carries `ω 0 = 0`; deleting it and re-inserting it costs the factor
+`(L−1)/L ≥ 1/2`, and `jsp87_tcVarAt_one_ge` has twice the main term of
+`jsp87_tcVarAt_ge`, which pays for it. -/
+theorem jsp87_tcVarAt_zero_ge {y L : ℕ} (hy : 2 ≤ y) (hL : 2 ≤ L)
+    (hyL : y * y ≤ 2 * (L - 1)) (hy3 : 2 * (L - 1) ≤ y ^ 3) :
+    jsp87TcVarAt L 0 ≥ jsp87Lam y / 8 - 5 := by
+  classical
+  have hL1 : 1 ≤ L := by omega
+  have hLpos : (0 : ℝ) < (L : ℝ) := by exact_mod_cast (show (0 : ℕ) < L by omega)
+  have hLnn1 : (0 : ℝ) ≤ ((L - 1 : ℕ) : ℝ) := by exact_mod_cast (Nat.zero_le _)
+  have hLpos1 : (0 : ℝ) < ((L - 1 : ℕ) : ℝ) := by
+    exact_mod_cast (show (0 : ℕ) < L - 1 by omega)
+  have hL2R : (2 : ℝ) ≤ (L : ℝ) := by exact_mod_cast hL
+  have hcast : ((L - 1 : ℕ) : ℝ) = (L : ℝ) - 1 := by
+    rw [Nat.cast_sub (by omega), Nat.cast_one]
+  set f : ℕ → ℝ := fun n => ((omega n : ℕ) : ℝ)
+  have hfinal : jsp87TcVarAt L 0 = jsp87Var (Finset.range L) f := by
+    unfold jsp87TcVarAt
+    refine jsp87Var_congr' _ _ _ ?_
+    intro N
+    rw [Nat.add_zero]
+  have hident : jsp87TcVarAt (L - 1) 1
+      = jsp87Var (Finset.range (L - 1)) (fun N => f (N + 1)) := by
+    unfold jsp87TcVarAt
+    refine jsp87Var_congr' _ _ _ ?_
+    intro N
+    rfl
+  -- the shifted estimate, at the shortened window
+  have hA : jsp87Var (Finset.range (L - 1)) (fun N => f (N + 1))
+      ≥ jsp87Lam y / 4 - 15 / 4 := by
+    have hn1 : 1 ≤ L - 1 := by omega
+    have hnL : 2 * (L - 1) ≤ y ^ 3 := hy3
+    have hinner := jsp87_tcVarAt_one_ge (y := y) (L := L - 1) hy hn1 hyL hnL
+    rw [hident] at hinner
+    exact hinner
+  -- the shortened window is the erase of `0`, and re-inserting `0` costs `1/2`
+  have hmem0 : (0 : ℕ) ∈ Finset.range L := Finset.mem_range.mpr (by omega)
+  have hcard : (((Finset.range L).erase 0).card : ℕ) = L - 1 :=
+    Finset.card_erase_of_mem hmem0 |>.trans (by rw [Finset.card_range])
+  have hset : insert 0 ((Finset.range L).erase 0) = Finset.range L :=
+    Finset.insert_erase hmem0
+  have hnot : (0 : ℕ) ∉ (Finset.range L).erase 0 := by
+    rw [Finset.mem_erase]
+    simp
+  have herase := var_erase_zero L hL1 f
+  have hinter := jsp87_var_insert_ge ((Finset.range L).erase 0) f 0 hnot
+  rw [hcard] at hinter
+  rw [hset] at hinter
+  have hV0 : (0 : ℝ) ≤ jsp87Var (Finset.range L) f := jsp87Var_nonneg _ _
+  have hALV : ((L - 1 : ℕ) : ℝ) * (jsp87Lam y / 4 - 15 / 4)
+      ≤ (L : ℝ) * (jsp87Var (Finset.range L) f : ℝ) := by
+    rw [herase] at hinter
+    have h1 := hinter
+    have hL1' : ((L - 1 : ℕ) : ℝ) + 1 = (L : ℝ) := by
+      have hN : L - 1 + 1 = L := by omega
+      rw [← hN]
+      norm_num
+    simp only [Nat.cast_add, Nat.cast_one] at h1
+    rw [hL1'] at h1
+    have hA' : ((L - 1 : ℕ) : ℝ) * (jsp87Lam y / 4 - 15 / 4)
+        ≤ ((L - 1 : ℕ) : ℝ)
+          * (jsp87Var (Finset.range (L - 1)) (fun N => f (N + 1))) :=
+      mul_le_mul_of_nonneg_left hA hLnn1
+    linarith [h1, hA']
+  have hratio : (1 : ℝ) / 2 ≤ ((L - 1 : ℕ) : ℝ) / (L : ℝ) := by
+    rw [(le_div_iff₀ hLpos), hcast]
+    linarith [hL2R]
+  rw [hfinal]
+  rcases le_total (jsp87Lam y / 4 - 15 / 4) 0 with hX | hX
+  · have h1 : jsp87Lam y / 8 - 5 ≤ 0 := by
+      have h2 : jsp87Lam y ≤ 15 := by linarith
+      linarith
+    have h3 : (0 : ℝ) ≤ jsp87Var (Finset.range L) f := jsp87Var_nonneg _ _
+    linarith
+  · -- `A · X ≤ A · V` with `A = L − 1 > 0` gives `X ≤ (L/A)·V ≤ 2V`,
+    -- hence `V ≥ X/2 = λ/8 − 15/8 ≥ λ/8 − 5`
+    have hq : jsp87Lam y / 4 - 15 / 4
+        ≤ (L : ℝ) / ((L - 1 : ℕ) : ℝ) * (jsp87Var (Finset.range L) f : ℝ) := by
+      have h1 := div_le_div_of_nonneg_right hALV (le_of_lt hLpos1)
+      have hexp : (((L - 1 : ℕ) : ℝ) * (jsp87Lam y / 4 - 15 / 4)) / ((L - 1 : ℕ) : ℝ)
+          = jsp87Lam y / 4 - 15 / 4 := by field_simp
+      have hexp2 : ((L : ℝ) * (jsp87Var (Finset.range L) f : ℝ)) / ((L - 1 : ℕ) : ℝ)
+          = (L : ℝ) / ((L - 1 : ℕ) : ℝ) * (jsp87Var (Finset.range L) f : ℝ) := by
+        field_simp
+      have h2 := h1
+      rw [hexp, hexp2] at h2
+      exact h2
+    have hLA : (L : ℝ) / ((L - 1 : ℕ) : ℝ) ≤ 2 := by
+      rw [div_le_iff₀ hLpos1, hcast]
+      linarith [hL2R]
+    have h5 : jsp87Lam y / 4 - 15 / 4 ≤ 2 * (jsp87Var (Finset.range L) f : ℝ) := by
+      have h7 := mul_le_mul_of_nonneg_right hLA hV0
+      linarith [hq]
+    have h6 : jsp87Lam y / 8 - 15 / 8 ≤ (jsp87Var (Finset.range L) f : ℝ) := by
+      linarith [h5]
+    have h7 : jsp87Lam y / 8 - 5 ≤ (jsp87Var (Finset.range L) f : ℝ) := by
+      linarith
+    exact h7
+
+/-- **THE VARIANCE BOUND, UNIFORM IN EVERY SHIFT `k ≤ L`.**  For every `y ≥ 32`,
+every `L ≥ 2`, every `k ≤ L`, and `y² ≤ 2(L−1)`, `2L ≤ y³`,
+
+```
+jsp87TcVarAt L k  ≥  ⅛ · λ(y)  −  5 .
+```
+
+This closes the endpoint `k = 0` that `jsp87_tcVarAt_ge` left out, so the
+divergence of `jsp87_var_omega_diverges` now covers the whole window of cut
+points, `k = 0` included. -/
+theorem jsp87_tcVarAt_all_ge {y L k : ℕ} (hy : 32 ≤ y) (hL : 2 ≤ L) (hkL : k ≤ L)
+    (hyL : y * y ≤ 2 * (L - 1)) (hy3 : 2 * L ≤ y ^ 3) :
+    jsp87TcVarAt L k ≥ jsp87Lam y / 8 - 5 := by
+  rcases Nat.eq_zero_or_pos k with rfl | hk
+  · have hy' : 2 ≤ y := by omega
+    exact jsp87_tcVarAt_zero_ge (y := y) (L := L) hy' hL hyL (by omega)
+  · have hyL' : y * y ≤ 2 * L := by omega
+    have hL1 : 1 ≤ L := by omega
+    exact jsp87_tcVarAt_ge (y := y) (L := L) (k := k) hy hL1 hk hkL hyL' hy3
+
+/-- **THE CROWN IN ITS FULL FORM: THE VARIANCE OF `ω` OVER A SHIFTED WINDOW IS
+UNBOUNDED AT EVERY SHIFT OF THE WINDOW, `k = 0` INCLUDED.**  For every `C > 0`
+there is `L` with `jsp87TcVarAt L k > C` for **every** `k ≤ L`.  This is the
+Turán–Erdős–Kac statement in the exact form the diagonal of §5.4 of
+arXiv:2512.01739 needs it, and it is proved with no analytic input beyond
+Euler's divergence of `Σ_p 1/p`. -/
+theorem jsp87_var_omega_diverges_all {C : ℝ} (_hC : 0 < C) :
+    ∃ L : ℕ, 1 ≤ L ∧ ∀ k, k ≤ L → jsp87TcVarAt L k > C := by
+  have hkey : ∀ b : ℝ, ∃ a : ℕ, ∀ y, a ≤ y → b ≤ jsp87Lam y := by
+    intro b
+    obtain ⟨a, ha⟩ := Filter.tendsto_atTop_atTop.1 jsp87_lam_tendsto b
+    exact ⟨a, fun y hy => ha y hy⟩
+  obtain ⟨a, ha⟩ := hkey (8 * (C + 5) + 1)
+  set y : ℕ := max (a + 1) 32 with hy
+  have hy1 : 32 ≤ y := by
+    rw [hy]
+    exact le_max_right _ _
+  have hy2 : 8 * (C + 5) + 1 ≤ jsp87Lam y := by
+    rw [hy]
+    exact ha _ (by omega)
+  have hy3 : 2 * (y * y) ≤ y ^ 3 := by
+    have h2 : (2 : ℕ) ≤ y := by rw [hy]; omega
+    have h4 : 2 * (y * y) ≤ y * (y * y) := by nlinarith [sq_nonneg y]
+    have h5 : y * (y * y) = y ^ 3 := by rw [pow_succ, pow_two]; ring
+    rw [← h5]
+    exact h4
+  have hy2' : (2 : ℕ) ≤ y := by rw [hy]; omega
+  have hyy : (1 : ℕ) ≤ y * y := by nlinarith [sq_nonneg (y - 1)]
+  have hyy2 : (2 : ℕ) ≤ y * y := by nlinarith [sq_nonneg (y - 1)]
+  set L : ℕ := max 1 (y * y) with hL
+  have hL1 : 1 ≤ L := by
+    rw [hL]
+    exact le_max_left _ _
+  have hL2 : 2 ≤ L := by
+    rw [hL]
+    exact le_trans hyy2 (le_max_right _ _)
+  have hyL : y * y ≤ 2 * (L - 1) := by
+    rw [hL]
+    have h1 : y * y ≤ max 1 (y * y) := le_max_right _ _
+    have h2 : 1 ≤ y * y := hyy
+    omega
+  have hy3L : 2 * L ≤ y ^ 3 := by
+    rw [hL]
+    have h1 : 1 ≤ y * y := hyy
+    have h2 : max 1 (y * y) = y * y := by
+      rw [max_eq_right h1]
+    rw [h2]
+    linarith [hy3]
+  refine ⟨L, hL1, ?_⟩
+  intro k hkL
+  have h2 := jsp87_tcVarAt_all_ge (y := y) (L := L) (k := k) hy1 hL2 hkL hyL hy3L
+  have h3 : C < jsp87Lam y / 8 - 5 := by linarith
+  linarith
+
+/-- **THE WEIGHT `4^{−(k+1)}` AT `k = 0`.** -/
+theorem jsp87Tw_zero_sq : jsp87Tw 0 ^ 2 = (1 : ℝ) / 4 := by
+  unfold jsp87Tw
+  norm_num
+
+/-- **THE WEIGHTED DIAGONAL VARIANCE OF §5.4 IS UNBOUNDED.**  For every `C > 0`
+there are `L, H` with `1 ≤ L` and
+
+```
+C  ≤  ∑_{k < H} 4^{−(k+1)} · jsp87TcVarAt L k ,
+```
+
+i.e. the "variance is large" clause of hypothesis (5.21) of
+arXiv:2512.01739 §5.4 is **satisfiable at large heights** — already with `H = 1`,
+the single weight `1/4` (`jsp87_diag_var_one` below).  This closes round 136's
+named blocker `jsp87_521_diag_satisfiable`. -/
+theorem jsp87_diag_var_one {C : ℝ} (hC : 0 < C) :
+    ∃ (L : ℕ), 1 ≤ L
+      ∧ C ≤ ∑ k ∈ Finset.range 1, jsp87Tw k ^ 2 * jsp87TcVarAt L k := by
+  have hC4 : 0 < 4 * C := by nlinarith
+  obtain ⟨L, hL, hLs⟩ := jsp87_var_omega_diverges_all (C := 4 * C) hC4
+  refine ⟨L, hL, ?_⟩
+  have hsum : ∑ k ∈ Finset.range 1, jsp87Tw k ^ 2 * jsp87TcVarAt L k
+      = jsp87TcVarAt L 0 / 4 := by
+    have h1 := Finset.sum_range_succ (f := fun k => jsp87Tw k ^ 2 * jsp87TcVarAt L k) 0
+    simp only [h1, Finset.sum_range_zero, jsp87Tw_zero_sq]
+    ring
+  rw [hsum]
+  have h4 : 4 * C ≤ jsp87TcVarAt L 0 := by
+    have h1 := hLs 0 (by omega)
+    linarith
+  nlinarith
+
+/-- **THE WEIGHTED DIAGONAL VARIANCE OF §5.4 IS UNBOUNDED, AT DEPTH `H = 1`.**  As
+a statement over arbitrary depths: for every `C > 0` there are `L, H` with
+`1 ≤ L` and `C ≤ ∑_{k < H} 4^{−(k+1)} · jsp87TcVarAt L k`. -/
+theorem jsp87_diag_var_unbounded {C : ℝ} (hC : 0 < C) :
+    ∃ (L H : ℕ), 1 ≤ L
+      ∧ C ≤ ∑ k ∈ Finset.range H, jsp87Tw k ^ 2 * jsp87TcVarAt L k := by
+  obtain ⟨L, hL, h⟩ := jsp87_diag_var_one hC
+  exact ⟨L, 1, hL, by simpa using h⟩
+
+/-- **HYPOTHESIS (5.21) OF arXiv:2512.01739 §5.4 IS SATISFIABLE.**  The clause
+
+```
+1  ≤  ∑_{k < H} 4^{−(k+1)} · jsp87TcVarAt L k
+```
+
+— the "variance of the truncated carry is large" hypothesis, in the notation of
+rounds 130–134 and `SqPair.lean` — holds at some window, and it holds with `1`
+replaced by **any** prescribed constant (`jsp87_diag_var_unbounded`).  Together
+with `jsp87_521_needs_diag` this says the clause is a *genuine* satisfiable
+hypothesis and not an obstruction: what is left of `jsp_000087_main` is the
+off-diagonal covariance bound `jsp87Mcov_small` (Thm 3.1 of arXiv:2512.01739,
+from Pilatte), which Mathlib does not contain. -/
+theorem jsp87_521_var_satisfiable :
+    ∃ (L H : ℕ), 1 ≤ L
+      ∧ 1 ≤ ∑ k ∈ Finset.range H, jsp87Tw k ^ 2 * jsp87TcVarAt L k :=
+  jsp87_diag_var_unbounded (C := (1 : ℝ)) (by norm_num)
+
+/-- **THE VARIANCE CLAUSE OF (5.21) IS ALREADY SATISFIABLE AT `H = 1`.**  The
+single weight `4^{−1}` at `k = 0` suffices. -/
+theorem jsp87_521_var_satisfiable_one :
+    ∃ L : ℕ, 1 ≤ L
+      ∧ 1 ≤ ∑ k ∈ Finset.range 1, jsp87Tw k ^ 2 * jsp87TcVarAt L k :=
+  jsp87_diag_var_one (C := (1 : ℝ)) (by norm_num)
+
+/-! ## 9. The single remaining input, isolated
+
+Sections 5–8 settled the *arithmetic* of hypothesis (5.21) of arXiv:2512.01739
+§5.4: the "variance is large" clause is **satisfiable**, and satisfiable with an
+arbitrary constant (`jsp87_diag_var_unbounded`).  What is left is the
+*off-diagonal* term, i.e. the two-point covariances `jsp87Mcov` of round 130 —
+the content of Theorem 3.1 of arXiv:2512.01739 (from Pilatte's quantitative
+Elliott-type work), which Mathlib does not contain.
+
+The two theorems below make that statement exact and machine-checked:
+
+* `jsp87_tcVar_sub_diag_abs_le` — a **two-sided** covariance bound `ε` transfers to
+  `|variance of the truncated carry − weighted diagonal| ≤ ε`, because the
+  total covariance weight is at most `1` (`jsp87Tw_pair_le_one`);
+* `jsp87_521_tcVar_of_chowla` — **so hypothesis (5.21), read as a bound on the
+  variance of the truncated carry, follows from (i) the Chowla-type covariance
+  bound `jsp87Mcov_small` and (ii) the variance divergence proved in §8, and
+  nothing else.**
+
+That is the localisation of `jsp_000087_main` this round contributes: the
+analytic input is *exactly* `jsp87Mcov_small`, and the variance clause is not
+an obstruction any more. -/
+
+/-- **A TWO-SIDED COVARIANCE BOUND TRANSFERS TO THE TRUNCATED CARRY.**  If every
+two-point covariance of `ω` at a nonzero shift inside the window is at most `ε`
+in absolute value, then
+
+```
+|variance of the truncated carry  −  ∑_k 4^{−(k+1)}·Var (N ↦ ω (N+k))|  ≤  ε ,
+```
+
+because the total weight `∑_{k<k'} 2·2^{−(k+1)}·2^{−(k'+1)}` of the
+off-diagonal is at most `1` (`jsp87Tw_pair_le_one`).  Round 130 had the
+one-sided upper half (`jsp87TcVar_le_diag_add`); this is the matching lower
+half, and the two together say the deterministic diagonal is the whole
+variance up to `ε`. -/
+theorem jsp87_tcVar_sub_diag_abs_le (L H : ℕ) (hL : 1 ≤ L) (ε : ℝ) (hε : 0 ≤ ε)
+    (hcov : ∀ k ∈ Finset.range H, ∀ k' ∈ (Finset.range H).filter (fun x => k < x),
+      |jsp87Mcov L k k'| ≤ ε) :
+    |jsp87TcVar L H - (∑ k ∈ Finset.range H, jsp87Tw k ^ 2 * jsp87TcVarAt L k)| ≤ ε := by
+  have hid := jsp87TcVar_eq_diag_add_cov L H hL
+  have hhi := jsp87TcVar_le_diag_add L H hL ε hε
+    fun k hk k' hk' => (abs_le.mp (hcov k hk k' hk')).2
+  have hterm : ∀ k ∈ Finset.range H,
+      ∀ k' ∈ (Finset.range H).filter (fun x => k < x),
+        -((2 * jsp87Tw k * jsp87Tw k') * ε)
+          ≤ (2 * jsp87Tw k * jsp87Tw k') * jsp87Mcov L k k' := by
+    intro k hk k' hk'
+    have hw : (0 : ℝ) ≤ 2 * jsp87Tw k * jsp87Tw k' :=
+      mul_nonneg (mul_nonneg (by norm_num) (le_of_lt (jsp87Tw_pos k)))
+        (le_of_lt (jsp87Tw_pos k'))
+    have h1 : -ε ≤ jsp87Mcov L k k' := (abs_le.mp (hcov k hk k' hk')).1
+    linarith [mul_le_mul_of_nonneg_left h1 hw]
+  have h1 : (∑ k ∈ Finset.range H,
+        ∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+        (2 * jsp87Tw k * jsp87Tw k') * jsp87Mcov L k k')
+      ≥ ∑ k ∈ Finset.range H,
+        ∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+          -((2 * jsp87Tw k * jsp87Tw k') * ε) :=
+    Finset.sum_le_sum fun k hk => Finset.sum_le_sum fun k' hk' => hterm k hk k' hk'
+  have h2 : (∑ k ∈ Finset.range H,
+        ∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+        -((2 * jsp87Tw k * jsp87Tw k') * ε))
+      = (∑ k ∈ Finset.range H,
+          ∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+            2 * jsp87Tw k * jsp87Tw k') * (-ε) := by
+    calc (∑ k ∈ Finset.range H,
+          ∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+            -((2 * jsp87Tw k * jsp87Tw k') * ε))
+        = ∑ k ∈ Finset.range H,
+            ∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+              ((2 * jsp87Tw k * jsp87Tw k') * (-ε)) := by
+          refine Finset.sum_congr rfl fun k _ => ?_
+          refine Finset.sum_congr rfl fun k' _ => ?_
+          ring
+      _ = ∑ k ∈ Finset.range H,
+            ((∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+              2 * jsp87Tw k * jsp87Tw k') * (-ε)) := by
+          refine Finset.sum_congr rfl fun k _ => ?_
+          rw [Finset.sum_mul]
+      _ = (∑ k ∈ Finset.range H,
+            ∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+              2 * jsp87Tw k * jsp87Tw k') * (-ε) := by
+          rw [Finset.sum_mul]
+  have hmul_le : -ε ≤ (∑ k ∈ Finset.range H,
+        ∑ k' ∈ (Finset.range H).filter (fun x => k < x),
+          2 * jsp87Tw k * jsp87Tw k') * (-ε) := by
+    have h3 := mul_le_mul_of_nonpos_right (jsp87Tw_pair_le_one H)
+      (show (-ε : ℝ) ≤ 0 by linarith [hε])
+    have h4 : (1 : ℝ) * (-ε) = -ε := by ring
+    rw [h4] at h3
+    exact h3
+  have hD0 : (0 : ℝ) ≤ ∑ k ∈ Finset.range H, jsp87Tw k ^ 2 * jsp87TcVarAt L k :=
+    Finset.sum_nonneg fun k _ =>
+      mul_nonneg (sq_nonneg _)
+        (jsp87Var_nonneg (Finset.range L)
+          (fun N => ((omega (N + k) : ℕ) : ℝ)))
+  rw [jsp87TcVar_eq_diag_add_cov L H hL, add_sub_cancel_left]
+  refine (abs_le).2 ⟨?_, ?_⟩
+  · linarith [h1, h2, hmul_le]
+  · linarith [hid, hhi]
+
+/-- **THE VARIANCE HYPOTHESIS (5.21) OF §5.4 FOLLOWS FROM THE CHOWLA-TYPE
+COVARIANCE BOUND ALONE (TOGETHER WITH §8).**  Let `H ≥ 1` and suppose the
+two-point covariances of `ω` inside the window are bounded by `ε` at **every**
+window length `L ≥ 1` — this is `jsp87Mcov_small`.  Then for every `C > 0`
+there is a window `L` at which the variance hypothesis of (5.21) holds with the
+constant `C`:
+
+```
+1 ≤ L        C ≤ (variance of the truncated carry of depth H)
+             |variance − ∑_{k<H} 4^{−(k+1)}·Var ω(N+k)| ≤ ε ,
+```
+
+i.e. **the truncated carry's variance exceeds any prescribed constant at a
+window where the correlations are `ε`-small.**  The variance divergence of §8
+supplies the `C`, `jsp87_tcVar_sub_diag_abs_le` transfers the correlations, and
+nothing else is used. -/
+theorem jsp87_521_tcVar_of_chowla {C ε : ℝ} (hC : 0 < C) (hε : 0 ≤ ε)
+    (H : ℕ) (hH : 1 ≤ H)
+    (hcov : ∀ L, 1 ≤ L → ∀ k ∈ Finset.range H,
+      ∀ k' ∈ (Finset.range H).filter (fun x => k < x), |jsp87Mcov L k k'| ≤ ε) :
+    ∃ (L : ℕ), 1 ≤ L ∧ C ≤ jsp87TcVar L H
+      ∧ |jsp87TcVar L H - (∑ k ∈ Finset.range H, jsp87Tw k ^ 2 * jsp87TcVarAt L k)| ≤ ε := by
+  obtain ⟨L, hL, hD1⟩ := jsp87_diag_var_one (C := C + ε) (by linarith)
+  have hmono : (∑ k ∈ Finset.range 1, jsp87Tw k ^ 2 * jsp87TcVarAt L k)
+      ≤ ∑ k ∈ Finset.range H, jsp87Tw k ^ 2 * jsp87TcVarAt L k :=
+    Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.mpr hH)
+      (fun i _ _ => mul_nonneg (sq_nonneg _) (jsp87Var_nonneg _ _))
+  refine ⟨L, hL, ?_, jsp87_tcVar_sub_diag_abs_le L H hL ε hε (hcov L hL)⟩
+  have h1 := (abs_le.mp (jsp87_tcVar_sub_diag_abs_le L H hL ε hε (hcov L hL))).1
+  linarith [hD1, hmono]
+
 end JSP87
