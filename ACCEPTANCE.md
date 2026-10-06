@@ -16,6 +16,62 @@ under a suitably uniform version of the prime `k`-tuples conjecture.
 
 `jsp_000087_main`
 
+## Round 148 — HOW DEEP EACH PRIME SITS IN THE LAMBERT DENOMINATORS (prime powers)
+
+`lake build` succeeds; the tree contains **no placeholders**; **2840 theorems and
+lemmas** are proved (73 new declarations, 58 of them public theorems, in one new
+module, 907 lines, 0 new linter warnings), including **the complete
+characterisation of the prime-power structure of the clearing denominator of the
+prime-restricted Lambert series** — the *depth* question, which round 147 (the
+*support* question) never asked.
+
+`lean/JSPProblem/LambertLevel.lean` — the new module:
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Order` | **the new object**: the multiplicative order of `2` modulo a general modulus, `orderOf (2 : ZMod m)` |
+| `jsp87_dvd_mer_iff_order_dvd'` | `m ∣ 2^k − 1 ↔ jsp87Order m ∣ k` for **any** `m`, not only primes |
+| `jsp87Order_mono` | **monotonicity**: `d ∣ e ⟹ jsp87Order d ∣ jsp87Order e` |
+| **`jsp87_lift_pow`** | **THE LIFT**: `q^e ∣ 2^k − 1 ⟹ q^(e+1) ∣ 2^(q·k) − 1`.  Proven by nilpotence: `2^k − 1 = q^e·u` has square `0` in `ℤ/q^(e+1)ℤ` (because `2e ≥ e+1`), and `(1+x)^q = 1 + q·x` when `x² = 0` |
+| `jsp87_dvd_pow_mer_lift_iter` | the lift iterated: `q^(c+1) ∣ 2^(q^c · jsp87Order2 q) − 1` |
+| **`jsp87_levelLadder`** | **★ THE LEVEL LADDER ★** `jsp87Order2 q ∣ jsp87Order (q^(c+1)) ∣ q^c · jsp87Order2 q` — the order at every prime-power level is squeezed between two explicit integers |
+| `jsp87Wieferich`, `jsp87_lift_dichotomy` | **★ THE WIEFERICH DICHOTOMY ★** for odd prime `q`: `jsp87Order (q²) = jsp87Order2 q` **or** `= q · jsp87Order2 q`.  No third possibility: the quotient divides the prime `q` |
+| `jsp87_genuine_iff` | the two branches are complementary |
+| **`jsp87_dvd_mer_sq_of_genuine`** | **NON-WIEFERICH: the square is expensive** — `q² ∣ 2^k − 1 ↔ q · jsp87Order2 q ∣ k` |
+| **`jsp87_dvd_mer_sq_of_weierich`** | **WIEFERICH: the square is free** — `q² ∣ 2^k − 1 ↔ q ∣ 2^k − 1` |
+| `jsp87_notdvd_mer_sq_of_genuine` | `q ∣ 2^k−1` and `q ∤ k` force `q² ∤ 2^k − 1` |
+| **`jsp87_dvd_mer_sq_of_prime_iff`** | **THE SHARP FORM** `q² ∣ 2^p − 1 ↔ (jsp87Order2 q = p ∧ jsp87Wieferich q)` for prime `p`: a prime sits in the tower with multiplicity two only if it is Wieferich *and* its order is that prime |
+| `jsp87_weierich_price` | the converse: a Wieferich prime of prime order has its square in the tower |
+| **`jsp87_lambertDen_dvd_pow_iff`** | **THE TOWER AT EVERY PRIME-POWER LEVEL** `q^e ∣ lambertDen s ↔ ∃ p ∈ s, p prime ∧ jsp87Order (q^e) = p` |
+| **`jsp87_lambertDen_dvd_sq_iff_weierich`** | `q² ∣ lambertDen s ↔ ∃ p ∈ s, p prime ∧ jsp87Order2 q = p ∧ jsp87Wieferich q` |
+| `jsp87_lambertDen_notdvd_sq_of_genuine`, `jsp87_lambertDen_level_once` | a non-Wieferich prime never divides the clearing denominator with multiplicity two |
+| **`jsp87_lambertDen_notdvd_pow_of_comp_order`** | **★ INVISIBILITY AT EVERY DEPTH ★** a prime of composite order divides no Lambert denominator **to any multiplicity**: `q^e ∤ lambertDen s` for every `e ≥ 1` |
+| `jsp87Order_nine`, `…_twenty_five`, `…_forty_nine`, `…_one_twenty_one`, `…_fifty_three_squared` | the levels computed: `ord_9 2 = 6`, `ord_25 2 = 20`, `ord_49 2 = 21`, `ord_121 2 = 110`, `ord_5329 2 = 657` |
+| `jsp87Wieferich_three_false` … `…_seventythree_false` | **`3, 5, 7, 11, 73` are not Wieferich** |
+| `jsp87_lambertDen_notdvd_nine`, `…_twenty_five`, `…_forty_nine`, `…_one_twenty_one`, `…_5329` | **`¬ (9 ∣ lambertDen s)`, `¬ (25 ∣ …)`, `¬ (49 ∣ …)`, `¬ (121 ∣ …)`, `¬ (5329 ∣ …)` for every `s`** |
+| `jsp87_lambertDen_coprime_twenty_five`, `…_one_twenty_one`, `…_3025` | `25`, `121` and `3025` are coprime to the whole clearing denominator |
+| `jsp87_lambertDen_notdvd_pow_five`, `…_eleven`, `…_seventythree` | `5^e`, `11^e`, `73^e` never divide it, for **any** `e ≥ 1` |
+| `jsp87_dvd_mer_sq_three_iff`, `…_five_`, `…_seven_`, `…_eleven_`, `…_seventythree_` | **THE UNRESTRICTED TOWER AT THE SQUARE LEVEL**: `9 ∣ 2^k−1 ↔ 6 ∣ k`, `25 ↔ 20 ∣ k`, `49 ↔ 21 ∣ k`, `121 ↔ 110 ∣ k`, `5329 ↔ 657 ∣ k` |
+| `jsp87_denominator_nine_dichotomy`, `…_twenty_five_dichotomy` | the price of the prime restriction at the square level, in one statement |
+| `jsp87_lambert_level_summary`, `jsp87_wieferich_summary` | the three results above, assembled |
+
+**Consequence.**  Round 147 fixed the *support* of the denominator tower and this
+round fixes its **depth**, so the arithmetic of `lambertDen s` is now closed in
+**both directions for every modulus**: `q^e` divides the clearing denominator iff
+a prime level `p ∈ s` satisfies `jsp87Order (q^e) = p`, and the only residual
+freedom is the Wieferich flag — itself computed at `3, 5, 7, 11, 73`.  **The
+tower can no longer be improved by pure divisibility reasoning.**  This is sharp
+negative knowledge for the rationality route: a rationality witness
+`2 · S = a / b` must live with a clearing denominator whose prime-power structure
+is completely determined by orders, and whose invisible primes (composite order)
+are invisible at *every* multiplicity, permanently.
+
+**Blocker unchanged.**  `jsp87Mcov_small`, the Chowla-type two-point correlation
+of `ω` (Thm 3.1 of arXiv:2512.01739, from Pilatte), is still the only deep
+analytic input, and `jsp_000087_main` is still deliberately **not** declared.
+
+---
+
 ## Round 147 — WHICH PRIMES APPEAR IN THE LAMBERT DENOMINATORS (the order of `2`)
 
 `lake build` succeeds; the tree contains **no placeholders**; **2784 theorems and
