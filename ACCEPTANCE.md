@@ -16,6 +16,37 @@ under a suitably uniform version of the prime `k`-tuples conjecture.
 
 `jsp_000087_main`
 
+## Round 145 — THE CRT-BOX ENDGAME
+
+`lake build` succeeds; the tree contains **no placeholders**; **3209 theorems and
+lemmas** are proved (14 new public + 13 new private in one new module, 901 lines,
+0 new linter warnings), including **the periodicity of the cube-alternating
+variable `X_p`, the Chinese remainder theorem proved from scratch, and the exact
+factorisation of the total phase on the box of residues** — with the negative
+consequence that hypothesis (5.15) of arXiv:2512.01739 is **refuted on every box**.
+
+`lean/JSPProblem/CrtBox.lean` — the new module:
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Xp0_mod` | **★ THE CUBE SUM IS `p`-PERIODIC ★** `X_p n = X_p (n % p)`: the variable of (5.13) is a function on `ℤ/pℤ`. Rounds 142–144 computed its *support* on residues but never proved this — the premise the endgame needs |
+| `jsp87sum_mod_mul` (private) | the CRT step: `gcd a m = 1` makes `t ↦ (c + a t) mod m` a permutation of `[0, m)`, from `Nat.dvd_sub` + Euclid's lemma + pigeonhole |
+| `jsp87sum_range_div` (private) | `n ↦ (n / M, n mod M)` bijects `[0, a M)` with `[0, a) × [0, M)` |
+| `jsp87sum_prod_finset` (private) | the sum form of CRT: for a `q`-periodic family over a set `S` of primes, `∑_{i < ∏ q} ∏_q f q i = ∏_q (∑_{m < q} f q m)` |
+| `jsp87sum_Xp_period`, `jsp87CAvg_Xp_period`, `jsp87Var_Xp_period` | **the mean and the variance of `q X_p` over `[0, a p)` equal their values over `[0, p)`**: a single prime contributes a function of `p` alone |
+| `jsp87Box` | the box of residues `B P = [0, ∏_{p ∈ P} p)` |
+| `jsp87CAvg_box_prod` | **★ THE FLAGSHIP ★** the mean of `e (q ∑_p X_p)` over `B P` **equals exactly** the product of the single-prime means over `[0, p)`. **No error term**: hypothesis (5.16)–(5.17) of the published proof is an *identity* on boxes |
+| `jsp87CAvg_box_eq_period`, `jsp87Var_box_eq` | every single-prime statistic of §5 is independent of the box |
+| `jsp87_515_box_le` | **★ (5.15) IS REFUTED ON EVERY BOX ★** `1 − exp(−4 q² 2^K 2^{−2(H+K)} ∑_{p∈P} 1/p) ≤ ‖𝔼ᶜ e (q ∑_p X_p) − 1‖`; by Euler the left side tends to `1`, so the *concentration* hypothesis fails on boxes at all large heights, for every admissible `q ≠ 0` |
+
+**Consequence.** The endgame of §§5.3–5.14 of arXiv:2512.01739 cannot be *started*
+on a box: there (5.16)–(5.17) is free (`κ₄ = κ₅ = 0`) and (5.15) is false. With round 144
+((5.21′) is satisfiable on plain initial segments) and round 116 (the hypotheses are mutually
+exclusive), the sample-geometry route is exhausted in both directions: a rationality-driven
+configuration must be a **correlated** sample. The remaining blocker is unchanged and is now the
+*only* obstruction: `jsp87Mcov_small`, the Chowla-type two-point correlation of `ω`
+(Thm 3.1 of arXiv:2512.01739, from Pilatte), which Mathlib does not contain.
+
 ## Current gate status
 
 `lake build` succeeds; the tree contains **0 `sorry` / 0 `admit`**; **158 theorems
