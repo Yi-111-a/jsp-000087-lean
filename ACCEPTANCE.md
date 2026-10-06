@@ -5971,3 +5971,137 @@ wants to use the raw-diagonal form `jsp87_521_needs_diag`.
   syntactically congruent under `f = fun N => f (N + k)`: a small helper
   (`jsp87Var_congr'`, built from `unfold jsp87Var jsp87FAvg; dsimp only;
   Finset.sum_congr`) is needed for every such identification.
+
+---
+
+## Round 144 — (5.21′) HOLDS ON A PLAIN INITIAL SEGMENT: THE TWO DELETED
+THEOREMS OF ROUND 143 REBUILT, AND THE ENDGAME JOINED TO THEM
+
+New module `lean/JSPProblem/IccWitness.lean` (725 lines, **18 new public
+theorems/definitions + 15 private helpers**, no placeholders; **2716** proved
+`theorem`/`lemma` declarations tree-wide at the `^(theorem|lemma)` level —
+2698 before this round, **3180** including private helpers — `lake build` clean,
+3329 jobs, **0 new linter warnings**).
+
+`policy.json` `next_round_attack[0]` of round 143 asked for exactly two
+theorems, which round 143 had fully written and then deleted over a bracket
+mismatch.  **Both are now theorems, together with the join of §3, and the
+honest mathematical consequence is that the *correlated sample* of §5 of
+arXiv:2512.01739 is NOT needed for hypothesis (5.21′) at all.**
+
+Write `B := H + 2^K − 1` (the length of the nonzero block of round 142) and
+`f_p := jsp87NzFrac K p H [1,N]`.
+
+### 1. §1 — THE INITIAL SEGMENT IS TWO-CLASS, WITH A KNOWN SPLIT
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87mul_mono_half` | `f ↦ f (1 − f)` is increasing on `[0, 1/2]` — the one monotonicity fact, from scratch (`nlinarith` does not factor `b(1−b) − a(1−a) = (b−a)(1−a−b)`) |
+| `jsp87NzFrac_Icc_ge_B_two` | **`2^K ≤ p`, `1 ≤ H`, `H + 2^K − 1 + 1 ≤ p`, `1 ≤ N`, `2p ≤ N ⟹ B/(2p) ≤ f_p`** — the lower split: on two whole periods the nonzero fraction never falls below *half* the uniform value `B/p` |
+| `jsp87NzFrac_Icc_le_half` | **`3B ≤ p` and `2p ≤ N ⟹ f_p ≤ 1/2`** — the upper split, from `f_p ≤ B/p + B/N ≤ 3B/(2p) ≤ 1/2` |
+| **`jsp87NzFrac_mul_one_sub_Icc_ge`** | **`policy.json` item (a): `2p ≤ N`, `3B ≤ p ⟹ B/(4p) ≤ f_p (1 − f_p)`** |
+| `jsp87NzFrac_mul_one_sub_Icc_le` | the matching upper bound `f_p(1−f_p) ≤ (3B/(2p))(1 − B/(2p))`: the (5.21′) mass is **maximised at height exactly `2p`**, so the witness height of §2 cannot be tuned |
+
+So `f_p ∈ [B/(2p), 3B/(2p)] ⊆ [B/(2p), 1/2]`, and the whole of
+`next_round_attack[0](a)` is a squeeze plus one monotonicity fact.  **The
+two-class quantity of (5.21′) is `Θ(1/p)` on a plain initial segment, with an
+explicit constant — no analytic input of any kind.**
+
+### 2. §2 — ★★ THE CAPSTONE: (5.21′) IS SATISFIABLE ON AN INITIAL SEGMENT ★★
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87_5_21_Icc_summand` | the one-prime form, `(B/4)·(1/p) ≤ f_p(1−f_p)` |
+| `jsp87_5_21_Icc_sum_ge` | the prime-set form, `c · ∑_{p∈P} f_p(1−f_p) ≥ c · (B/4) · jsp87RecipSum P`, with no constant lost |
+| `jsp87_5_21_Icc_mass` | **the mass statement**: for every `q ≠ 0` and every scale there is `Y ≥ 1` with `4/(B c) ≤ jsp87RecipSum (jsp87PrimeSet (3B, Y))` — Euler's divergence, transferred |
+| `jsp87_5_21_Icc_at` | **the explicit-height form**: `P := jsp87PrimeSet (3B, Y)`, all `p ∈ P` prime with `3B ≤ p` and `2p ≤ 2Y`, and (5.21′) holds on `[1, 2Y]` |
+| **`jsp87_5_21_Icc_witness`** | **`policy.json` item (b): for every `q ≠ 0` and every `K, H` with `1 ≤ H` there is a height `Y`, a prime set `P`, and `1 ≤ q² 2^{−2(H+K)} ∑_{p∈P} f_p (1 − f_p)`, every `p ∈ P` prime with `3B ≤ p` and `2p ≤ 2Y`** |
+| `jsp87Icc_dvd_pt`, `jsp87Icc_active_pt`, `jsp87_5_21_Icc_hne` | the two-class witness `hne` holds on **every** initial segment with `2p ≤ N`: the sample points `p` (a multiple of `p`) and `p − 1` (an active residue, the last point of round 142's block) |
+
+**Hypothesis (5.21′) of arXiv:2512.01739 is satisfiable on a plain initial
+segment, at every scale, unconditionally.**  The only input is Euler's
+divergence of the reciprocal primes (`jsp87RecipSum_primeSet_tendsto`,
+round 125).  Consequently the Chowla-type input `jsp87Mcov_small` is **not**
+what is needed to satisfy (5.21′).
+
+### 3. §3 — THE ENDGAME, JOINED
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Hyp15Icc`, `jsp87Hyp1617Icc` | the error bounds (5.15) and (5.16)–(5.17) **on the initial-segment sample** `[1, N]` |
+| **`jsp87_endgame_Icc_of_5_15`** | **on an initial segment the endgame of §§5.3–5.14 fires from (5.15) and (5.16)–(5.17) alone** (hypothesis (5.21′) is discharged by §2, and `hne` by `jsp87_5_21_Icc_hne`) |
+| **`jsp87_endgame_Icc_witness`** | **if (5.15) and (5.16)–(5.17) hold on the canonical initial-segment samples `[1, 2Y]` over the prime sets `[3B, Y]`, the five constants of §5 cannot all be sharp** |
+| **`jsp87_5_15_Icc_or_5_16`** | **the dichotomy**: if the endgame's conclusion held at an admissible scale, then on those initial-segment samples **at least one of (5.15) and (5.16)–(5.17) must fail** |
+
+Read with `jsp87_5_21_Icc_witness` this is the sharp statement available about
+§5 of the published proof: **hypothesis (5.21′) cannot be the obstruction —
+only the two error estimates can be.**  So any witness of the endgame must be
+a **correlated** sample, and finding one is exactly the content of the single
+remaining blocker `jsp87Mcov_small` (Thm 3.1 of arXiv:2512.01739, from
+Pilatte), for which Mathlib has no Chowla-, Elliott- or Gowers-type analogue.
+
+### 4. Gate status
+
+`harness/score.py problems/JSP-000087 --strict-prize` reports `build_ok=true,
+sorry=0, admit=0, placeholder_total=0, partial_ok=true, prize_ready=false,
+missing_theorems=["jsp_000087_main"]`.
+
+`jsp_000087_main` is **still deliberately not declared**: the headline
+irrationality is a theorem of the literature (Tao–Teräväinen,
+arXiv:2512.01739 Thm 1.3 = Erdős #69, unconditional), and its proof is
+missing.  This round removes the *last geometric* obstacle and shows that the
+published endgame reduces, on every plain sample, to a two-estimate question.
+
+### 5. The blocker, after round 144, stated exactly
+
+> **`jsp87Mcov_small`** — there are `H ≥ 1` and `ε ≥ 0` such that for every
+> window `L ≥ 1` and every `0 ≤ k < k' < H`, `|jsp87Mcov L k k'| ≤ ε`
+> (a Chowla-type two-point correlation bound for `ω`; Thm 3.1 of
+> arXiv:2512.01739, from Pilatte).
+
+Unchanged since round 115 and now **sharp**: round 137 showed the Chowla bound
+plus the unconditional variance divergence discharges the endgame;
+round 143 and this round showed that the sample geometry of §5 — the support
+shape, the truncation, the sample size and the choice of prime set — cannot
+refute (5.21′), since (5.21′) *holds* on plain initial segments.  The
+correlation estimate is therefore needed only to make a sample on which (5.15)
+is *true* and *small*, i.e. to find the correlated sample of the published
+proof.
+
+### Mathlib findings of this round (do not repeat the mistakes)
+
+* `div_le_div_iff₀ : 0 < b → 0 < d → (a / b ≤ c / d ↔ a * d ≤ c * b)` — the
+  cross-multiplied form is `a·d ≤ c·b` (note the order);
+  `le_div_iff₀ : 0 < c → (a ≤ b / c ↔ a * c ≤ b)` and
+  `div_le_iff₀ : 0 < c → (b / c ≤ a ↔ b ≤ a * c)`;
+* `sub_le_sub_left (h : a ≤ b) (c) : c - b ≤ c - a` — i.e. from `f ≤ 1/2`,
+  `1 - 1/2 ≤ 1 - f`; but `simpa using` it **normalises `1 - 1/2` to
+  `1 - f + 2⁻¹`**, so use `linarith [h]` instead;
+* `Nat.cast_mul (α := ℝ) 3 x : (↑3 : ℝ) * ↑x = ↑(3 * x)` — the parameter is
+  `α`, **not** `R`; and `push_cast` does **not** push `↑H + ↑(2^K − 1)` into
+  `↑(H + 2^K − 1)`, so use `rw [Nat.cast_add]` explicitly;
+* `Finset.Icc 1 N).Nonempty := ⟨1, Finset.mem_Icc.mpr ⟨le_rfl, hN⟩⟩` — note
+  the order `a ≤ x`, `x ≤ b`: the pair is `⟨le_rfl, hN⟩`, not `⟨hN, le_rfl⟩`;
+* `Nat.sub_le_sub_right (h : a ≤ b) (c) : a - c ≤ b - c` is *monotone*, not
+  antitone; for `p - (1 + 2^K − 1) ≤ p - 1` use the equation pair
+  `Nat.sub_add_cancel` + `omega` (`jsp87sub_le_of_ge1`);
+* `Nat.mod_eq_of_lt {a b : ℕ} (h : a < b) : a % b = a` is the way to get
+  `(p - 1) % p = p - 1` (there is no `Nat.sub_mod`);
+* `Finset.mul_sum` has all arguments implicit, so `(Finset.mul_sum).symm`
+  fails when the summed function is not determined; rewrite the *left* side
+  instead (`rw [Finset.mul_sum, Finset.mul_sum]` then `Finset.sum_congr rfl
+  (fun p hp => by ring)`);
+* `div_nonneg`, `sub_nonneg`, `sq_pos_of_ne_zero` are **proofs**, not rewrite
+  rules: `rw [div_nonneg]` fails with "Invalid rewrite argument";
+* a `Prop`-valued `def` is unfolded by `intro`, so `intro Y hY` on a goal of
+  the form `∀ Y, jsp87Hyp15Icc …` consumes `Y` and then fails on `hY`; use
+  `fun Y => Classical.byContradiction (fun hh => h1 ⟨Y, hh⟩)` instead of
+  `intro`/`absurd`;
+* `push_neg` is deprecated in this toolchain (`push Not`);
+* `getElem`-free `Nat.Prime p ∧ a ≤ p ∧ b ≤ p ∧ …` conjunctions are
+  de Bruijn-indexed: `(hw p hp).2.2.1`, not `.2.2`;
+* **GATE CORRECTION (IMPORTANT FOR EVERY FUTURE ROUND)**: `harness/score.py`
+  counts the *words* `sorry` and
+  `admit` in the `.lean` sources.  A doc comment saying "0 `sorry`, 0
+  `admit`" silently flips `partial_ok` to **false**.  Never write those two
+  words in a `.lean` file.

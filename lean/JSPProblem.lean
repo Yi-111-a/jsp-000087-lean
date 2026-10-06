@@ -88,3 +88,4 @@ import JSPProblem.PairLoss
 import JSPProblem.SharpVar
 import JSPProblem.ResidueBlock
 import JSPProblem.SampleGeom
+import JSPProblem.IccWitness
