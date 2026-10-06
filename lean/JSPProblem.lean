@@ -91,3 +91,4 @@ import JSPProblem.SampleGeom
 import JSPProblem.IccWitness
 import JSPProblem.CrtBox
 import JSPProblem.BoxIndep
+import JSPProblem.LambertOrder

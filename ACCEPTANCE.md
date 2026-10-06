@@ -16,6 +16,53 @@ under a suitably uniform version of the prime `k`-tuples conjecture.
 
 `jsp_000087_main`
 
+## Round 147 — WHICH PRIMES APPEAR IN THE LAMBERT DENOMINATORS (the order of `2`)
+
+`lake build` succeeds; the tree contains **no placeholders**; **2784 theorems and
+lemmas** are proved (33 new public declarations + 18 private helpers in one new
+module, 692 lines, 0 new linter warnings), including **the complete
+characterisation of the prime divisors of the Lambert denominators of the
+prime-restricted series** — a question no earlier round had asked.  Rounds 37–39
+proved the denominators `2 ^ p - 1` (p prime) are *mutually* coprime and that
+their product is the exact clearing denominator; they never asked **which
+primes occur in the denominators at all**.
+
+`lean/JSPProblem/LambertOrder.lean` — the new module:
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87Order2` | **the multiplicative order of `2` modulo a prime** `ℓ` (as `orderOf (2 : ZMod ℓ)`) |
+| `jsp87_mer_iff_pow_one` | the `ℤ / ℓ ℤ` bridge `ℓ ∣ 2 ^ k - 1 ↔ (2 : ZMod ℓ) ^ k = 1` |
+| **`jsp87_dvd_mer_iff_order_dvd`** | **THE IDENTIFICATION**: `ℓ ∣ 2 ^ k - 1 ↔ jsp87Order2 ℓ ∣ k` |
+| **`jsp87_dvd_mer_of_prime_iff`** | **for prime indices `p`, `ℓ ∣ 2 ^ p - 1 ↔ jsp87Order2 ℓ = p`** |
+| **`jsp87_notdvd_mer_of_comp_order`** | **THE INVISIBILITY THEOREM**: a prime `ℓ` whose order of `2` is *composite* divides **no** Lambert denominator of the prime-restricted series |
+| `jsp87Order2_fermat`, `jsp87Order2_two_le`, `jsp87Order2_dvd_card_sub_one` | Fermat in the order language: `2 ≤ jsp87Order2 ℓ` and `jsp87Order2 ℓ ∣ ℓ - 1` for every odd prime `ℓ` |
+| `jsp87Order2_three`, `…_five`, `…_seven`, `…_eleven`, `…_seventythree` | the orders computed: `2, 4, 3, 10, 9` — so `3, 5, 11, 73` are **invisible** and `7` is **visible** |
+| `jsp87_dvd_mer_three_of_prime_iff` | `3 ∣ 2 ^ p - 1 ↔ p = 2` for prime `p`: the prime `3` occurs at exactly one level |
+| **`jsp87_lambertDen_dvd_iff`** | **EXACT CHARACTERISATION**: an odd prime `ℓ` divides `lambertDen s` **iff** some prime `p ∈ s` has `jsp87Order2 ℓ = p` |
+| `jsp87_lambertDen_coprime_of_comp_order`, `…_five`, `…_eleven`, `…_seventythree`, `…_fifty_five` | **the invisible primes never divide the clearing denominator** — `Nat.Coprime (lambertDen s) 55` for every `s` |
+| `jsp87_lambertNumer_coprime_den_of_order` | an **independent proof**, from the order machinery, that the truncated prime-restricted Lambert sum is in lowest terms (round 34's `jsp87_lambertNumer_coprime_den`) |
+| `jsp87_dvd_mer_five_iff` | `5 ∣ 2 ^ k - 1 ↔ 4 ∣ k`: the *unrestricted* Lambert denominator sees `5` at every multiple of `4` |
+| **`jsp87_denominator_five_dichotomy`** | **THE PRICE OF THE PRIME RESTRICTION**: `5 ∣ ∏_{k<N} (2^k-1)` for `N ≥ 5`, yet `5 ∤ lambertDen (range N)` **for every** `N` |
+| **`jsp87Order2_eq_pow_succ_of_dvd_add`** | every prime factor `ℓ` of `2 ^ 2 ^ k + 1` has order exactly `2 ^ (k+1)` |
+| **`jsp87exists_invisible_prime`** | **ARBITRARILY LARGE INVISIBLE PRIMES, elementarily**: for every `B` there is an odd prime `ℓ > B` dividing **no** Lambert denominator of the series |
+
+**Consequence.**  A rationality witness for
+`2 · S = ∑ p prime, 1/(2^p-1)` must work with a denominator tower that is
+missing **infinitely many** primes — every prime whose order of `2` is
+composite is deleted from the tower *permanently*, at every truncation.  This
+is the arithmetic content of the restriction `p ↦ prime`, and it is invisible
+to all the Lambert-denominator arguments of rounds 37–40, which are internal to
+the family `2^p - 1`.  It does not, by itself, yield irrationality: the
+integrality step `b · D_N · R_N ∈ ℤ` (round 40) is a statement about `D_N`, and
+`D_N` is *larger* for the prime-restricted series, not smaller.
+
+**Blocker unchanged.**  `jsp87Mcov_small`, the Chowla-type two-point correlation
+of `ω` (Thm 3.1 of arXiv:2512.01739, from Pilatte), is still the only deep
+analytic input, and `jsp_000087_main` is still deliberately **not** declared.
+
+---
+
 ## Round 146 — THE INDEPENDENCE THEOREM ON THE BOX
 
 `lake build` succeeds; the tree contains **no placeholders**; **2756 theorems and
