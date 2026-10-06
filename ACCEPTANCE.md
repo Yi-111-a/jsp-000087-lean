@@ -16,6 +16,52 @@ under a suitably uniform version of the prime `k`-tuples conjecture.
 
 `jsp_000087_main`
 
+## Round 146 — THE INDEPENDENCE THEOREM ON THE BOX
+
+`lake build` succeeds; the tree contains **no placeholders**; **2756 theorems and
+lemmas** are proved (14 new public + 10 new private in one new module, 916 lines,
+0 new linter warnings), including **the independence of the cube-alternating
+variables on the box of residues** — the variance of the *total* phase, which
+round 145 never computed — **the equivalence of hypothesis (5.21) on a box with
+the single-prime condition**, and **the harmonic-mass price of the two-class
+criterion (5.21′) on a box**.
+
+`lean/JSPProblem/BoxIndep.lean` — the new module:
+
+| Theorem | Statement |
+| --- | --- |
+| `jsp87FAvg_box_period` | **the general periodicity statement**: on `B P`, the mean of *any* `p`-periodic real family is its mean over `[0, p)` (round 145 had this only for `φ (X_p · q)`) |
+| `jsp87FAvg_box_prod` | **★★ the CRT mean-factorisation in full generality ★★** `𝔼ᶜ_{n<M} ∏_{p ∈ P} f p n = ∏_{p ∈ P} 𝔼ᶜ_{m<p} f p m` for arbitrary `p`-periodic `f` — the general form of round 145's phase-only `jsp87CAvg_box_prod` |
+| `jsp87FAvg_box_cross` | **★★★ PAIRWISE INDEPENDENCE ON THE BOX ★★★** two `p`-periodic families on `B P` satisfy `𝔼ᶜ (f · g) = 𝔼ᶜ_p f · 𝔼ᶜ_{p'} g` for `p ≠ p'` |
+| `jsp87Var_sum_box` | **★★★ THE VARIANCE OF THE TOTAL PHASE IS THE SUM OF THE SINGLE-PRIME VARIANCES ★★★** for arbitrary real coefficients `c p`, `Var_{B P} (∑_{p ∈ P} c p · X p) = ∑_{p ∈ P} Var_{[0,p)} (c p · X p)`.  **No error term and no dependence on the box** |
+| `jsp87FAvg_sum_Xp_box` | the mean of the total phase is the sum of the single-prime means |
+| `jsp87_521_box_iff` | **★ (5.21) ON A BOX IS EQUIVALENT TO THE SINGLE-PRIME CONDITION ★** — the sample geometry of a box can neither create nor destroy the variance hypothesis |
+| `jsp87_box_dichotomy` | on the box, the endgame either has a truncation error `≥ 1/2` or (5.21) fails: `κ₁+κ₂+κ₃ ≥ 1/2 ∨ ∑_p Var_{[0,p)} < 1` |
+| `jsp87_box_budget` | **★★ ON A BOX THE WHOLE ERROR BUDGET IS TRUNCATION ★★** with `κ_j ≥ 0` and (5.15),(5.19),(5.21), `κ₁+κ₂+κ₃ ≥ 1/2` (and `κ₁+…+κ₅ ≥ 1/2`): `κ₄ = κ₅` are identically zero and (5.21) is single-prime |
+| `jsp87_521b_mass_ge` | **★★ (5.21′) IS A HARMONIC-MASS CONDITION ★★** for *any* finite prime set: `2^{2(H+K)} ≤ H · 2^K · q² · ∑_{p ∈ P} 1/p` |
+| `jsp87_box_exp_ge` | **★ (5.21′) prices the truncation exponent at `4/H` ★** `4/H ≤ 4 q² 2^K 2^{−2(H+K)} ∑ 1/p` |
+| `jsp87_box_515_gap` | **★ (5.15′) is violated on every box satisfying (5.21′) by the gap `1 − exp(−4/H)` ★** `1 − exp(−4/H) ≤ ‖𝔼ᶜ e (q ∑ X_p) − 1‖ ≤ κ₁+κ₂+κ₃` |
+| `jsp87_endgame_box_notSharp` | **★ the endgame cannot run on a box at the first two heights ★** for `H ≤ 2` no prime set satisfying (5.21′) admits a box with `κ_j < 1/30` |
+| `jsp87_box_summary` | the three statements above, assembled |
+
+Five private helpers of rounds 123/145 were **promoted to public** (no statement
+changed) so that the CRT sum-factorisation (`jsp87sum_period`,
+`jsp87sum_prod_finset`, `jsp87Box_eq_range_mul`) and the (5.21′) reduction
+(`jsp87R521b_iff`, `jsp87summand_ge`) are reusable.
+
+**Consequence.**  With round 145 (boxes violate (5.15) once the harmonic mass
+grows), round 144 ((5.21′) is satisfiable on plain initial segments) and round
+116 (the four endgame hypotheses are mutually exclusive), the sample geometry of
+§§5.3–5.14 of arXiv:2512.01739 is now exhausted in both directions:
+**initial segments satisfy (5.21′) but not (5.15); boxes satisfy neither once
+(5.21′) is assumed, and their variance structure is exactly additive.**  The
+remaining blocker is unchanged and is now the *only* obstruction:
+`jsp87Mcov_small`, the Chowla-type two-point correlation of `ω` (Thm 3.1 of
+arXiv:2512.01739, from Pilatte), which Mathlib does not contain.  A rationality
+witness must therefore be a genuinely **correlated** sample, and the natural
+next object is the progression sample `{c + a n}` whose residues are *not*
+jointly uniform.
+
 ## Round 145 — THE CRT-BOX ENDGAME
 
 `lake build` succeeds; the tree contains **no placeholders**; **3209 theorems and

@@ -239,7 +239,7 @@ private theorem jsp87sum_range_div {R : Type*} [AddCommMonoid R]
 
 For `0 < M` and any `a ≥ 1`, the sum of an `M`-periodic function over a whole
 number of periods is exactly `a` times the sum over one period. -/
-private theorem jsp87sum_period {R : Type*} [AddCommMonoid R]
+theorem jsp87sum_period {R : Type*} [AddCommMonoid R]
     (a M : ℕ) (_hM : 0 < M) (f : ℕ → R) :
     (∑ n ∈ Finset.range (a * M), f (n % M))
       = (a : ℕ) • ∑ i ∈ Finset.range M, f i := by
@@ -555,7 +555,7 @@ private theorem jsp87sum_prod_finset_aux (f : ℕ → ℕ → ℂ) :
       subst hS
       simp
 
-private theorem jsp87sum_prod_finset {S : Finset ℕ} (f : ℕ → ℕ → ℂ)
+theorem jsp87sum_prod_finset {S : Finset ℕ} (f : ℕ → ℕ → ℂ)
     (hprim : ∀ q' ∈ S, q'.Prime)
     (hper : ∀ q' ∈ S, ∀ i : ℕ, f q' (i % q') = f q' i) :
     (∑ i ∈ Finset.range (∏ q' ∈ S, q'), ∏ q' ∈ S, f q' i)
@@ -643,7 +643,7 @@ theorem jsp87CAvg_box_prod {P : Finset ℕ} (hP : ∀ p ∈ P, p.Prime) (K H : �
   rw [Finset.prod_congr rfl (fun p _ => by rw [← div_eq_mul_inv])]
 
 /-- **THE BOX IS A WHOLE NUMBER OF PERIODS OF `p`.** -/
-private theorem jsp87Box_eq_range_mul {P : Finset ℕ} (hP : ∀ p ∈ P, p.Prime)
+theorem jsp87Box_eq_range_mul {P : Finset ℕ} (hP : ∀ p ∈ P, p.Prime)
     (hPne : ∀ p ∈ P, 2 ≤ p) (p : ℕ) (hp : p ∈ P) :
     jsp87Box P = Finset.range (((∏ p' ∈ P, p') / p) * p) := by
   classical

@@ -265,7 +265,7 @@ private theorem jsp87half_pow (m : ℕ) :
 
 /-- **(5.21b) WITHOUT THE DYADIC WEIGHT.**  The summand is exactly the summand
 of `jsp87R521b`. -/
-private theorem jsp87R521b_iff (K : ℕ) (P : Finset ℕ) (q : ℝ) (H : ℕ) :
+theorem jsp87R521b_iff (K : ℕ) (P : Finset ℕ) (q : ℝ) (H : ℕ) :
     jsp87R521b K P q H
       ↔ (2 : ℝ) ^ (2 * (H + K)) ≤ (q ^ 2) * ∑ p ∈ P, jsp87FracTerm K p H := by
   have hAT := jsp87half_pow (H + K)
@@ -308,7 +308,7 @@ private theorem jsp87R521b_iff (K : ℕ) (P : Finset ℕ) (q : ℝ) (H : ℕ) :
 THE SEPARATION BOUND.**  This is the analytic heart of the reduction: the
 fraction `c_p/p` is at least `2^K/p` (round 123's `jsp87NzResCard_bounds`) and at
 most `1/2` (the separation bound), so `f (1−f) ≥ f/2`. -/
-private theorem jsp87summand_ge {K p H : ℕ} (hH : 1 ≤ H) (hpc : p.Prime)
+theorem jsp87summand_ge {K p H : ℕ} (hH : 1 ≤ H) (hpc : p.Prime)
     (hB : jsp87Separation K H ≤ p) :
     ((2 : ℝ) ^ K / 2) / (p : ℝ) ≤ jsp87FracTerm K p H := by
   have hpow : 2 ^ K ≤ p := le_trans (jsp87Separation_pow_le hH) hB
